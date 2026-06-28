@@ -1,0 +1,64 @@
+html,
+body {
+    padding: 0;
+    margin: 0;
+    height: 100vh;
+    width: 100%;
+    display: flex;
+    background-color: #f2efdf;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding-left: 50px;
+    overflow: hidden;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+
+
+.main {
+    margin-top: 10vh;
+}
+
+.main input {
+    height: 5vh;
+    width: 70vw;
+}
+
+.main button {
+    height: 5vh;
+    width: 7vw;
+}
+
+
+.container_A {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.container_A1 {
+    margin-top: 10vh;
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 3vw;
+    margin-bottom: 70px;
+}
+
+.container_A1_content {
+    width: 70%;
+    border: 3px solid black;
+}
+
+.container_A1_filter {
+    width: 20%;
+    border: 3px solid black;
+    background: skyblue;
+}

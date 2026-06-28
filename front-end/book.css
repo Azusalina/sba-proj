@@ -1,0 +1,247 @@
+html,
+body {
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    background-color: #35393c;
+}
+
+.title {
+    font-size: 30px;
+    margin-top: 1vh;
+    font-family: "Abel", sans-serif;
+    font-style: oblique;
+}
+
+.container_A {
+    height: 80vh;
+    width: 40vw;
+    margin-left: 55vw;
+    margin-top: 10vh;
+    box-shadow: 0 0 10px 5px #c2e0f7;
+    background-color: #A4D8ff;
+    border: 2px solid #bce2ff;
+    border-radius: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 0px;
+}
+
+
+.container_a1 {
+    margin-left: 4vh;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1vw;
+}
+
+.select_options {
+    padding: 1vw;
+    list-style: none;
+    height: 5vh;
+    width: 10vw;
+    color: black;
+    border: 0px transparent;
+    border-radius: 5px;
+    background-color: transparent;
+    display: flex;
+    flex-direction: column;
+
+}
+
+.select_options li {
+    display: flex;
+    align-items: center;
+    cursor: default;
+    font-size: 25px;
+    padding-left: 15px;
+    height: 3vh;
+    width: 10vw;
+    margin-bottom: 2vh;
+    font-family: "Abel", sans-serif;
+    font-style: oblique;
+    border: 0.5px solid black;
+    box-sizing: border-box;
+    border-radius: 25px;
+    white-space: nowrap;
+}
+
+.select_options li:not(:first-child) {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s, visibility 0.5s;
+    transition-delay: 0.5s;
+}
+
+.select_options:hover li:not(:first-child) {
+    opacity: 1;
+    transition-delay: 0s;
+    visibility: visible;
+}
+
+.select_options.clicked li:not(:first-child) {
+    opacity: 0;
+    visibility: hidden !important;
+    transition: none !important;
+    transition-delay:0s !important;
+}
+
+
+/* a */
+
+
+
+
+
+
+
+.container_alpha {
+    display: flex;
+    flex-direction: row;
+    gap: 0;
+    flex-wrap: wrap;
+}
+
+.container_alpha1 {
+    display: flex;
+    flex-direction: column;
+    gap: 2vh;
+    margin-top: 14vh;
+    margin-left: 2vw;
+}
+
+
+.a1a,
+.a1b,
+.a1c,
+.a1d {
+    white-space: nowrap;
+    font-size: 25px;
+    font-family: "Abel", sans-serif;
+    font-style: oblique;
+
+}
+
+
+.container_alpha1_price {
+    display: flex;
+    flex-direction: column;
+    gap: 2vh;
+    margin-top: 14vh;
+    margin-left: 2vw;
+}
+
+.container_alpha1_price p {
+    white-space: nowrap;
+    font-size: 25px;
+    font-family: "Abel", sans-serif;
+    font-style: italic;
+
+}
+
+.container_alpha2 {
+    display: flex;
+    flex-direction: column;
+    margin-top: 15vh;
+    margin-left: 5vw;
+    gap: 6vh;
+}
+
+.container_alpha4 {
+    display: flex;
+    flex-direction: column;
+    margin-top: 15vh;
+    margin-left: 3vw;
+    gap: 6vh;
+}
+
+.a2a,
+.a4a {
+    font-size: 20px;
+    color: black;
+    background-color: grey;
+    border-radius: 7px;
+    height: 4vh;
+    width: 5vh;
+    border: 0.5px solid black;
+}
+
+.a2b,
+.a4b {
+    font-size: 20px;
+    color: black;
+    background-color: greenyellow;
+    border-radius: 7px;
+    height: 4vh;
+    width: 5vh;
+    border: 0.5px solid black;
+}
+
+.a2c,
+.a4c {
+    font-size: 20px;
+    color: black;
+    background-color: rgb(123, 123, 255);
+    border-radius: 7px;
+    height: 4vh;
+    width: 5vh;
+    border: 0.5px solid black;
+}
+
+.a2d,
+.a4d {
+    font-size: 20px;
+    color: black;
+    background-color: gold;
+    border-radius: 7px;
+    height: 4vh;
+    width: 5vh;
+    border: 0.5px solid black;
+}
+
+
+.container_alpha3 {
+    display: flex;
+    flex-direction: column;
+    margin-top: 14vh;
+    margin-left: 3vw;
+    gap: 5vh;
+}
+
+.container_alpha3 p {
+    width: 3vw;
+    text-align: center;
+    border-radius: 3px;
+    font-size: 17px;
+    margin-top: 1.8vh;
+    background-color: mintcream;
+}
+
+.container_alpha5 {
+    display: flex;
+    gap: 5vh;
+    width: 100%;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 4vh;
+    margin-right: 3vw;
+}
+
+
+.container_alpha5 p {
+    font-family: "Abel", sans-serif;
+    font-size: 25px;
+    font-style: oblique;
+}
+
+.container_alpha5 button {
+    border-radius: 7px;
+    height: 3vh;
+    width: 3.5vw;
+}
