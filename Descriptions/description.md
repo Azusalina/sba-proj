@@ -21,3 +21,8 @@
     complete sum(price) calculate function in book.html( front-back communication)
     progress on ui/ux design of main.html and search.html
         
+
+29th june 2026
+    add localstorage function in order to allow search input bar in search.html inherit data input from main.html
+    filterbox v1.0.1
+    ![v1.0.1](filterbox_v1_0_1.png)

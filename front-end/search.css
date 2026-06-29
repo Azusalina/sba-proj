@@ -62,3 +62,52 @@ body {
     border: 3px solid black;
     background: skyblue;
 }
+
+.filter_title {
+    margin-left: 20px;
+    font-size: 30px;
+    font-style: oblique;
+}
+
+
+.price {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid black;
+
+}
+
+
+.s_bar {
+    width: 90%;
+}
+
+.interval {
+    display: flex;
+    width: 90%;
+    justify-content: space-between;
+}
+
+.general_filter_box {
+    display: flex;
+    flex-direction: flex-start;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid black;
+    margin-top: 2vh;
+}
+
+.general_filter_box p {
+    width: 70%;
+    font-size: 20px;
+    font-style: oblique;
+}
+
+.general_filter_box input {
+
+    height: 3vh;
+    width: 3vh;
+    border: none;
+}
