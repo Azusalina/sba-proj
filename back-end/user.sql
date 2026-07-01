@@ -1,37 +1,91 @@
-create table if not exists user_infor(
+-- create table if not exists user_infor(
+--     uid serial primary key,
+--     id varchar(20) unique,
+--     pwd varchar(30),
+--     create_at timestamp default now(),
+--     email varchar(30),
+--     birth date
+-- );
+-- create table if not exists opera(
+--     opera_id serial primary key,
+--     opera_name varchar(30)
+-- );
+-- create table if not exists ticket(
+--     opera_id INT references opera(opera_id),
+--     ticket_id serial primary key,
+--     seat_class varchar(5),
+--     seat_number int,
+--     book_time date,
+--     transac_time date,
+--     transac_method varchar(30),
+--     transac_fee int,
+--     transac_status varchar(30),
+--     uid int references user_infor(uid)
+-- );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+create table if not EXISTS user_infor (
     uid serial primary key,
     id varchar(20) unique,
-    pwd varchar(30),
+    pwd varchar(255),
     create_at timestamp default now(),
-    email varchar(30),
-    birth date
+    email varchar(50),
+    birth date 
 );
 
-create table if not exists opera(
+create table if not EXISTS opera(
     opera_id serial primary key,
     opera_name varchar(30)
 );
-create table if not exists ticket(
-    opera_id INT references opera(opera_id),
 
-    ticket_id serial primary key,
-    seat_class varchar(5),
-    seat_number int,
+CREATE table if not exists prices(
+    price_id serial primary key,
+    opera_id int references opera(opera_id) on delete cascade,     
+    premium int,
+    std_high int,
+    std_low int,
+    budget int,
 
-    book_time date,
-    transac_time date,
-    transac_method varchar(30),
-    transac_fee int,
-    transac_status varchar(30),
+    note varchar(100)
+)
 
-    uid int references user_infor(uid)
-
+create table if not exists orders(
+    order_id serial primary key,
+    uid int references user_infor(uid),
+    book_time timestamp default current_timestamp,
+    transac_time timestamp,
+    transac_method varchar(50),
+    sum_fee int,
+    transac_status varchar(20)
 );
+create table if not exists ticket(
+    ticket_id serial primary key,
+    opera_id int references opera(opera_id),
+    order_id int references orders(order_id) on delete cascade,
+    seat_class int, 
+    seat_num int
+)
 
-select * from user_infor order by uid; 
-select * from opera order by opera_name;
-select * from ticket;
 
 
+select * from user_infor order by uid;
+select * from opera ORDER BY opera_id;
+select * from prices order by price_id;
+select * from orders order by order_id;
+select * from ticket order by ticket_id;
 
-update opera set premium=1300,std_high=900,std_low=700,budget=350 where opera_name='Die Zauberflöte'
+
+insert into opera(opera_name) values('Aida'),('Carmen'),('Die Zauberflöte');

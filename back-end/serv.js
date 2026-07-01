@@ -100,8 +100,6 @@ app.post('/opera_name', async (req, res) => {
 
 
 
-
-
 app.listen(3000, () => {
     console.log("Service online");
 });
