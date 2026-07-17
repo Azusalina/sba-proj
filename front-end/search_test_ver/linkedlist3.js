@@ -55,13 +55,13 @@ print()
                         Node
 ========================================================== */
 
-class ListNode{
+class ListNode {
 
-    constructor(data){
+    constructor(data) {
 
-        this.data=data;
+        this.data = data;
 
-        this.next=null;
+        this.next = null;
 
     }
 
@@ -71,13 +71,13 @@ class ListNode{
                 Recommendation Linked List
 ========================================================== */
 
-class RecommendationList{
+class RecommendationList {
 
-    constructor(){
+    constructor() {
 
-        this.head=null;
+        this.head = null;
 
-        this.length=0;
+        this.length = 0;
 
     }
 
@@ -85,13 +85,13 @@ class RecommendationList{
                         Append
     ====================================================== */
 
-    append(data){
+    append(data) {
 
-        const node=new ListNode(data);
+        const node = new ListNode(data);
 
-        if(this.head===null){
+        if (this.head === null) {
 
-            this.head=node;
+            this.head = node;
 
             this.length++;
 
@@ -99,15 +99,15 @@ class RecommendationList{
 
         }
 
-        let current=this.head;
+        let current = this.head;
 
-        while(current.next!==null){
+        while (current.next !== null) {
 
-            current=current.next;
+            current = current.next;
 
         }
 
-        current.next=node;
+        current.next = node;
 
         this.length++;
 
@@ -117,13 +117,13 @@ class RecommendationList{
                         Prepend
     ====================================================== */
 
-    prepend(data){
+    prepend(data) {
 
-        const node=new ListNode(data);
+        const node = new ListNode(data);
 
-        node.next=this.head;
+        node.next = this.head;
 
-        this.head=node;
+        this.head = node;
 
         this.length++;
 
@@ -133,19 +133,19 @@ class RecommendationList{
                     Insert After
     ====================================================== */
 
-    insertAfter(target,data){
+    insertAfter(target, data) {
 
-        let current=this.head;
+        let current = this.head;
 
-        while(current!==null){
+        while (current !== null) {
 
-            if(current.data===target){
+            if (current.data === target) {
 
-                const node=new ListNode(data);
+                const node = new ListNode(data);
 
-                node.next=current.next;
+                node.next = current.next;
 
-                current.next=node;
+                current.next = node;
 
                 this.length++;
 
@@ -153,7 +153,7 @@ class RecommendationList{
 
             }
 
-            current=current.next;
+            current = current.next;
 
         }
 
@@ -165,17 +165,17 @@ class RecommendationList{
                         Remove
     ====================================================== */
 
-    remove(data){
+    remove(data) {
 
-        if(this.head===null){
+        if (this.head === null) {
 
             return false;
 
         }
 
-        if(this.head.data===data){
+        if (this.head.data === data) {
 
-            this.head=this.head.next;
+            this.head = this.head.next;
 
             this.length--;
 
@@ -183,13 +183,13 @@ class RecommendationList{
 
         }
 
-        let current=this.head;
+        let current = this.head;
 
-        while(current.next!==null){
+        while (current.next !== null) {
 
-            if(current.next.data===data){
+            if (current.next.data === data) {
 
-                current.next=current.next.next;
+                current.next = current.next.next;
 
                 this.length--;
 
@@ -197,7 +197,7 @@ class RecommendationList{
 
             }
 
-            current=current.next;
+            current = current.next;
 
         }
 
@@ -209,19 +209,19 @@ class RecommendationList{
                         Find
     ====================================================== */
 
-    find(data){
+    find(data) {
 
-        let current=this.head;
+        let current = this.head;
 
-        while(current!==null){
+        while (current !== null) {
 
-            if(current.data===data){
+            if (current.data === data) {
 
                 return current;
 
             }
 
-            current=current.next;
+            current = current.next;
 
         }
 
@@ -233,9 +233,9 @@ class RecommendationList{
                     Contains
     ====================================================== */
 
-    contains(data){
+    contains(data) {
 
-        return this.find(data)!==null;
+        return this.find(data) !== null;
 
     }
 
@@ -243,7 +243,7 @@ class RecommendationList{
                         Size
     ====================================================== */
 
-    size(){
+    size() {
 
         return this.length;
 
@@ -253,9 +253,9 @@ class RecommendationList{
                         Empty
     ====================================================== */
 
-    isEmpty(){
+    isEmpty() {
 
-        return this.length===0;
+        return this.length === 0;
 
     }
 
@@ -263,11 +263,11 @@ class RecommendationList{
                         Clear
     ====================================================== */
 
-    clear(){
+    clear() {
 
-        this.head=null;
+        this.head = null;
 
-        this.length=0;
+        this.length = 0;
 
     }
 
@@ -275,17 +275,17 @@ class RecommendationList{
                         Array
     ====================================================== */
 
-    toArray(){
+    toArray() {
 
-        const result=[];
+        const result = [];
 
-        let current=this.head;
+        let current = this.head;
 
-        while(current!==null){
+        while (current !== null) {
 
             result.push(current.data);
 
-            current=current.next;
+            current = current.next;
 
         }
 
@@ -297,7 +297,7 @@ class RecommendationList{
                         Print
     ====================================================== */
 
-    print(){
+    print() {
 
         console.table(this.toArray());
 
@@ -311,9 +311,9 @@ class RecommendationList{
 ==========================================================
 */
 
-function saveRecommendation(list){
+function saveRecommendation(list) {
 
-    if(!(list instanceof RecommendationList)){
+    if (!(list instanceof RecommendationList)) {
 
         return;
 
@@ -333,11 +333,11 @@ function saveRecommendation(list){
 
 }
 
-function loadRecommendation(){
+function loadRecommendation() {
 
-    const list=new RecommendationList();
+    const list = new RecommendationList();
 
-    const data=JSON.parse(
+    const data = JSON.parse(
 
         localStorage.getItem(
 
@@ -347,7 +347,7 @@ function loadRecommendation(){
 
     );
 
-    data.forEach(item=>{
+    data.forEach(item => {
 
         list.append(item);
 
