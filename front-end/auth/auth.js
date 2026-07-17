@@ -40,7 +40,7 @@ window.onload = function () {
 
             if (result.success) {//if value of success in json =true then...
                 signin_status.innerText = "status:sucess";
-                window.location.href = "main.html";
+                window.location.href = "../main/main.html";
             } else {
                 signin_status.innerText = "status:fail";
             }

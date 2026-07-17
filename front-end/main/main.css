@@ -2,87 +2,109 @@ html,
 body {
     padding: 0;
     margin: 0;
-    height: 100%;
     width: 100%;
+    height: 100%;
     display: flex;
-    background-color: #0f0f11;
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
+    background-color: #0f0f11;
 }
+
 
 .container_alpha {
     margin-top: 2vh;
+
     width: 95%;
     height: 10vh;
-    border: 1px solid #E5C185;
-    border-radius: 3px;
-    background-color: #161618;
+
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
 
+    background-color: #161618;
+    border: 1px solid #E5C185;
+    border-radius: 3px;
 }
 
 .title {
     margin-left: 2vw;
+
+    color: #E5C185;
     font-size: 8vh;
     font-family: "Grenze Gotisch", serif;
     font-style: oblique;
-    color: #E5C185;
 }
+
 
 .search {
     margin-left: auto;
     margin-right: 2vw;
+
     display: flex;
     flex-direction: row;
+    align-items: center;
     gap: 0.25vw;
 }
 
 .search input {
-    color: #ffffff;
+    width: 13vw;
+    height: 3vh;
+
     background: #222225;
+    color: white;
+
+    border: none;
+    border-radius: 5px;
+
     font-size: 2vh;
     font-style: oblique;
-    border: transparent;
-    border-radius: 5px;
-    height: 3vh;
-    width: 13vw;
+}
+
+.search input:focus {
+    outline: none;
 }
 
 .search input:focus::placeholder {
-    opacity: 1;
-    transition: 0.3s ease-in-out;
     color: #C5A880;
-    border: none;
+    transition: .3s ease-in-out;
 }
 
 .search button {
     width: 3vh;
+    height: 3vh;
+
     padding: 0;
+
     background: #C5A880;
     border: none;
     border-radius: 25%;
+
     cursor: pointer;
 }
 
 
 .map {
     margin-right: 7vw;
-    max-width: 3vh;
-    max-height: 3vh;
+
+    width: 3vh;
+    height: 3vh;
+
     object-fit: contain;
     filter: invert(100%);
 }
 
 .auth {
     margin-right: 2vw;
+
+    color: #C5A880;
+
     font-size: 3vh;
     font-family: "Grenze Gotisch", serif;
     font-style: oblique;
-    color: #C5A880;
+
+    text-decoration: none;
 }
 
 .auth:hover {
@@ -91,6 +113,7 @@ body {
 
 .container_bd {
     width: 100%;
+
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -102,55 +125,66 @@ body {
 }
 
 .container_beta img {
+    width: 100%;
+    height: 100%;
+
     margin-top: 10vh;
     margin-left: 3vw;
-    height: 100%;
-    width: 100%;
+
     filter: invert(100%);
 }
 
 .container_delta {
-
     width: 50%;
     height: 90%;
+
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
 
-
 .o_title {
-    color: #E5C185;
     margin-top: 2vh;
+
+    color: #E5C185;
+
     font-size: 30px;
-    font-style: oblique;
     font-family: "Grenze Gotisch", serif;
+    font-style: oblique;
 }
 
 .o_description {
-    font-family: "Instrument Serif", serif;
-    font-size: 20px;
-    font-style: italic;
     color: #C5A880;
+
+    font-size: 20px;
+    font-family: "Instrument Serif", serif;
+    font-style: italic;
 }
 
 
 .book {
-    color: #E5C185;
-    font-size: 1.5vh;
-    font-family: "Grenze Gotisch", serif;
-    height: 2.5vh;
-    width: 6vw;
     margin-top: 20vh;
     margin-left: 35vw;
-    border: transparent;
-    border-radius: 3px;
+
+    width: 6vw;
+    height: 2.5vh;
+
+    color: #E5C185;
+
     background: #801A24;
+    border: none;
+    border-radius: 3px;
+
+    font-size: 1.5vh;
+    font-family: "Grenze Gotisch", serif;
+
+    cursor: pointer;
+
+    transition: .5s ease-in-out;
 }
 
 .book:hover {
     background: #9C222E;
     filter: drop-shadow(0 0 5px #E5C185);
-    transition: 0.5s ease-in-out;
 }

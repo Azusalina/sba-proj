@@ -55,6 +55,36 @@ body {
 .container_A1_content {
     width: 70%;
     border: 3px solid black;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.container_A1_content_a {
+    height: 90%;
+    width: 95%;
+    display: flex;
+    flex-direction: column;
+}
+.container_A1_content_a_1{
+    width:100%;
+    display: flex;
+    flex-direction: row;
+    gap:100px;
+    align-items: center;
+    justify-content:center;
+}
+.container_A1_content_a_1 image{
+    max-width: 30px;
+    max-height:30px;
+}
+.container_A1_content3_b {
+    display: flex;
+    flex-direction: row;
+    width: 95%;
+    height: 10%;
 }
 
 .container_A1_filter {

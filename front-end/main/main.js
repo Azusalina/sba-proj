@@ -8,5 +8,5 @@ search_btn.onclick = function (event){
     event.preventDefault();
     let a = search.value;
     localStorage.setItem("search_content", JSON.stringify(a));
-    window.location.href = 'search.html';
+    window.location.href = '../search/search.html';
 }

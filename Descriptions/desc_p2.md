@@ -30,3 +30,6 @@
   * Redesigned DBMS tables to fix **3NF violations**.
   * Optimized data storage distribution.
   * *Upcoming:* ER diagram and deep analysis of the DBMS tables will be conducted before Sunday, July 5th.
+* **2st July 2026**
+  * draw the v1.0.0 ER diagram addresing the sql table:
+  ![alt text](ERD_v1_0_0-1.png)'

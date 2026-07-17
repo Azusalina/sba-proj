@@ -68,7 +68,7 @@ app.post('/api/signup', async (req, res) => {
 app.post('/opera_name', async (req, res) => {
     const op_name = req.body.a;
     try {
-        const command = 'SELECT premium,std_high,std_low,budget from opera where opera_name=$1;';
+        const command = 'SELECT premium,std_high,std_low,budget from prices p left join opera o on p.opera_id=o.opera_id where o.opera_name=$1;';
         const db_result = await pool.query(command, [op_name]);
         if (db_result.rows.length > 0) {
             const row = db_result.rows[0];

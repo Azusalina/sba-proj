@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Opera Search</title>
+
+    <link rel="stylesheet" href="search3.css">
+
+    <script src="sort3.js" defer></script>
+    <script src="queue3.js" defer></script>
+    <script src="stack3.js" defer></script>
+    <script src="linkedlist3.js" defer></script>
+    <script src="search3.js" defer></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Abel&display=swap" rel="stylesheet">
+
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+
+</head>
+
+<body>
+
+    <div class="container">
+
+        <!-- ===================================================== -->
+        <!-- Search Bar -->
+        <!-- ===================================================== -->
+
+        <header class="search_bar">
+
+            <div class="logo">
+
+                Opera Search
+
+            </div>
+
+            <form id="search_form" class="search_form">
+
+                <input id="search_input" type="text" placeholder="Search opera, venue, performer...">
+
+                <button id="search_button" type="submit">
+
+                    Search
+
+                </button>
+
+            </form>
+
+        </header>
+
+        <!-- ===================================================== -->
+        <!-- Main -->
+        <!-- ===================================================== -->
+
+        <main class="main_container">
+
+            <!-- ================================================= -->
+            <!-- Search Result -->
+            <!-- ================================================= -->
+
+            <section class="result_panel">
+
+                <div class="result_header">
+
+                    <div>
+
+                        <h2>
+
+                            Search Result
+
+                        </h2>
+
+                        <p id="result_count">
+
+                            3 Results
+
+                        </p>
+
+                    </div>
+
+                    <div class="algorithm_status">
+
+                        Current Algorithm :
+
+                        <span id="current_algorithm">
+
+                            None
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <div id="result_container" class="result_container">
+
+                    <!-- ======================== -->
+                    <!-- Result Card -->
+                    <!-- ======================== -->
+
+                    <div id="result_container" class="result_container">
+
+                    </div>
+
+                    <img class="opera_poster" src="../foto for searchhtml/A.jpg" alt="Opera Poster">
+
+                    <div class="opera_information">
+
+                        <h2 class="opera_title">
+
+                            Carmen
+
+                        </h2>
+
+                        <p class="opera_venue">
+
+                            Hong Kong Cultural Centre
+
+                        </p>
+
+                        <p class="opera_date">
+
+                            14 Jul 2026 ・ 19:30
+
+                        </p>
+
+                        <p class="opera_rating">
+
+                            ★★★★★ 4.8 / 5.0
+
+                        </p>
+
+                        <div class="seat_tags">
+
+                            <span class="seat budget">
+
+                                Budget
+
+                            </span>
+
+                            <span class="seat low">
+
+                                Standard Low
+
+                            </span>
+
+                            <span class="seat high">
+
+                                Standard High
+
+                            </span>
+
+                            <span class="seat premium">
+
+                                Premium
+
+                            </span>
+
+                        </div>
+
+                        <p class="opera_price">
+
+                            HK$280 ~ HK$1280
+
+                        </p>
+
+                    </div>
+
+                    <div class="opera_action">
+
+                        <button class="detail_btn">
+
+                            Details
+
+                        </button>
+
+                        <button class="book_btn" onclick="location.href='../book/book.html'">
+
+                            Book Now
+
+                        </button>
+
+                    </div>
+
+                    </article>
+
+                    <!-- ======================== -->
+
+                    <div id="result_container" class="result_container">
+
+                    </div>
+
+                    <img class="opera_poster" src="../foto for searchhtml/A.jpg" alt="Opera Poster">
+
+                    <div class="opera_information">
+
+                        <h2 class="opera_title">
+
+                            Aida
+
+                        </h2>
+
+                        <p class="opera_venue">
+
+                            Hong Kong City Hall
+
+                        </p>
+
+                        <p class="opera_date">
+
+                            21 Jul 2026 ・ 20:00
+
+                        </p>
+
+                        <p class="opera_rating">
+
+                            ★★★★☆ 4.4 / 5.0
+
+                        </p>
+
+                        <div class="seat_tags">
+
+                            <span class="seat budget">
+
+                                Budget
+
+                            </span>
+
+                            <span class="seat premium">
+
+                                Premium
+
+                            </span>
+
+                        </div>
+
+                        <p class="opera_price">
+
+                            HK$380 ~ HK$1580
+
+                        </p>
+
+                    </div>
+
+                    <div class="opera_action">
+
+                        <button class="detail_btn">
+
+                            Details
+
+                        </button>
+
+                        <button class="book_btn" onclick="location.href='../book/book.html'">
+
+                            Book Now
+
+                        </button>
+
+                    </div>
+
+                    </article>
+
+                    <!-- ======================== -->
+
+                    <div id="result_container" class="result_container">
+
+                    </div>
+
+                    <img class="opera_poster" src="../foto for searchhtml/A.jpg" alt="Opera Poster">
+
+                    <div class="opera_information">
+
+                        <h2 class="opera_title">
+
+                            Die Zauberflöte
+
+                        </h2>
+
+                        <p class="opera_venue">
+
+                            HKAPA Lyric Theatre
+
+                        </p>
+
+                        <p class="opera_date">
+
+                            30 Jul 2026 ・ 19:00
+
+                        </p>
+
+                        <p class="opera_rating">
+
+                            ★★★★★ 4.9 / 5.0
+
+                        </p>
+
+                        <div class="seat_tags">
+
+                            <span class="seat high">
+
+                                Standard High
+
+                            </span>
+
+                            <span class="seat premium">
+
+                                Premium
+
+                            </span>
+
+                        </div>
+
+                        <p class="opera_price">
+
+                            HK$250 ~ HK$1380
+
+                        </p>
+
+                    </div>
+
+                    <div class="opera_action">
+
+                        <button class="detail_btn">
+
+                            Details
+
+                        </button>
+
+                        <button class="book_btn" onclick="location.href='../book/book.html'">
+
+                            Book Now
+
+                        </button>
+
+                    </div>
+
+                    </article>
+                </div>
+
+            </section>
+
+            <!-- ================================================= -->
+            <!-- Filter Panel -->
+            <!-- ================================================= -->
+
+            <aside class="filter_panel">
+
+                <h2 class="filter_title">
+
+                    Filter
+
+                </h2>
+
+                <!-- ============================================= -->
+                <!-- Price -->
+                <!-- ============================================= -->
+
+                <div class="filter_group">
+
+                    <div class="group_title">
+
+                        Price Range
+
+                    </div>
+
+                    <span id="price_indicator" class="price_indicator">
+
+                        HK$0 - HK$3000
+
+                    </span>
+
+                    <input id="price_slider" class="price_slider" type="range" min="0" max="3000" value="3000"
+                        step="50">
+
+                </div>
+
+                <!-- ============================================= -->
+                <!-- Opera -->
+                <!-- ============================================= -->
+
+                <div class="filter_group">
+
+                    <div class="group_title">
+
+                        Opera
+
+                    </div>
+
+                    <label>
+
+                        <input class="opera_filter" type="checkbox" value="Carmen">
+
+                        Carmen
+
+                    </label>
+
+                    <label>
+
+                        <input type="checkbox" value="Aida">
+
+                        Aida
+
+                    </label>
+
+                    <label>
+
+                        <input type="checkbox" value="Die Zauberflöte">
+
+                        Die Zauberflöte
+
+                    </label>
+
+                    <label>
+
+                        <input type="checkbox" value="Turandot">
+
+                        Turandot
+
+                    </label>
+
+                </div>
+
+                <!-- ============================================= -->
+                <!-- Venue -->
+                <!-- ============================================= -->
+
+                <div class="filter_group">
+
+                    <div class="group_title">
+
+                        Venue
+
+                    </div>
+
+                    <label>
+
+                        <input type="checkbox">
+
+                        Hong Kong Cultural Centre
+
+                    </label>
+
+                    <label>
+
+                        <input type="checkbox">
+
+                        Hong Kong City Hall
+
+                    </label>
+
+                    <label>
+
+                        <input type="checkbox">
+
+                        HKAPA
+
+                    </label>
+
+                    <label>
+
+                        <input type="checkbox">
+
+                        Xiqu Centre
+
+                    </label>
+
+                </div>
+
+                <!-- ============================================= -->
+                <!-- Date -->
+                <!-- ============================================= -->
+
+                <div class="filter_group">
+
+                    <div class="group_title">
+
+                        Date
+
+                    </div>
+
+                    <input id="date_filter" type="date">
+
+                </div>
+
+                <!-- ============================================= -->
+                <!-- Seat Class -->
+                <!-- ============================================= -->
+
+                <div class="filter_group">
+
+                    <div class="group_title">
+
+                        Seat Class
+
+                    </div>
+
+                    <label>
+
+                        <input type="checkbox">
+
+                        Budget
+
+                    </label>
+
+                    <label>
+
+                        <input type="checkbox">
+
+                        Standard Low
+
+                    </label>
+
+                    <label>
+
+                        <input type="checkbox">
+
+                        Standard High
+
+                    </label>
+
+                    <label>
+
+                        <input type="checkbox">
+
+                        Premium
+
+                    </label>
+
+                </div>
+
+                <!-- ============================================= -->
+                <!-- Rating -->
+                <!-- ============================================= -->
+
+                <div class="filter_group">
+
+                    <div class="group_title">
+
+                        Minimum Rating
+
+                    </div>
+
+                    <select id="rating_select">
+
+                        <option value="0">All</option>
+
+                        <option value="5">★★★★★</option>
+
+                        <option value="4">★★★★☆ & Above</option>
+
+                        <option value="3">★★★☆☆ & Above</option>
+
+                    </select>
+
+                </div>
+
+                <!-- ============================================= -->
+                <!-- Availability -->
+                <!-- ============================================= -->
+
+                <div class="filter_group">
+
+                    <div class="group_title">
+
+                        Availability
+
+                    </div>
+
+                    <label>
+
+                        <input type="radio" name="availability" value="all" checked>
+
+                        All
+
+                    </label>
+
+                    <label>
+
+                        <input type="radio" name="availability" value="available">
+
+                        Available
+
+                    </label>
+
+                    <label>
+
+                        <input type="radio" name="availability" value="sold">
+
+                        Sold Out
+
+                    </label>
+
+                </div>
+
+                <!-- ============================================= -->
+                <!-- Sorting -->
+                <!-- ============================================= -->
+
+                <div class="filter_group">
+
+                    <div class="group_title">
+
+                        Sort Result
+
+                    </div>
+
+                    <select id="sort_type">
+
+                        <option value="price">
+
+                            Price
+
+                        </option>
+
+                        <option value="date">
+
+                            Date
+
+                        </option>
+
+                        <option value="name">
+
+                            Name
+
+                        </option>
+
+                        <option value="rating">
+
+                            Rating
+
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <!-- ============================================= -->
+                <!-- Algorithm Information -->
+                <!-- ============================================= -->
+
+                <div class="algorithm_box">
+
+                    <h3>
+
+                        Algorithm Information
+
+                    </h3>
+
+                    <div class="algorithm_row">
+
+                        <span>
+
+                            Current
+
+                        </span>
+
+                        <span id="algorithm_name">
+
+                            None
+
+                        </span>
+
+                    </div>
+
+                    <div class="algorithm_row">
+
+                        <span>
+
+                            Complexity
+
+                        </span>
+
+                        <span id="algorithm_complexity">
+
+                            -
+
+                        </span>
+
+                    </div>
+
+                    <div class="algorithm_row">
+
+                        <span>
+
+                            Execution Time
+
+                        </span>
+
+                        <span id="algorithm_time">
+
+                            0 ms
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <!-- ============================================= -->
+                <!-- Queue -->
+                <!-- ============================================= -->
+
+                <div class="history_box">
+
+                    <h3>
+
+                        Recent Searches (Queue)
+
+                    </h3>
+
+                    <ul id="recent_search_list">
+
+                    </ul>
+
+                </div>
+
+                <!-- ============================================= -->
+                <!-- Stack -->
+                <!-- ============================================= -->
+
+                <div class="history_box">
+
+                    <h3>
+
+                        Recently Viewed (Stack)
+
+                    </h3>
+
+                    <ul id="recent_view_list">
+
+                    </ul>
+
+                </div>
+
+                <!-- ============================================= -->
+                <!-- Linked List -->
+                <!-- ============================================= -->
+
+                <div class="history_box">
+
+                    <h3>
+
+                        Recommendation (Linked List)
+
+                    </h3>
+
+                    <ul id="recommendation_list">
+
+                    </ul>
+
+                </div>
+
+                <!-- ============================================= -->
+                <!-- Buttons -->
+                <!-- ============================================= -->
+
+                <div class="filter_buttons">
+
+                    <button id="reset_button" type="button">
+
+                        Reset
+
+                    </button>
+
+                    <button id="apply_button" type="button">
+
+                        Apply
+
+                    </button>
+
+                </div>
+
+            </aside>
+
+        </main>
+
+    </div>
+
+</body>
+
+</html>
