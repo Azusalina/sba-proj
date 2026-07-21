@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta lang="en-US">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="auth.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lavishly+Yours&display=swap" rel="stylesheet">
+    <script src="auth.js" defer></script>
+</head>
+
+<body>
+    <div id="stage" class="stage">
+        <div id="signin" class="signin_overall">
+            <p class="signin_title">Sign in </p>
+            <form class="inputs">
+                <div class="signin_pair">
+                    <label for="signin_name">Name:</label>
+                    <input id="signin_name" placeholder="name:" class="input_boxes">
+                </div>
+                <div class="signin_pair">
+                    <label for="signin_pwd">Password:</label>
+                    <input id="signin_pwd" placeholder="password:" type="password" class="input_boxes">
+                </div>
+                <button id="signin_btn" class="signin_btn" type="submit">sign in</button>
+            </form>
+            <p id="signin_status" class="signin_status">status:</p>
+            <button id="to_signup_redirection" type="button" class="signup_redirection">Don't have an account yet? click
+                here-></a>
+        </div>
+        <div id="signup" class="signup_overall">
+            <p class="title">Sign up an account now</p>
+            <form id="form">
+                <div class="signup_pair">
+                    <label for="signup_id">ID:</label>
+                    <input id="signup_id" type="input" placeholder="ID:">
+                </div>
+                <div class="signup_pair">
+                    <label for="signup_email">Email:</label>
+                    <input id="signup_email" type="input" placeholder="Email:">
+                </div>
+                <div class="signup_pair">
+                    <label for="signup_pwd">Password:</label>
+                    <input id="signup_pwd" type="password" placeholder="Password:">
+                </div>
+                <button id="signup_btn" type="button" class="signup_btn">Sign up</button>
+            </form>
+            <p id="signup_status" class="signup_status">Status:</p>
+            <button id="to_signin_redirection" type="button" class="signin_redirection">Already have an account? click
+                here-></a>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -75,10 +75,15 @@ create table if not exists ticket(
     ticket_id serial primary key,
     opera_id int references opera(opera_id),
     order_id int references orders(order_id) on delete cascade,
-    seat_class int, 
+    seat_class varchar(20),
+    seat_class2 varchar(20),
     seat_num int
 )
-
+create table if not exists lv(
+    id serial primary key,
+    name varchar(20),
+    multiplier decimal(10,4)
+)
 
 
 select * from user_infor order by uid;
@@ -86,3 +91,4 @@ select * from opera ORDER BY opera_id;
 select * from prices order by price_id;
 select * from orders order by order_id;
 select * from ticket order by ticket_id;
+select * from lv order by id;

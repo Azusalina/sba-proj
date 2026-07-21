@@ -1,0 +1,106 @@
+body {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 2%;
+}
+
+.left {
+    width: 49%;
+    min-height: 98vh;
+    border: 1px solid black;
+    align-items: center;
+    justify-content: center;
+}
+
+.right {
+    width: 49%;
+    min-height: 98vh;
+    border: 1px solid black;
+}
+
+.right * {
+    margin-left: 5%;
+}
+
+.right-middle1 {
+
+    align-items: space-between;
+    justify-content: space-between;
+}
+
+.right-middle1 button {
+    width: 5vh;
+    height: 3vh;
+    border: 1px solid black;
+    border-radius: 10px;
+}
+
+.right-middle1 button:hover,
+.right-middle1 button.active {
+    border: 2px solid aqua;
+    background-color: green;
+    transition: 0.1s ease-in-out;
+}
+
+.right-middle2 {
+    margin-top: 10%;
+    align-items: center;
+}
+
+.grp {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 10%;
+    width: 80%;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid black;
+}
+
+.grp label {
+    font-size: 20px;
+    margin-right: 10%;
+    width: 10%;
+    cursor: default;
+    white-space: nowrap;
+}
+
+.grp button {
+    width: 10%;
+    height: 5%;
+    border-radius: 10px;
+}
+
+.grp button:hover,
+.grp button.active {
+    border: 1px solid black;
+    background: skyblue;
+    transition: 0.1s ease-in-out;
+}
+
+
+.right-low {
+    display: flex;
+    flex-direction: row;
+    margin-top: 30%;
+    margin-left: 60%;
+}
+
+.right-low span {
+    font-size: 20px;
+    font-style: oblique;
+    cursor: default;
+
+}
+
+.right-low button {
+    margin-left: 30px;
+    width: 5vw;
+    height: 2vh;
+}
+
+.right-low button:hover {
+    background: gold;
+    transition: 0.1s ease-in-out;
+}
