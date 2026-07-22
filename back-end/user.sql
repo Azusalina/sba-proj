@@ -92,3 +92,4 @@ select * from prices order by price_id;
 select * from orders order by order_id;
 select * from ticket order by ticket_id;
 select * from lv order by id;
+

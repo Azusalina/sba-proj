@@ -33,3 +33,15 @@
 * **2st July 2026**
   * draw the v1.0.0 ER diagram addresing the sql table:
   ![alt text](ERD_v1_0_0-1.png)'
+
+
+* **22nd July 2026**
+  * Add hash and salt algorithm to the backend `serv.js` to encrypt passwords.
+  * Add password validation checks on sign-up including:
+    * Must include at least 1 uppercase letter
+    * Must include at least 1 lowercase letter
+    * Must include at least 1 special character
+    * Must include at least 1 number
+    * Length must be 8 or more characters
+  * Start working on reset password page (improve ux as user may forget their password and are urgent to  reset them)
+

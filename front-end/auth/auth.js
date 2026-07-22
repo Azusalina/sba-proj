@@ -27,7 +27,6 @@ window.onload = function () {
     async function send() {
         const url = 'http://127.0.0.1:3000/api/login';
         const data = { user_name: username, passwd: pwd };
-
         try {
 
             const resp = await fetch(url, {
@@ -56,16 +55,44 @@ window.onload = function () {
     const signup_status = document.getElementById("signup_status");
     const signup_btn = document.getElementById("signup_btn");
 
+
+
+
+    function valid_check(pwd) {
+        if (!pwd) return {
+            Valid: false,
+            msg: ["Pwd Cannot be empty"]
+        }
+        const cases = [
+            { case: /[A-Z]/.test(pwd), msg: "At least one uppercase character is required", },
+            { case: /[a-z]/.test(pwd), msg: "At least one lowercase character is required", },
+            { case: /[^\w\u4e00-\u9fa5\s]/.test(pwd), msg: "At least one special character is required" },
+            { case: /\d/.test(pwd), msg: "At least one number is required" },
+            { case: pwd.length >= 8, msg: "minimum pwd length is 8" },
+        ]
+        const missing = cases.filter(item => !item.case).map(item => item.msg)
+        return {
+            isValid: missing.length === 0,
+            errors: missing
+        };
+    }
+
+
     signup_btn.onclick = function (event) {
         event.preventDefault();
         const username = signup_id.value.trim();
         const email = signup_email.value.trim();
         const pwd = signup_pwd.value.trim();
+        const valid_condition = valid_check(pwd);
 
         if (!username || !email || !pwd) {
             signup_status.innerText = "Please fill all missing blanks";
             return;
-        } else {
+        } else if (!valid_condition.isValid) {
+            signup_status.innerText = valid_condition.errors.join("\n")
+        }
+
+        else {
             signup();
         }
         async function signup() {
@@ -81,15 +108,17 @@ window.onload = function () {
                 if (result.success) {
                     signup_status.innerText = "success";
                 } else {
-                    signup_status.innerText = "fatal error";
+                    signup_status.innerText = result.msg;
                 }
             } catch (error) {
                 signup_status.innerText = "Service in Maintenance,try again later";
             }
         }
-
-
     }
-
 }
 
+const to_reset_btn=document.getElementById("to_reset_redirection")
+
+to_reset_btn.onclick=function(){
+    window.location.href='../reset/reset.html'
+}

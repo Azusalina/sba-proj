@@ -27,9 +27,9 @@ lv.forEach(btn => {
 
 
 const change = document.querySelectorAll('#a-minus, #a-plus, #s-minus, #s-plus, #w-minus, #w-plus');
-const pA=document.getElementById("pA")
-const pS=document.getElementById("pS")
-const pW=document.getElementById("pW")
+const pA = document.getElementById("pA")
+const pS = document.getElementById("pS")
+const pW = document.getElementById("pW")
 const sum_price = document.getElementById("sum-price")
 function update() {
     const total =
@@ -58,7 +58,7 @@ change.forEach(btn => {
         } else if (a === "w") {
             ticket.wheelchair = currentVal;
         }
-        btn.blur(); 
+        btn.blur();
         update();
     });
 });
@@ -75,3 +75,5 @@ sub_form.addEventListener('submit', (e) => {
     localStorage.setItem("ticket", JSON.stringify(ticket));
     window.location.href = "../pay.html"
 })
+
+url = "http://127.0.0.1:3000/opera_name"
