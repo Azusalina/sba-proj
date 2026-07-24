@@ -45,3 +45,18 @@
     * Length must be 8 or more characters
   * Start working on reset password page (improve ux as user may forget their password and are urgent to  reset them)
 
+
+
+* **23rd july 2026**
+  * user who sign up now will receive a verification email to verify if they are signing up an account
+    * **with special thanks to the service provided by `https://app.mailersend.com`
+* **24th July 2026**
+  * fixed problem of the link included inside the email for redirection purposes:
+    * port of the link should be `3000`(express module port) instead of `5500`(live server port)
+  * **added vast amount of `console.log()` in serv.js in order to record log in the terminal**
+    * *receive verfiction email now is completely functional*
+    * test account:
+      * id: `a`
+      * email: `azusaring@gmail.com`
+      * pwd: `Aa714714!`
+

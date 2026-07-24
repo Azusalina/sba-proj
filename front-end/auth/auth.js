@@ -38,6 +38,7 @@ window.onload = function () {
             const result = await resp.json();
 
             if (result.success) {//if value of success in json =true then...
+                localStorage.setItem('user',signin_name);
                 signin_status.innerText = "status:sucess";
                 window.location.href = "../main/main.html";
             } else {
@@ -73,7 +74,7 @@ window.onload = function () {
         const missing = cases.filter(item => !item.case).map(item => item.msg)
         return {
             isValid: missing.length === 0,
-            errors: missing
+            errors: missing.msg
         };
     }
 
@@ -106,7 +107,7 @@ window.onload = function () {
                 })
                 const result = await resp.json();
                 if (result.success) {
-                    signup_status.innerText = "success";
+                    signup_status.innerText = result.msg;
                 } else {
                     signup_status.innerText = result.msg;
                 }

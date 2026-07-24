@@ -54,6 +54,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 25px;
+    padding-left: 30px;
 }
 
 .signin_pair {
@@ -251,4 +252,17 @@ body {
 .test {
     animation-name: anim;
     animation-duration: 2s;
+}
+
+
+
+
+
+
+#signup_id,
+#signup_email,
+#signup_pwd {
+    padding-left: 20px;
+    font-size: 20px;
+    font-style: oblique;
 }
