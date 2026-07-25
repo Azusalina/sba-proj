@@ -30,8 +30,8 @@
   * Redesigned DBMS tables to fix **3NF violations**.
   * Optimized data storage distribution.
   * *Upcoming:* ER diagram and deep analysis of the DBMS tables will be conducted before Sunday, July 5th.
-* **2st July 2026**
-  * draw the v1.0.0 ER diagram addresing the sql table:
+* **2nd July 2026**
+  * created the v1.0.0 ER diagram addressing the sql table:
   ![alt text](ERD_v1_0_0-1.png)'
 
 
@@ -43,20 +43,42 @@
     * Must include at least 1 special character
     * Must include at least 1 number
     * Length must be 8 or more characters
-  * Start working on reset password page (improve ux as user may forget their password and are urgent to  reset them)
+  * Start working on reset password page (improve ux as user may forget their password and are urgent to reset them)
 
 
 
 * **23rd july 2026**
   * user who sign up now will receive a verification email to verify if they are signing up an account
-    * **with special thanks to the service provided by `https://app.mailersend.com`
+    * ***with special thanks to the service provided by `https://app.mailersend.com`***
 * **24th July 2026**
   * fixed problem of the link included inside the email for redirection purposes:
     * port of the link should be `3000`(express module port) instead of `5500`(live server port)
   * **added vast amount of `console.log()` in serv.js in order to record log in the terminal**
-    * *receive verfiction email now is completely functional*
+    * *receive verification email now is completely functional*
     * test account:
       * id: `a`
       * email: `azusaring@gmail.com`
       * pwd: `Aa714714!`
 
+* **25th July 2026** 
+  * Connect front-end search page `search.js` with backend `serv.js` in order to update opera-related data dynamically.
+  * Implement **Merge Sort** for "sort by name" and **Insertion Sort** for "sort by show_time" in `search.html`,more algorithms will be implemented in the future *(est. <=2 days)*
+    * To support the front-end search page, new columns were added to the `opera` table in the database:
+      * **Original version:**
+        ```sql
+        CREATE TABLE IF NOT EXISTS opera (
+            opera_id SERIAL PRIMARY KEY
+        );
+        ```
+      * **Updated version:**
+        ```sql
+        CREATE TABLE IF NOT EXISTS opera (
+            opera_id SERIAL PRIMARY KEY,
+            opera_name VARCHAR(30),
+            show_time TIMESTAMP DEFAULT '2009-06-29 19:30:00',
+            rate DECIMAL(3,1) DEFAULT 5.0 CHECK(rate <= 10.0),
+            duration INT DEFAULT 150
+        );
+        ```
+    * All database updates were executed using `ALTER TABLE ADD COLUMN` and `UPDATE TABLE` statements.
+    * To support the search page requirements, the sorting algorithms in `sort.js` have been updated with specialized versions *(using feature-descriptive suffixes)*

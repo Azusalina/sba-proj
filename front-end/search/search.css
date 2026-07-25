@@ -69,7 +69,7 @@ body {
     flex-direction: column;
 }
 
-.container_A1_content_a_1 {
+.content-display {
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -77,14 +77,14 @@ body {
 
 }
 
-.container_A1_content_a_1 article {
+.content-display article {
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: flex-start;
 }
 
-.container_A1_content_a_1 article img {
+.content-display article img {
     max-width: 80px;
     height: 100%;
     flex-shrink: 0;

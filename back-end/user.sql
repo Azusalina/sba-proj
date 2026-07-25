@@ -26,17 +26,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 create table if not EXISTS user_infor (
     uid serial primary key,
     id varchar(20) unique,
@@ -46,10 +35,19 @@ create table if not EXISTS user_infor (
     birth date, 
     verified BOOLEAN default FALSE
 );
+CREATE TABLE if not exists email_verification (
+    token TEXT PRIMARY KEY,
+    userid TEXT REFERENCES user_infor(id),
+    expire_time TIMESTAMP not null,
+    used BOOLEAN DEFAULT FALSE
+);
 
 create table if not EXISTS opera(
     opera_id serial primary key,
-    opera_name varchar(30)
+    opera_name varchar(30),
+    show_time timestamp  default ' 2009-06-29 19:30:00',
+    rate decimal(3,1) default 5.0 check(rate<=10.0),
+    duration int default 150
 );
 
 CREATE table if not exists prices(
@@ -61,8 +59,7 @@ CREATE table if not exists prices(
     budget int,
 
     note varchar(100)
-)
-
+);
 create table if not exists orders(
     order_id serial primary key,
     uid int references user_infor(uid),
@@ -79,26 +76,31 @@ create table if not exists ticket(
     seat_class varchar(20),
     seat_class2 varchar(20),
     seat_num int
-)
+);
 create table if not exists lv(
     id serial primary key,
     name varchar(20),
     multiplier decimal(10,4)
-)
-CREATE TABLE if not exists email_verification (
-    token TEXT PRIMARY KEY,
-    userid TEXT REFERENCES user_infor(id),
-    expire_time TIMESTAMP not null,
-    used BOOLEAN DEFAULT FALSE
 );
 
-select * from user_infor order by uid;
+select * from user_infor order by uid;  
+select * from email_verification;
 select * from opera ORDER BY opera_id;
 select * from prices order by price_id;
 select * from orders order by order_id;
 select * from ticket order by ticket_id;
 select * from lv order by id;
-select * from email_verification;
+
 
 delete from email_verification where userid='a';
 delete from user_infor where id='a';
+
+alter table opera add column duration int default 150
+
+update opera set opera_name='aida' where opera_id=1;
+update opera set opera_name='carmen' where opera_id=2;
+update opera set opera_name='zauberflote' where opera_id=3;
+insert into opera(opera_name,show_time) values('la-traviata','2009-07-16 19:30:00'),('rigoletto','2009-07-17')
+
+
+select * from opera order by show_time

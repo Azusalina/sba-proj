@@ -3,7 +3,7 @@
 
 <head>
     <link rel="stylesheet" href="search.css">
-    <script src="search.js" defer></script>
+    <script type="module" src="search.js" defer></script>
 </head>
 
 
@@ -17,32 +17,37 @@
         <div class="container_A1">
             <div class="container_A1_content">
                 <div class="container_A1_content_a">
-                    <div class="container_A1_content_a_1">
-                        <article>
+                    <div class="content-display">
+                        <article id="carmen">
                             <img src="placeholder.png">
-                            <h1>head</h1>
+                            <h1>carmen</h1>
                             <p>name</p>
                         </article>
-                        <article>
+                        <article id="aida">
                             <img src="placeholder.png">
-                            <h1>head</h1>
+                            <h1>aida</h1>
                             <p>name</p>
                         </article>
-                        <article>
+                        <article id="rigoletto">
                             <img src="placeholder.png">
-                            <h1>head</h1>
+                            <h1>rigoletto</h1>
                             <p>name</p>
                         </article>
-                        <article>
+                        <article id="zauberflote">
                             <img src="placeholder.png">
-                            <h1>head</h1>
+                            <h1>zauberflote</h1>
+                            <p>name</p>
+                        </article>
+                        <article id="la-traviata">
+                            <img src="placeholder.png">
+                            <h1>la-traviata</h1>
                             <p>name</p>
                         </article>
                     </div>
                 </div>
                 <div class="container_A1_content_btn">
-                    <button>a</button>
-                    <button>b</button>
+                    <button>last page</button>
+                    <button>next page</button>
                 </div>
             </div>
             <div class="container_A1_filter">
@@ -60,19 +65,23 @@
                 </div>
                 <div class="general_filter_box">
                     <p>Name</p>
-                    <input type="checkbox">
+                    <input type="checkbox" id="FilterStatus_name">
+                </div>
+                <div class="general_filter_box">
+                    <p>price</p>
+                    <input type="checkbox" id="FilterStatus_price">
                 </div>
                 <div class="general_filter_box">
                     <p>Time</p>
-                    <input type="checkbox">
+                    <input type="checkbox" id="FilterStatus_time">
                 </div>
                 <div class="general_filter_box">
                     <p>Rate </p>
-                    <input type="checkbox">
+                    <input type="checkbox" id="FilterStatus_rate">
                 </div>
                 <div class="general_filter_box">
                     <p>Available</p>
-                    <input type="checkbox">
+                    <input type="checkbox" id="FilterStatus_avail">
                 </div>
 
             </div>

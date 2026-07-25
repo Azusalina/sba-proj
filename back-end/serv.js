@@ -171,16 +171,25 @@ app.post('/opera_name', async (req, res) => {
             res.json(row);
         }
     } catch (error) {
-        res.status(500).json({ msg: error });
+        return res.status(500).json({ msg: error });
     }
 })
 
-
-
-
-
-
-
+app.post('/updateOperaData', async (req, res) => {
+    const op_name = req.body.name;
+    try {
+        const command = 'select show_time,rate,duration from opera where opera_name=$1';
+        const { rows } = await pool.query(command, [op_name]);
+        if (rows.length > 0) {
+            return res.json({ status: true, data: rows[0] });
+        } else {
+            return res.json({ status: false, msg: 'opera not found' })
+        }
+    } catch (error) {
+        console.log(error)
+        return res.json({ status: false, msg: 'data not found' });
+    }
+})
 
 
 
