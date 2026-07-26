@@ -12,11 +12,24 @@ export function selection(data = []) {
     return data;
 }
 
-export function bubble(data = []) {
+export function bubble_ascending_price(data = []) {
     for (let i = 0; i < data.length - 1; i++) {
         let status = false;
         for (let j = 0; j < data.length - i - 1; j++) {
-            if (data[j] > data[j + 1]) {
+            if (data[j].price > data[j + 1].price) {
+                [data[j], data[j + 1]] = [data[j + 1], data[j]];
+                status = true;
+            }
+        }
+        if (!status) break;
+    }
+    return data;
+};
+export function bubble_ascending_rate(data = []) {
+    for (let i = 0; i < data.length - 1; i++) {
+        let status = false;
+        for (let j = 0; j < data.length - i - 1; j++) {
+            if (data[j].rate < data[j + 1].rate) {
                 [data[j], data[j + 1]] = [data[j + 1], data[j]];
                 status = true;
             }
@@ -40,7 +53,7 @@ export function insertion(data = []) {
     return data;
 };
 
-export function insertion_timeVer(data = []) {
+export function insertion_time(data = []) {
     const n = data.length;
     for (let i = 1; i < n; i++) {
         let key = data[i];
@@ -54,9 +67,7 @@ export function insertion_timeVer(data = []) {
     return data;
 };
 
-
-//merge done
-export function merge_typeA(data = []) {
+    export function merge(data = []) {
     let width = 1;
     const n = data.length;
     while (width < n) {
@@ -98,7 +109,7 @@ export function merge_typeA(data = []) {
     }
     return data;
 };
-export function merge_typeB(data = []) {
+export function merge_name(data = []) {
     let width = 1;
     const n = data.length;
     while (width < n) {

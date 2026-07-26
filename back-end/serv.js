@@ -178,7 +178,7 @@ app.post('/opera_name', async (req, res) => {
 app.post('/updateOperaData', async (req, res) => {
     const op_name = req.body.name;
     try {
-        const command = 'select show_time,rate,duration from opera where opera_name=$1';
+        const command = 'SELECT o.show_time, o.rate, o.duration, p.budget AS price FROM opera o LEFT JOIN prices p ON o.opera_id = p.opera_id WHERE o.opera_name = $1';
         const { rows } = await pool.query(command, [op_name]);
         if (rows.length > 0) {
             return res.json({ status: true, data: rows[0] });
@@ -190,8 +190,6 @@ app.post('/updateOperaData', async (req, res) => {
         return res.json({ status: false, msg: 'data not found' });
     }
 })
-
-
 
 
 

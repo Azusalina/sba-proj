@@ -92,15 +92,24 @@ select * from ticket order by ticket_id;
 select * from lv order by id;
 
 
-delete from email_verification where userid='a';
-delete from user_infor where id='a';
+-- delete from email_verification where userid='a';
+-- delete from user_infor where id='a';
 
-alter table opera add column duration int default 150
+-- alter table opera add column duration int default 150
 
-update opera set opera_name='aida' where opera_id=1;
-update opera set opera_name='carmen' where opera_id=2;
-update opera set opera_name='zauberflote' where opera_id=3;
-insert into opera(opera_name,show_time) values('la-traviata','2009-07-16 19:30:00'),('rigoletto','2009-07-17')
+-- update opera set opera_name='aida' where opera_id=1;
+-- update opera set opera_name='carmen' where opera_id=2;
+-- update opera set opera_name='zauberflote' where opera_id=3;
+-- insert into opera(opera_name,show_time) values('la-traviata','2009-07-16 19:30:00'),('rigoletto','2009-07-17')
 
 
-select * from opera order by show_time
+-- update opera set rate=5.1 where opera_id=2;
+-- update opera set rate=5.2 where opera_id=3;
+-- update opera set rate=5.3 where opera_id=4;
+-- update opera set rate=5.4 where opera_id=5;
+
+insert into prices(opera_id,premium,std_high,std_low,budget,note) 
+values(2,1200,850,650,250,'carmen caseI'),
+(3,1150,800,600,200,'zauberflote caseI'),
+(4,1100,750,550,150,'la-traviata caseI'),
+(5,1125,775,575,175,'rigoletto caseI')

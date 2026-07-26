@@ -3,7 +3,7 @@
 
 <head>
     <link rel="stylesheet" href="search.css">
-    <script type="module" src="search.js" defer></script>
+    <script type="module" src="search.js" ></script>
 </head>
 
 
@@ -16,32 +16,58 @@
         </form>
         <div class="container_A1">
             <div class="container_A1_content">
+                <label id="algo-display">Current Algorithm implemented:None</label>
                 <div class="container_A1_content_a">
                     <div class="content-display">
                         <article id="carmen">
                             <img src="placeholder.png">
-                            <h1>carmen</h1>
-                            <p>name</p>
+                            <div class="info_container">
+                                <h1>carmen</h1>
+                                <label class="price">price:carmen's price</label>
+                                <label class="rate">Rate:5.0/10</label>
+                                <label class="time">show time:yyyy-mm-dd</label>
+                                <label class="duration">duration:1minute</label>
+                            </div>
                         </article>
                         <article id="aida">
                             <img src="placeholder.png">
-                            <h1>aida</h1>
-                            <p>name</p>
+                            <div class="info_container">
+                                <h1>aida</h1>
+                                <label class="price">price:carmen's price</label>
+                                <label class="rate">Rate:5.0/10</label>
+                                <label class="time">show time:yyyy-mm-dd</label>
+                                <label class="duration">duration:1minute</label>
+                            </div>
                         </article>
                         <article id="rigoletto">
                             <img src="placeholder.png">
-                            <h1>rigoletto</h1>
-                            <p>name</p>
+                            <div class="info_container">
+                                <h1>rigoletto</h1>
+                                <label class="price">price:carmen's price</label>
+                                <label class="rate">Rate:5.0/10</label>
+                                <label class="time">show time:yyyy-mm-dd</label>
+                                <label class="duration">duration:1minute</label>
+                            </div>
                         </article>
                         <article id="zauberflote">
                             <img src="placeholder.png">
-                            <h1>zauberflote</h1>
-                            <p>name</p>
+                            <div class="info_container">
+                                <h1>zauberflote</h1>
+                                <label class="price">price:carmen's price</label>
+                                <label class="rate">Rate:5.0/10</label>
+                                <label class="time">show time:yyyy-mm-dd</label>
+                                <label class="duration">duration:1minute</label>
+                            </div>
                         </article>
                         <article id="la-traviata">
                             <img src="placeholder.png">
-                            <h1>la-traviata</h1>
-                            <p>name</p>
+                            <div class="info_container">
+                                <h1>la-traviata</h1>
+                                <label class="price">price:carmen's price</label>
+                                <label class="rate">Rate:5.0/10</label>
+                                <label class="time">show time:yyyy-mm-dd</label>
+                                <label class="duration">duration:1minute</label>
+                            </div>
                         </article>
                     </div>
                 </div>
@@ -60,28 +86,27 @@
                         <span class="p_num">1000</span>
                         <span class="p_num">2000</span>
                         <span class="p_num">3000</span>
-
                     </div>
                 </div>
                 <div class="general_filter_box">
                     <p>Name</p>
-                    <input type="checkbox" id="FilterStatus_name">
-                </div>
-                <div class="general_filter_box">
-                    <p>price</p>
-                    <input type="checkbox" id="FilterStatus_price">
+                    <input type="radio" name=sort id="FilterStatus_name">
                 </div>
                 <div class="general_filter_box">
                     <p>Time</p>
-                    <input type="checkbox" id="FilterStatus_time">
+                    <input type="radio" name=sort id="FilterStatus_time">
+                </div>
+                <div class="general_filter_box">
+                    <p>price</p>
+                    <input type="radio" name=sort id="FilterStatus_price">
                 </div>
                 <div class="general_filter_box">
                     <p>Rate </p>
-                    <input type="checkbox" id="FilterStatus_rate">
+                    <input type="radio" name=sort id="FilterStatus_rate">
                 </div>
                 <div class="general_filter_box">
                     <p>Available</p>
-                    <input type="checkbox" id="FilterStatus_avail">
+                    <input type="radio" name="sort" id="FilterStatus_avail">
                 </div>
 
             </div>
