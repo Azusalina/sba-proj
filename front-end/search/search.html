@@ -3,7 +3,7 @@
 
 <head>
     <link rel="stylesheet" href="search.css">
-    <script type="module" src="search.js" ></script>
+    <script type="module" src="search.js"></script>
 </head>
 
 
@@ -11,19 +11,21 @@
 <body>
     <div class="container_A">
         <form id="main" class="main">
-            <input id="bar" placeholder="Search">
+            <input id="bar" placeholder="Search,leave blank to pop a random content you may be interested">
             <button id="m_btn" type="submit">=></button>
         </form>
         <div class="container_A1">
             <div class="container_A1_content">
                 <label id="algo-display">Current Algorithm implemented:None</label>
+                <label id="time-display">current time 00:00:00 HKT</label>
+                <label id="plan-display">current price plan adopted:X</label>
                 <div class="container_A1_content_a">
                     <div class="content-display">
                         <article id="carmen">
                             <img src="placeholder.png">
                             <div class="info_container">
-                                <h1>carmen</h1>
-                                <label class="price">price:carmen's price</label>
+                                <h1 data-id="carmen">carmen</h1>
+                                <label class="price">Budget price:100hkd</label>
                                 <label class="rate">Rate:5.0/10</label>
                                 <label class="time">show time:yyyy-mm-dd</label>
                                 <label class="duration">duration:1minute</label>
@@ -32,7 +34,7 @@
                         <article id="aida">
                             <img src="placeholder.png">
                             <div class="info_container">
-                                <h1>aida</h1>
+                                <h1 data-id="aida">aida</h1>
                                 <label class="price">price:carmen's price</label>
                                 <label class="rate">Rate:5.0/10</label>
                                 <label class="time">show time:yyyy-mm-dd</label>
@@ -42,7 +44,7 @@
                         <article id="rigoletto">
                             <img src="placeholder.png">
                             <div class="info_container">
-                                <h1>rigoletto</h1>
+                                <h1 data-id="rigoletto">rigoletto</h1>
                                 <label class="price">price:carmen's price</label>
                                 <label class="rate">Rate:5.0/10</label>
                                 <label class="time">show time:yyyy-mm-dd</label>
@@ -52,7 +54,7 @@
                         <article id="zauberflote">
                             <img src="placeholder.png">
                             <div class="info_container">
-                                <h1>zauberflote</h1>
+                                <h1 data-id="zauberflote">zauberflote</h1>
                                 <label class="price">price:carmen's price</label>
                                 <label class="rate">Rate:5.0/10</label>
                                 <label class="time">show time:yyyy-mm-dd</label>
@@ -62,7 +64,7 @@
                         <article id="la-traviata">
                             <img src="placeholder.png">
                             <div class="info_container">
-                                <h1>la-traviata</h1>
+                                <h1 data-id="la-traviata">la-traviata</h1>
                                 <label class="price">price:carmen's price</label>
                                 <label class="rate">Rate:5.0/10</label>
                                 <label class="time">show time:yyyy-mm-dd</label>

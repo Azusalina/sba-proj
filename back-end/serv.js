@@ -1,3 +1,4 @@
+//header files
 import express from 'express';
 import pkg from 'pg';
 const { Pool } = pkg;
@@ -5,15 +6,14 @@ import cors from 'cors';
 import crypto from 'crypto';
 import 'dotenv/config';
 import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
+import { time } from 'console';
 
-//express is a network listener
 export const app = express();
-//cors->cross origin resource sharing
-
 app.use(cors());
 app.use(express.json());
 
-///////////////////
+//initialize
+
 const pool = new Pool({
     user: 'a_sql',
     host: 'localhost',
@@ -28,6 +28,11 @@ const ver_email = new MailerSend({
 const NoreplySentFrom = new Sender("noreply@test-z0vklo6xwxpl7qrx.mlsender.net", "noreply verification");
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//subfunctions
+function hash(pwd, salt) {
+    return crypto.createHash("sha256").update(pwd + salt).digest("hex");
+}
 function random_generate_web() {
     const result = crypto.randomUUID().replace(/-/g, '');
     return {
@@ -35,7 +40,6 @@ function random_generate_web() {
         url: `http://127.0.0.1:3000/auth/${result}`
     };
 }
-
 async function send_ver_mail(target, token, url, userid) {
     const verification_mail = new EmailParams()
         .setFrom(NoreplySentFrom)
@@ -49,11 +53,30 @@ async function send_ver_mail(target, token, url, userid) {
     }
 }
 
+//
 
-
-function hash(pwd, salt) {
-    return crypto.createHash("sha256").update(pwd + salt).digest("hex");
+function TimeToSeconds(timestr) {
+    const [hr, min, sec] = timestr.split(':').map(Number);
+    return hr * 3600 + min * 60 + sec;
 }
+
+
+function getPricePlan(time) {
+    const mid = '12:00:00';
+    const current = new Date();
+    const midSec = TimeToSeconds(mid);
+    const currentSec = current.getHours() * 3600 + current.getMinutes() * 60 + current.getSeconds();
+    if (currentSec <= 43200) {
+        return 1;
+    } else {
+        return 2;
+    }
+}
+////////////////////////////////////////////////////////////////////////////
+
+
+
+//auth work zone
 
 
 app.post('/api/signup', async (req, res) => {
@@ -99,9 +122,7 @@ app.post('/api/signup', async (req, res) => {
         await pool.query("ROLLBACK");
         res.status(500).json({ success: false, msg: "something error" });
     }
-})
-
-
+});
 app.get("/auth/:token", async (req, res) => {
     console.log('route entered ')
     const token = req.params.token;
@@ -124,9 +145,7 @@ app.get("/auth/:token", async (req, res) => {
     console.log("before redirect");
     res.redirect("http://127.0.0.1:5500/front-end/auth/confirm.html");
     console.log('redirected!')
-})
-
-
+});
 app.post('/api/login', async (req, res) => {
     const userid = req.body.user_name;
     const pwd = req.body.passwd;
@@ -161,27 +180,16 @@ app.post('/api/login', async (req, res) => {
 
 });
 
-app.post('/opera_name', async (req, res) => {
-    const op_name = req.body.a;
-    try {
-        const command = 'SELECT premium,std_high,std_low,budget from prices p left join opera o on p.opera_id=o.opera_id where o.opera_name=$1;';
-        const db_result = await pool.query(command, [op_name]);
-        if (db_result.rows.length > 0) {
-            const row = db_result.rows[0];
-            res.json(row);
-        }
-    } catch (error) {
-        return res.status(500).json({ msg: error });
-    }
-})
+//search work zone
 
 app.post('/updateOperaData', async (req, res) => {
     const op_name = req.body.name;
+    const planID = getPricePlan()
     try {
-        const command = 'SELECT o.show_time, o.rate, o.duration, p.budget AS price FROM opera o LEFT JOIN prices p ON o.opera_id = p.opera_id WHERE o.opera_name = $1';
-        const { rows } = await pool.query(command, [op_name]);
+        const command = 'SELECT o.show_time, o.rate, o.duration, p.budget AS price FROM opera o LEFT JOIN prices p ON o.opera_id = p.opera_id WHERE o.opera_name = $1 and p.price_id=$2';
+        const { rows } = await pool.query(command, [op_name, planID]);
         if (rows.length > 0) {
-            return res.json({ status: true, data: rows[0] });
+            return res.json({ status: true, data: rows[0], plan: planID });
         } else {
             return res.json({ status: false, msg: 'opera not found' })
         }
@@ -191,10 +199,23 @@ app.post('/updateOperaData', async (req, res) => {
     }
 })
 
-
-
-
-
+//book work zone
+app.post('/operaName', async (req, res) => {
+    const operaName = req.body.name;
+    const priceID = getPricePlan();
+    try {
+        const { rows: prices } = await pool.query('select premium,std_high,std_low,budget from prices p left join opera o on p.opera_id=o.opera_id where o.opera_name=$1 and p.price_id=$2', [operaName, priceID])
+        const { rows: multipliers } = await pool.query('select name,multiplier from lv')
+        if (prices.length > 0) {
+            return res.json({ status: true, prices: prices[0], multipliers: multipliers })
+        } else {
+            return res.json({ status: false, msg: 'price not found' })
+        }
+    } catch (error) {
+        console.log(error)
+        return res.json({ status: false, msg: 'unknown fatal error' })
+    }
+})
 
 
 

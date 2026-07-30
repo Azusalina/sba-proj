@@ -52,7 +52,6 @@ export function insertion(data = []) {
     }
     return data;
 };
-
 export function insertion_time(data = []) {
     const n = data.length;
     for (let i = 1; i < n; i++) {
@@ -67,7 +66,7 @@ export function insertion_time(data = []) {
     return data;
 };
 
-    export function merge(data = []) {
+export function merge(data = []) {
     let width = 1;
     const n = data.length;
     while (width < n) {
@@ -151,11 +150,104 @@ export function merge_name(data = []) {
 };
 
 
+export function quick(data = []) {
+    if (data.length <= 1) return data;
+    const len = data.length;
+    const first = data[0];
+    const mid = data[Math.floor((len - 1) / 2)];
+    const last = data[len - 1];
+    const pivot = median(first, mid, last);
+    const pivotIdx = data.indexOf(pivot);
+    data.splice(pivotIdx, 1);
+    let left = [];
+    let right = [];
+    for (let i = 0; i < data.length; i++) {
+        if (data[i] <= pivot) {
+            left.push(data[i]);
+        } else {
+            right.push(data[i]);
+        }
+    }
+    return [...quick(left), pivot, ...quick(right)];
+}
+
+export function quick_v1(data = []) {
+    if (data.length <= 1) return data;
+    const len = data.length;
+    const first = data[0];
+    const mid = data[Math.floor((len - 1) / 2)];
+    const last = data[len - 1];
+    const vfirst = Number(first.dataset.data);
+    const vmid = Number(mid.dataset.data);
+    const vlast = Number(last.dataset.data);
+    const vpivot = vfirst + vmid + vlast - Math.max(vfirst, vmid, vlast) - Math.min(vfirst, vmid, vlast);
+    let pivotIdx = 0;
+    if (vpivot === vmid) {
+        pivotIdx = Math.floor((len-1)/2);
+    } else if (vpivot === vlast) {
+        pivotIdx = len-1
+    }
+    const pivot = data[pivotIdx];
+    data.splice(pivotIdx, 1);
+    const left = [];
+    const right = [];
+    for (let i = 0; i < data.length; i++) {
+        if (Number(data[i].dataset.data) > Number(pivot.dataset.data)) {
+            left.push(data[i]);
+        } else {
+            right.push(data[i]);
+        }
+    }
+    return [...quick_v1(left), pivot, ...quick_v1(right)]
+}
+
+export function quick_v2(data = []) {
+    quick_v2_InPlace(data, 0, data.length - 1);
+    return data;
+}
+
+function quick_v2_InPlace(data, start, end) {
+    if (start >= end) return;
+
+    const midIdx = Math.floor((start + end) / 2);
+    const vfirst = Number(data[start].dataset.data);
+    const vmid = Number(data[midIdx].dataset.data);
+    const vlast = Number(data[end].dataset.data);
+
+    const vpivot = vfirst + vmid + vlast - Math.max(vfirst, vmid, vlast) - Math.min(vfirst, vmid, vlast);
+
+    let pivotIdx = start;
+    if (vpivot === vmid) pivotIdx = midIdx;
+    else if (vpivot === vlast) pivotIdx = end;
+
+    [data[start], data[pivotIdx]] = [data[pivotIdx], data[start]];
+
+    const pNum = Number(data[start].dataset.data);
+    let i = start + 1;
+    let j = end;
+    while (i <= j) {
+        while (i <= end && Number(data[i].dataset.data) < pNum) {
+            i++;
+        }
+        while (j > start && Number(data[j].dataset.data) >= pNum) {
+            j--;
+        }
+        if (i < j) {
+            [data[i], data[j]] = [data[j], data[i]];
+        }
+    }
+    [data[start], data[j]] = [data[j], data[start]];
+    quick_v2_InPlace(data, start, j - 1);
+    quick_v2_InPlace(data, j + 1, end);
+}
 
 
 
-// let data=[1,6,3,5,7,9,0,9,6,4,2];
-// data=merge(data);
+
+
+
+// let data = [1, 6, 3, 5, 7, 9, 0, 9, 6, 4, 2];
+// data = quick(data);
 // console.log("sorted");
 // console.log(...data);
 

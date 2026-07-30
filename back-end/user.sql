@@ -43,7 +43,7 @@ CREATE TABLE if not exists email_verification (
 );
 
 create table if not EXISTS opera(
-    opera_id serial primary key,
+    opera_id  int primary key,
     opera_name varchar(30),
     show_time timestamp  default ' 2009-06-29 19:30:00',
     rate decimal(3,1) default 5.0 check(rate<=10.0),
@@ -51,7 +51,8 @@ create table if not EXISTS opera(
 );
 
 CREATE table if not exists prices(
-    price_id serial primary key,
+    pid serial primary key,
+    price_id int not null,
     opera_id int references opera(opera_id) on delete cascade,     
     premium int,
     std_high int,
@@ -59,6 +60,12 @@ CREATE table if not exists prices(
     budget int,
 
     note varchar(100)
+);
+
+create table if not exists lv(
+    id serial primary key,
+    name varchar(20),
+    multiplier decimal(10,4)
 );
 create table if not exists orders(
     order_id serial primary key,
@@ -77,23 +84,23 @@ create table if not exists ticket(
     seat_class2 varchar(20),
     seat_num int
 );
-create table if not exists lv(
-    id serial primary key,
-    name varchar(20),
-    multiplier decimal(10,4)
-);
 
+--user-related
 select * from user_infor order by uid;  
 select * from email_verification;
+--opera-related&prices
 select * from opera ORDER BY opera_id;
-select * from prices order by price_id;
+--raw
+select * from prices;
+--for intuitive management
+select * from prices order by opera_id;
+select * from lv order by id;
+--ticket-related
 select * from orders order by order_id;
 select * from ticket order by ticket_id;
-select * from lv order by id;
 
 
--- delete from email_verification where userid='a';
--- delete from user_infor where id='a';
+
 
 -- alter table opera add column duration int default 150
 
@@ -108,8 +115,16 @@ select * from lv order by id;
 -- update opera set rate=5.3 where opera_id=4;
 -- update opera set rate=5.4 where opera_id=5;
 
-insert into prices(opera_id,premium,std_high,std_low,budget,note) 
-values(2,1200,850,650,250,'carmen caseI'),
-(3,1150,800,600,200,'zauberflote caseI'),
-(4,1100,750,550,150,'la-traviata caseI'),
-(5,1125,775,575,175,'rigoletto caseI')
+-- insert into prices(price_id,opera_id,premium,std_high,std_low,budget,note) 
+-- values
+-- (1,1,1250,900,700,300,'aida caseI'),
+-- (1,2,1200,850,650,250,'carmen caseI'),
+-- (1,3,1150,800,600,200,'zauberflote caseI'),
+-- (1,4,1100,750,550,150,'la-traviata caseI'),
+-- (1,5,1125,775,575,175,'rigoletto caseI')
+--(2,1,1225,855,655,255,'aida caseII')
+-- (2,2,1215,865,675,265,'carmen caseII'),
+-- (2,3,1165,815,612,215,'zauberflote caseII'),
+-- (2,4,1115,765,565,165,'la-traviata caseII'),
+-- (2,5,1140,790,590,190,'rigoletto caseII')
+

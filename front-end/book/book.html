@@ -1,63 +1,57 @@
 <!DOCTYPE html>
 
 <head>
-    <meta charset="utf-8">
     <link rel="stylesheet" href="book.css">
-    <script src="book.js" defer></script>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Abel&family=Playwrite+AU+TAS:wght@100..400&display=swap"
-        rel="stylesheet">
+    <script type="module" src="book.js" defer></script>
 </head>
 
 <body>
-    <img src="seat.svg">
-    <div class="container_A">
-        <div class="container_a1">
-            <p class="title">Opera Selected:</p>
-            <ul id="select_options" class="select_options">
-                <li class="options">-</li>
-                <li class="options">Carmen</li>
-                <li class="options">Aida</li>
-                <li class="options">Die Zauberflöte</li>
-            </ul>
-        </div>
-        <div class="container_alpha">
-            <div class="container_alpha1">
-                <p class="a1a">Budget</p>
-                <p class="a1b">Standard low</p>
-                <p class="a1c">Standard High</p>
-                <p class="a1d">Premium</p>
-            </div>
-            <div class="container_alpha1_price">
-                <p id="a1p1">-</p>
-                <p id="a1p2">-</p>
-                <p id="a1p3">-</p>
-                <p id="a1p4">-</p>
-            </div>
-            <div class="container_alpha2">
-                <button id="a2a" class="a2a" type="button">-</button>
-                <button id="a2b" class="a2b" type="button">-</button>
-                <button id="a2c" class="a2c" type="button">-</button>
-                <button id="a2d" class="a2d" type="button">-</button>
-            </div>
-            <div class="container_alpha3">
-                <p id="a3a" class="a3a">0</p>
-                <p id="a3b" class="a3b">0</p>
-                <p id="a3c" class="a3c">0</p>
-                <p id="a3d" class="a3d">0</p>
-            </div>
-            <div class="container_alpha4">
-                <button id="a4a" class="a4a" type="button">+</button>
-                <button id="a4b" class="a4b" type="button">+</button>
-                <button id="a4c" class="a4c" type="button">+</button>
-                <button id="a4d" class="a4d" type="button">+</button>
-            </div>
-            <div class="container_alpha5">
-                <p id="sum_p">Total: ____</p>
-                <a href="../pay/pay.html"><button>Pay</button></a>
-            </div>
-        </div>
+    <div class="left">
+        <article>
+            this is for svg map or opera poster
+        </article>
     </div>
+    <div class="right">
+        <div class="right-top">
+            <h2 id="operaTitle">Opera selected:abcdefg</h2>
+        </div>
+        <div class="right-middle1">
+            <button id="budget">budget</button>
+            <button id="std_low">std_low</button>
+            <button id="std_high">std_high</button>
+            <button id="premium">premium</button>
+        </div>
+        <div class="right-middle2">
+            <div class="grp">
+                <label>Adult</label>
+                <label id="pA">per ticket:0 hkd</label>
+                <button id="a-minus">-1</button>
+                <p id="a-status">0</p>
+                <button id="a-plus">+1</button>
+            </div>
+            <div class="grp">
+                <label>Student</label>
+                <label id="pS">per ticket:0 hkd</label>
+                <button id="s-minus">-1</button>
+                <p id="s-status">0</p>
+                <button id="s-plus">+1</button>
+            </div>
+            <div class="grp">
+                <label>Wheelchair</label>
+                <label id="pW">per ticket:0 hkd</label>
+                <button id="w-minus">-1</button>
+                <p id="w-status">0</p>
+                <button id="w-plus">+1</button>
+            </div>
+        </div>
+        <div class="right-low">
+            <span id="sum-price">Total Price:xyz</span>
+            <form id="sub-form">
+                <button type="submit">Confirm</button>
+            </form>
+
+        </div>
+
+    </div>
+
 </body>

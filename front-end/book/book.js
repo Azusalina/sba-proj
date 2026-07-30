@@ -1,130 +1,175 @@
-const sel_op = document.getElementById('select_options')
-const ops = document.querySelectorAll('#select_options .options')
+const operaTitle = document.getElementById('operaTitle')
 
-let opera = null;
-ops.forEach(op => {
-    op.addEventListener('click', function (e) {
-        e.stopPropagation();
-        const parent = this.parentNode;
-        if (parent) {
-            parent.insertBefore(this, parent.firstElementChild);
-            parent.classList.add('clicked');
-        }
-        opera = this.innerText.trim();
-        console.log(opera);
-        send();
-    });
-});
+const budget = document.getElementById("budget")
+const std_low = document.getElementById("std_low")
+const std_high = document.getElementById("std_high")
+const premium = document.getElementById("premium")
 
-sel_op.addEventListener('mouseleave', function () {
-    this.classList.remove('clicked');
-});
+const lv = [budget, std_low, std_high, premium];
+//abbr notes:a=adult,s=student,w=wheelchair
+//p=price
 
-
-function updateTotal() {
-    const p1 = Number(a1p1.innerText) || 0;
-    const p2 = Number(a1p2.innerText) || 0;
-    const p3 = Number(a1p3.innerText) || 0;
-    const p4 = Number(a1p4.innerText) || 0;
-
-    const countA = Number(a3a.innerText) || 0;
-    const countB = Number(a3b.innerText) || 0;
-    const countC = Number(a3c.innerText) || 0;
-    const countD = Number(a3d.innerText) || 0;
-
-    let sum = (p1 * countA) + (p2 * countB) + (p3 * countC) + (p4 * countD);
-
-    sum_p.innerText = `Total: ${sum}`;
-}
+const change = document.querySelectorAll('#a-minus, #a-plus, #s-minus, #s-plus, #w-minus, #w-plus');
+const pA = document.getElementById("pA")
+const pS = document.getElementById("pS")
+const pW = document.getElementById("pW")
+const sum_price = document.getElementById("sum-price")
+const sub_form = document.getElementById("sub-form")
+const a = document.getElementById("a-status")
+const s = document.getElementById("s-status")
+const w = document.getElementById("w-status")
+const ticket = {
+    level: "",
+    adult: 0,
+    student: 0,
+    wheelchair: 0,
+};
+let btn_current = null;
+//important items:
+const operaName = localStorage.getItem('selected');
 
 
-// divide line 
-function add(a) {
-    let current = Number(a.innerText);
-    a.innerText = current + 1;
-    updateTotal();
-}
-function minus(a) {
-    let current = Number(a.innerText);
-    if (current == 0) {
-        return
-    }
-    a.innerText = current - 1;
-    updateTotal();
-}
-
-const a2a = document.getElementById("a2a")
-const a3a = document.getElementById("a3a")
-const a4a = document.getElementById("a4a")
-
-a2a.onclick = function () {
-    minus(a3a);
-}
-a4a.onclick = function () {
-    add(a3a);
-}
-
-const a2b = document.getElementById("a2b")
-const a3b = document.getElementById("a3b")
-const a4b = document.getElementById("a4b")
-
-a2b.onclick = function () {
-    minus(a3b);
-}
-a4b.onclick = function () {
-    add(a3b);
-}
-
-const a2c = document.getElementById("a2c")
-const a3c = document.getElementById("a3c")
-const a4c = document.getElementById("a4c")
-
-a2c.onclick = function () {
-    minus(a3c);
-}
-a4c.onclick = function () {
-    add(a3c);
-}
-
-const a2d = document.getElementById("a2d")
-const a3d = document.getElementById("a3d")
-const a4d = document.getElementById("a4d")
-
-a2d.onclick = function () {
-    minus(a3d);
-}
-a4d.onclick = function () {
-    add(a3d);
-}
 
 
-//divide line
-const a1p1 = document.getElementById("a1p1");
-const a1p2 = document.getElementById("a1p2");
-const a1p3 = document.getElementById("a1p3");
-const a1p4 = document.getElementById("a1p4");
-const sum_p = document.getElementById("sum_p");
 
-
-async function send() {
-    url = "http://127.0.0.1:3000/opera_name"
-    const data = { a: opera }
+//subfunctions
+async function getPrices(name) {
+    const url = "http://127.0.0.1:3000/operaName";
+    const data = { name: operaName };
     try {
         const resp = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data)
         });
-        if (resp.ok) {
+        if (!resp.ok) {
+            throw new Error(`HTTP error! status: ${resp.status}`);
+        } else {
             const result = await resp.json();
-            console.log(result);
-            a1p1.innerText = result.budget;
-            a1p2.innerText = result.std_low;
-            a1p3.innerText = result.std_high;
-            a1p4.innerText = result.premium;
-            updateTotal();
+            return result;
         }
-    } catch (error) {
-        console.log("err");
+    } catch (erorr) {
+        console.log(error)
     }
 }
+
+function updateSumPrices() {
+    const getPriceNum = (element) => {
+        const match = element.innerText.match(/\d+(\.\d+)?/);
+        return match ? Number(match[0]) : 0;
+    };
+
+    const total =
+        ticket.adult * getPriceNum(pA) +
+        ticket.student * getPriceNum(pS) +
+        ticket.wheelchair * getPriceNum(pW);
+
+    sum_price.textContent = `Total Price: HK$${total.toFixed(2)}`;
+}
+
+
+
+
+
+
+
+
+
+
+
+//initialize
+const data = await getPrices();
+if (operaName) {
+    operaTitle.innerText = `Opera selected:${operaName}`
+}
+//make lv btns mut.exlc
+lv.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        ticket.adult = 0;
+        ticket.student = 0;
+        ticket.wheelchair = 0;
+        a.innerText = 0;
+        s.innerText = 0;
+        w.innerText = 0;
+
+        if (btn_current != null) {
+            btn_current.classList.remove('active');
+        }
+        btn.classList.add('active')
+        btn_current = btn;
+        btn.blur();
+        ticket.level = btn.id;
+        updateSumPrices();
+    })
+});
+//ticketamount+- initialize
+change.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const [a, b] = btn.id.split("-");
+        const statusElem = document.getElementById(`${a}-status`);
+        let currentVal = Number(statusElem.innerText);
+        if (b === "plus") {
+            currentVal++;
+        }
+        if (b === "minus" && currentVal > 0) {
+            currentVal--;
+        }
+        statusElem.innerText = currentVal;
+        if (a === "a") {
+            ticket.adult = currentVal;
+        } else if (a === "s") {
+            ticket.student = currentVal;
+        } else if (a === "w") {
+            ticket.wheelchair = currentVal;
+        }
+        btn.blur();
+        updateSumPrices();
+    });
+});
+
+
+
+//prices work zone
+lv.forEach(async (btn) => {
+    btn.addEventListener('click', async (event) => {
+        event.preventDefault();
+        const level = btn.id;
+        const std_price = data.prices[level];
+        //abbr:m=multiplier,A=adult,S=student,W=wheelchair
+        const AdultObj = data.multipliers.find(m => m.name === 'adult')
+        const mA = AdultObj ? AdultObj.multiplier : 1
+        const StudentObj = data.multipliers.find(m => m.name === 'student')
+        const mS = StudentObj ? StudentObj.multiplier : 1
+        const WheelObj = data.multipliers.find(m => m.name === 'wheelchair')
+        const mW = WheelObj ? WheelObj.multiplier : 1
+        //for debug only:
+        console.log(mA)
+        console.log(mS)
+        console.log(mW)
+        const Aprice = std_price * mA;
+        const Sprice = std_price * mS;
+        const Wprice = std_price * mW;
+        pA.innerText = `per ticket:${Aprice}`;
+        pS.innerText = `per ticket:${Sprice}`;
+        pW.innerText = `per ticket:${Wprice}`;
+        updateSumPrices();
+    })
+})
+
+
+
+
+
+
+
+sub_form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!ticket.level) {
+        alert("Please select a seat class.");
+        return;
+    }
+    localStorage.setItem("ticket", JSON.stringify(ticket));
+    window.location.href = "../pay.html"
+})
