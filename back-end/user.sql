@@ -35,6 +35,42 @@ create table if not EXISTS user_infor (
     birth date, 
     verified BOOLEAN default FALSE
 );
+
+CREATE TABLE IF NOT EXISTS wallet (
+    uid INT PRIMARY KEY REFERENCES user_infor(uid) ON DELETE CASCADE,
+    balance NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
+    updated_at TIMESTAMP DEFAULT NOW(),
+    CONSTRAINT check_positive_balance CHECK (balance >= 0)
+);
+
+
+CREATE TABLE IF NOT EXISTS wallet_transaction (
+    tx_id BIGSERIAL PRIMARY KEY,
+    uid INT NOT NULL REFERENCES user_infor(uid) ON DELETE CASCADE,
+    order_id INT REFERENCES orders(order_id) ON DELETE SET NULL, 
+    tx_type VARCHAR(10) NOT NULL, 
+    amount NUMERIC(12, 2) NOT NULL,
+    running_balance NUMERIC(12, 2) NOT NULL, 
+    source_destination VARCHAR(50) NOT NULL, 
+    description VARCHAR(255),
+    created_at TIMESTAMP DEFAULT NOW(),
+    
+    CONSTRAINT check_positive_amount CHECK (amount > 0),
+    CONSTRAINT check_tx_type CHECK (tx_type IN ('CREDIT', 'DEBIT'))
+);
+
+    CREATE INDEX idx_wallet_tx_uid_date ON wallet_transaction(uid, created_at DESC);
+
+
+CREATE table if not exists gift_code(
+    code varchar(15)  primary key,--4+1+4+1+4=14, where 4 is 4 digit code and 1 is hyphen
+    current_status BOOLEAN default FALSE,
+    create_at timestamp default now(),
+    claim_by varchar(30) references user_infor(id),
+    claim_time timestamp,
+    amount decimal(10,2)
+)
+
 CREATE TABLE if not exists email_verification (
     token TEXT PRIMARY KEY,
     userid TEXT REFERENCES user_infor(id),
@@ -73,7 +109,7 @@ create table if not exists orders(
     book_time timestamp default current_timestamp,
     transac_time timestamp,
     transac_method varchar(50),
-    sum_fee int,
+    sum_fee decimal(10,2),
     transac_status varchar(20)
 );
 create table if not exists ticket(
@@ -85,9 +121,15 @@ create table if not exists ticket(
     seat_num int
 );
 
+
+
 --user-related
 select * from user_infor order by uid;  
 select * from email_verification;
+SELECT * FROM wallet;
+SELECT * from wallet_transaction order by uid
+
+select * from gift_code
 --opera-related&prices
 select * from opera ORDER BY opera_id;
 --raw
@@ -101,6 +143,7 @@ select * from ticket order by ticket_id;
 
 
 
+delete from gift_code
 
 -- alter table opera add column duration int default 150
 
@@ -172,3 +215,4 @@ select * from ticket order by ticket_id;
 
 -- (1, 15, 790, 590, 390, 190, 'eugene-onegin caseI'),
 -- (2, 15, 690, 595, 395, 195, 'eugene-onegin caseII');
+

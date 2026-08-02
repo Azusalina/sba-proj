@@ -27,7 +27,8 @@ const ticket = {
 let btn_current = null;
 //important items:
 const operaName = localStorage.getItem('selected');
-
+//
+const sub_btn = document.getElementById('sub-btn');
 
 
 
@@ -48,7 +49,7 @@ async function getPrices(name) {
             const result = await resp.json();
             return result;
         }
-    } catch (erorr) {
+    } catch (error) {
         console.log(error)
     }
 }
@@ -128,8 +129,14 @@ change.forEach(btn => {
         updateSumPrices();
     });
 });
+//redir
 
-
+sub_btn.onclick = function (e) {
+    e.preventDefault();
+    const sum_p=sum_price.textContent.match(/\d+/);
+    localStorage.setItem('price',sum_p)
+    window.location.href = "../pay/pay.html";
+}
 
 //prices work zone
 lv.forEach(async (btn) => {

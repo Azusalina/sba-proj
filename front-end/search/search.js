@@ -3,20 +3,17 @@ import * as sort from './sort.js'
 const price_indicator = document.getElementById("p_indicator");
 const slide_bar = document.getElementById("s_bar");
 const main = document.getElementById('main')
-const search = document.getElementById("main");
 const bar = document.getElementById("bar");
 //operas
 const content_container = document.querySelector('.content-display')
-const aida = document.getElementById('aida')
-const carmen = document.getElementById('carmen')
-const rigoletto = document.getElementById('rigoletto')
-const la_traviata = document.getElementById('la-traviata')
-const zauberflote = document.getElementById('zauberflote')
-
-
 //
-const AlloperaID = document.querySelectorAll('article h1')
-const DOMoperaList = [aida, carmen, rigoletto, la_traviata, zauberflote];
+const btnPrev = document.getElementById("btn-prev");
+const btnNext = document.getElementById("btn-next");
+const page_num = document.getElementById('page-num')
+let currentPage = 1;
+const itemsPerPage = 3;
+let currentDataset = [];
+
 //
 //filter
 const FilterStatus_name = document.getElementById('FilterStatus_name')
@@ -98,58 +95,85 @@ async function updateOperaData(name) {
     }
 }
 async function ReqOperaData() {
-    const promises = DOMoperaList.map(async (per) => {
-        const operaResult = await updateOperaData(per.id);
-        if (operaResult?.status) {
-            return {
-                id: per.id,
-                duration: operaResult.data.duration,
-                time: operaResult.data.show_time,
-                rate: Number(operaResult.data.rate),
-                price: Number(operaResult.data.price),
-            };
-        }
-        return null;
-    });
-    const result = await Promise.all(promises);
-    return result.filter(item => item !== null);
+    const operaResult = await updateOperaData();
+    if (operaResult?.status && Array.isArray(operaResult.data)) {
+        return operaResult.data.map(opera => ({
+            id: opera.opera_name.toLowerCase().replace(/\s+/g, '-'),
+            name: opera.opera_name,
+            duration: opera.duration,
+            time: opera.show_time,
+            rate: Number(opera.rate),
+            price: Number(opera.price)
+        }));
+    }
+    return [];
 }
-function renderOperaData(Final) {
-    Final.forEach(opera => {
-        const article = document.getElementById(opera.id);
-        article.querySelector(".price").textContent = `Budget Price: $${opera.price}`;
-        article.querySelector(".rate").textContent = `Rate: ${opera.rate}/10`;
-        const date = new Date(opera.time);
-        article.querySelector(".time").textContent = `Show Time: ${date.toLocaleString()}`;
-        article.querySelector(".duration").textContent = `Duration: ${opera.duration} min`;
-    });
-}
+function createOperaArticle(opera) {
+    const article = document.createElement('article');
+    article.id = opera.id;
 
+    const date = new Date(opera.time);
+    article.innerHTML = `
+        <img src="placeholder.png">
+        <div class="info_container">
+            <h1 data-id="${opera.id}">${opera.name}</h1>
+            <label class="price">Budget Price: $${opera.price}</label>
+            <label class="rate">Rate: ${opera.rate}/10</label>
+            <label class="time">Show Time: ${date.toLocaleString()}</label>
+            <label class="duration">Duration: ${opera.duration} min</label>
+        </div>
+    `;
+
+    const titleTag = article.querySelector('h1');
+    titleTag.style.cursor = 'pointer';
+    titleTag.addEventListener('click', () => {
+        localStorage.setItem('selected', opera.id);
+        window.location.href = redir_link;
+    });
+
+    return article;
+}
+function renderPage(dataList) {
+    currentDataset = dataList;
+    content_container.innerHTML = '';
+
+    const totalPages = Math.ceil(dataList.length / itemsPerPage) || 1;
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const pageItems = dataList.slice(startIndex, startIndex + itemsPerPage);
+
+    pageItems.forEach(opera => {
+        const articleNode = createOperaArticle(opera);
+        content_container.appendChild(articleNode);
+    });
+
+    // Toggle button state
+    btnPrev.disabled = currentPage === 1;
+    btnNext.disabled = currentPage >= totalPages;
+}
 function AccordingToSearchBar() {
     const content = bar.value.trim().toLowerCase();
-    DOMoperaList.forEach((element) => {
-        const target = element.id.toLowerCase()
-        let val;
-        if (target.includes(content)) {
-            val = -1;
-        } else {
-            val = levenshtein(content, element.id)
-        }
 
+    const sortedData = [...Final].sort((a, b) => {
+        const aName = a.id.toLowerCase();
+        const bName = b.id.toLowerCase();
 
-        element.dataset.data = val;
-    })
-    const updatedList = sort.quick_v2(DOMoperaList);
-    return updatedList;
-}
+        const distA = aName.includes(content) ? -1 : levenshtein(content, aName);
+        const distB = bName.includes(content) ? -1 : levenshtein(content, bName);
 
-function executeSearch() {
-    const updatedList = AccordingToSearchBar();
-    updatedList.forEach((element) => {
-        if (element) {
-            content_container.appendChild(element);
-        }
+        return distA - distB;
     });
+
+    return sortedData;
+}
+function executeSearch() {
+    const searchResults = AccordingToSearchBar();
+
+    currentPage = 1;
+    renderPage(searchResults);
+
     algo_display.innerText = 'Current Algo implied: Levenshtein distance';
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -162,31 +186,45 @@ if (hist) {
     bar.value = a;
     executeSearch();
 }
-//preset FilterStatus -> false
+//preset All FilterStatus -> false
 const filterlist = document.querySelectorAll('input[name="sort"]');
 filterlist.forEach((status) => {
     if (status) status.checked = false;
 });
 
 slide_bar.addEventListener("input", () => {
-    price_indicator.innerText = `price:${s_bar.value}`;
+    price_indicator.innerText = `price:${slide_bar.value}`;
 });
 const redir_link = 'http://127.0.0.1:5500/front-end/book/book.html'
-AlloperaID.forEach((tag) => {
-    tag.style.cursor = 'pointer';
-    tag.addEventListener('click', () => {
-        const operaName = tag.dataset.id;
-        console.log(operaName)
-        localStorage.setItem('selected', operaName);
-        window.location.href = redir_link;
-    })
+window.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        btnPrev.click();
+    } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        btnNext.click();
+    }
 });
 
-renderOperaData(Final);
-//
+btnPrev.addEventListener('click', () => {
+    if (currentPage > 1) {
+        currentPage--;
+        renderPage(currentDataset);
+        page_num.innerText = `Current Page:${currentPage}`;
+    }
+});
+btnNext.addEventListener('click', () => {
+    const totalPages = Math.ceil(currentDataset.length / itemsPerPage);
+    if (currentPage < totalPages) {
+        currentPage++;
+        renderPage(currentDataset);
+        page_num.innerText = `Current Page:${currentPage}`;
+    }
+
+});
+renderPage(Final);
 ////////////////////////////////////////////////////////////////////////////////////////////////
 ////search-bar related working zone:
-
 main.addEventListener('submit', (event) => {
     event.preventDefault();
     executeSearch();
@@ -202,27 +240,22 @@ FilterStatusList.forEach((status) => {
             const [prefix, section] = status.id.split('_');
             if (section === 'name') {
                 sort.merge_name(Final);
-                algo_display.innerText = 'Current Algorithm implemented:merge sort'
+                algo_display.innerText = 'Current Algorithm implemented: merge sort';
             }
             if (section === 'time') {
                 sort.insertion_time(Final);
-                algo_display.innerText = 'Current Algorithm implemented:insertion sort'
+                algo_display.innerText = 'Current Algorithm implemented: insertion sort';
             }
             if (section === 'price') {
                 sort.bubble_ascending_price(Final);
-                algo_display.innerText = 'Current Algorithm implemented:bubble sort'
+                algo_display.innerText = 'Current Algorithm implemented: bubble sort';
             }
             if (section === 'rate') {
                 sort.bubble_ascending_rate(Final);
-                algo_display.innerText = 'Current Algorithm implemented:bubble sort'
+                algo_display.innerText = 'Current Algorithm implemented: bubble sort';
             }
-            Final.forEach((item) => {
-                const domElement = document.getElementById(item.id);
-                if (domElement) {
-                    content_container.appendChild(domElement);
-                }
-            });
-            renderOperaData(Final);
+            currentPage = 1;
+            renderPage(Final);
         }
     })
 })
