@@ -1,7 +1,7 @@
 ### Activity Log
 
 * **13th May 2026**
-  * Distributed the initial questions.
+  * Questions were distributed.
 * **16th May 2026**
   * Added the Sign-In page.
 * **17th May 2026**
@@ -53,7 +53,7 @@
 * **24th July 2026**
   * fixed problem of the link included inside the email for redirection purposes:
     * port of the link should be `3000`(express module port) instead of `5500`(live server port)
-  * **added vast amount of `console.log()` in serv.js in order to record log in the terminal**
+  * **added vast amount of `console.log()` in serv.js in order to record log in the terminal for debug purposes**
     * *receive verification email now is completely functional*
     * test account:
       * id: `a`
@@ -105,3 +105,53 @@
     * name:alpha
     * pwd:Aa714714!
     
+
+* 1st Aug 2026
+  * add more content data in sql in order to fir the basic requirement of the project
+    ```sql 
+    INSERT INTO opera (opera_id, opera_name, show_time, rate, duration) VALUES
+    (6,  'The Marriage of Figaro',   '2009-07-01 19:00:00', 9.2, 180),
+    (7,  'Don Giovanni',            '2009-07-03 19:30:00', 8.9, 165),
+    (8,  'The Barber of Seville',   '2009-07-05 18:00:00', 8.7, 160),
+    (9,  'La Boheme',               '2009-07-08 20:00:00', 9.5, 140),
+    (10, 'Tosca',                   '2009-07-10 19:30:00', 9.0, 130),
+    (11, 'Madama Butterfly',        '2009-07-12 19:00:00', 9.1, 155),
+    (12, 'Tristan und Isolde',      '2009-07-15 17:30:00', 8.8, 230),
+    (13, 'The Ring of the Nibelung','2009-07-18 16:00:00', 9.6, 300),
+    (14, 'Die Fledermaus',          '2009-07-20 19:30:00', 8.4, 145),
+    (15, 'Eugene Onegin',           '2009-07-22 19:00:00', 8.6, 170);
+
+
+    INSERT INTO prices (price_id, opera_id, premium, std_high, std_low, budget, note) VALUES
+    (1, 6, 700, 500, 300, 100, 'the-marriage-of-figaro caseI'),
+    (2, 6, 600, 505, 305, 105, 'the-marriage-of-figaro caseII'),
+
+    (1, 7, 710, 510, 310, 110, 'don-giovanni caseI'),
+    (2, 7, 610, 515, 315, 115, 'don-giovanni caseII'),
+
+    (1, 8, 720, 520, 320, 120, 'the-barber-of-seville caseI'),
+    (2, 8, 620, 525, 325, 125, 'the-barber-of-seville caseII'),
+
+    (1, 9, 730, 530, 330, 130, 'la-boheme caseI'),
+    (2, 9, 630, 535, 335, 135, 'la-boheme caseII'),
+
+    (1, 10, 740, 540, 340, 140, 'tosca caseI'),
+    (2, 10, 640, 545, 345, 145, 'tosca caseII'),
+
+    (1, 11, 750, 550, 350, 150, 'madama-butterfly caseI'),
+    (2, 11, 650, 555, 355, 155, 'madama-butterfly caseII'),
+
+    (1, 12, 760, 560, 360, 160, 'tristan-und-isolde caseI'),
+    (2, 12, 660, 565, 365, 165, 'tristan-und-isolde caseII'),
+
+    (1, 13, 770, 570, 370, 170, 'the-ring-of-the-nibelung caseI'),
+    (2, 13, 670, 575, 375, 175, 'the-ring-of-the-nibelung caseII'),
+
+    (1, 14, 780, 580, 380, 180, 'die-fledermaus caseI'),
+    (2, 14, 680, 585, 385, 185, 'die-fledermaus caseII'),
+
+    (1, 15, 790, 590, 390, 190, 'eugene-onegin caseI'),
+    (2, 15, 690, 595, 395, 195, 'eugene-onegin caseII');
+    ```
+
+    * ### it is not longer to mannually add opera content `<article>` element in search.html when new opera is added into the sql table, as the automated solution is performed by `serv.js` 
