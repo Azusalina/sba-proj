@@ -22,11 +22,8 @@ const pool = new Pool({
     port: 5432,
 });
 
-const ver_email = new MailerSend({
-    apiKey: process.env.MAILERSEND_API_KEY,
-});
+const ver_email = new MailerSend({ apiKey: process.env.MAILERSEND_API_KEY, });
 const NoreplySentFrom = new Sender("noreply@test-z0vklo6xwxpl7qrx.mlsender.net", "noreply verification");
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //subfunctions
@@ -52,14 +49,37 @@ async function send_ver_mail(target, token, url, userid) {
         throw err;
     }
 }
-
+async function send_confirmation_email(targetEmail, orderId, opera, level, sum_price, tickets) {
+    const recipient = [new Recipient(targetEmail, "Opera Customer")];
+    const ticketRows = tickets.map(t => `<li><strong>${t.ticketId}</strong> — Level: <em>${t.level}</em>, Class: <em>${t.seatClass2}</em></li>`).join('');
+    const htmlContent = `
+        <h2>Booking Confirmation #${orderId}</h2>
+        <p>Ticket Booking order record</p>
+        <p><strong>Opera:</strong> ${opera}</p>
+        <p><strong>Seat Level:</strong> ${level}</p>
+        <p><strong>Total Paid:</strong> HK$${sum_price}</p>
+        <h3>Your Ticket IDs:</h3>
+        <ul>${ticketRows}</ul>
+    `;
+    const emailParams = new EmailParams()
+        .setFrom(NoreplySentFrom)
+        .setTo(recipient)
+        .setSubject(`Order Confirmation #${orderId} - ${opera}`)
+        .setHtml(htmlContent);
+    try {
+        await ver_email.email.send(emailParams);
+        console.log('Confirmation email sent successfully.');
+    } catch (err) {
+        console.error('Failed to send confirmation email:', err);
+        throw err;
+    }
+}
 //
 
 function TimeToSeconds(timestr) {
     const [hr, min, sec] = timestr.split(':').map(Number);
     return hr * 3600 + min * 60 + sec;
 }
-
 
 function getPricePlan(time) {
     const mid = '12:00:00';
@@ -72,14 +92,38 @@ function getPricePlan(time) {
         return 2;
     }
 }
+//
+function sub_ID_time() {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const hr = String(now.getHours()).padStart(2, '0');
+    const min = String(now.getMinutes()).padStart(2, '0');
+    const sec = String(now.getSeconds()).padStart(2, '0');
+    const result = `${yyyy}${mm}${dd}-${hr}${min}${sec}`;
+    return result;
+}
+
+function generate_TransacID() {
+    const prefix = 'tx-';
+    const time = `${sub_ID_time()}-`;
+    const ID = Math.random().toString(36).substring(2, 8).toUpperCase();
+    return `${prefix}${time}${ID}`
+}
+
+function generate_ticketID(operaName) {
+    const prefix = `${operaName}-`
+    const time = `${sub_ID_time()}-`;
+    const ID1 = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const ID2 = Math.random().toString(36).substring(2, 8).toUpperCase();
+    if (ID1 == ID2) { return generate_ticketID(operaName) };
+    return `${prefix}${time}${ID1}${ID2}`
+}
 ////////////////////////////////////////////////////////////////////////////
 
-
-
 //auth work zone
-
-
-app.post('/api/signup', async (req, res) => {
+app.post('/auth/signup', async (req, res) => {
     const userid = req.body.username;
     const email = req.body.email;
     const pwd = req.body.pwd;
@@ -149,7 +193,7 @@ app.get("/auth/:token", async (req, res) => {
     res.redirect("http://127.0.0.1:5500/front-end/auth/confirm.html");
     console.log('redirected!')
 });
-app.post('/api/login', async (req, res) => {
+app.post('/auth/login', async (req, res) => {
     const userid = req.body.user_name;
     const pwd = req.body.passwd;
     try {
@@ -183,9 +227,6 @@ app.post('/api/login', async (req, res) => {
 
 });
 
-
-
-
 //settings fetch data work zone
 
 app.post('/settingGetData', async (req, res) => {
@@ -203,7 +244,6 @@ app.post('/settingGetData', async (req, res) => {
         res.json({ msg: 'unknown or fatal error' })
     }
 })
-
 
 //redeem
 app.post('/redeem', async (req, res) => {
@@ -241,14 +281,7 @@ app.post('/redeem', async (req, res) => {
     }
 })
 
-
-
-
-
-
-
 //search work zone
-
 app.post('/updateOperaData', async (req, res) => {
     const op_name = req.body?.name;
     const planID = getPricePlan();
@@ -291,13 +324,91 @@ app.post('/operaName', async (req, res) => {
     }
 })
 
+//payment zone 
+app.post('/PaymentOrder', async (req, res) => {
+    const { user, opera, level, sum_price, adult, student, wheelchair } = req.body;
+    const payAmount = parseFloat(sum_price);
+    try {
+        await pool.query('BEGIN');
+        const userRes = await pool.query('SELECT u.uid, w.balance FROM user_infor u JOIN wallet w ON u.uid = w.uid WHERE u.id = $1', [user]);
+        if (userRes.rows.length === 0) throw new Error('User or wallet not found');
 
+        const { uid, balance } = userRes.rows[0];
+        const currentBalance = parseFloat(balance);
+        //check balance
+        if (currentBalance < payAmount) {
+            await pool.query('ROLLBACK');
+            console.log('insufficient balance')
+            return res.json({ msg: 'insufficientBalance' });
+        }
+        //record order
+        const orderRes = await pool.query("INSERT INTO orders (uid, book_time, transac_time, transac_method, sum_fee, transac_status) VALUES ($1, NOW(), NOW(), 'WALLET_BALANCE', $2, 'COMPLETED') RETURNING order_id", [uid, payAmount]);
+        const newOrderId = orderRes.rows[0].order_id;
+        console.log('order recorded')
+        //update wallet
+        const walletRes = await pool.query('UPDATE wallet SET balance = balance - $1, updated_at = NOW() WHERE uid = $2 RETURNING balance', [payAmount, uid]);
+        const newWalletBal = parseFloat(walletRes.rows[0].balance);
+        console.log('wallet balance updated')
+        //record transaction
+        const txId = generate_TransacID();
+        await pool.query("INSERT INTO wallet_transaction (tx_id, uid, order_id, tx_type, amount, running_balance, source_destination, description) VALUES ($1, $2, $3, 'DEBIT', $4, $5, 'OPERA_TICKET_PURCHASE', $6)", [txId, uid, newOrderId, payAmount, newWalletBal, `Purchased ticket for ${opera}`]);
+        console.log('transaction recorded')
+        //get operaName
+        const operaRes = await pool.query('SELECT opera_id FROM opera WHERE opera_name = $1', [opera]);
+        if (operaRes.rows.length === 0) throw new Error('Opera not found');
+        const operaId = operaRes.rows[0].opera_id;
+        console.log(`opera:${operaId}`)
+        //generate ticketId
+        const generatedTicketIDs = [];
+        //application of push/pop of *queue*?
+        const insertTickets = async (seatClass2, quantity) => {
+            for (let i = 0; i < quantity; i++) {
+                const ticketId = generate_ticketID(opera);
 
+                generatedTicketIDs.push({ ticketId, level, seatClass2 });
 
+                await pool.query('INSERT INTO ticket (ticket_id, opera_id, order_id, seat_class, seat_class2, seat_num) VALUES ($1, $2, $3, $4, $5, 1)', [ticketId, operaId, newOrderId, level, seatClass2]);
+            }
+        };
+        if (adult > 0) await insertTickets('ADULT', adult);
+        if (student > 0) await insertTickets('STUDENT', student);
+        if (wheelchair > 0) await insertTickets('WHEELCHAIR', wheelchair);
+        console.log('ticketIDs generated')
+        //return back to front-end
+        await pool.query('COMMIT');
+        console.log('submitted')
+        console.log('all successfully executed')
+        return res.json({ msg: 'success', orderId: newOrderId, tickets: generatedTicketIDs });
+    } catch (error) {
+        await pool.query('ROLLBACK');
+        console.error('Transaction Error:', error);
+        return res.json({ msg: 'error', details: 'service in maintainance' });
+    }
+});
 
+//OrderConfirm zone
+app.post('/SendConfirmationEmail', async (req, res) => {
+    const { user, orderId, opera, level, sum_price, tickets } = req.body;
+    console.log("Received email request for user:", user);
+    try {
+        const { rows } = await pool.query('select email from user_infor where id=$1', [user]);
+        console.log("Database query result rows:", rows);
+        if (rows.length > 0 && rows[0].email) {
+            const email = rows[0].email;
+            console.log("Found email:", email);
+            await send_confirmation_email(email, orderId, opera, level, sum_price, tickets);
+            console.log('Confirmation email sent successfully via button click.');
+            return res.json({ msg: 'success' });
+        } else {
+            console.log('Email not found for user:', user);
+            return res.json({ msg: 'email_not_found' });
+        }
+    } catch (error) {
+        console.error('Send Email Error (Detailed):', error);
+        return res.json({ msg: 'error' });
+    }
+});
 //toolkit zone
-
-
 app.post('/toolkit/gen_redeem_code', async (req, res) => {
     const code = req.body.code;
     const value = req.body.value;
@@ -327,22 +438,7 @@ app.post('/toolkit/gen_redeem_code', async (req, res) => {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+/////////////////////////////////////////////////////////////////////////////////////
 app.listen(3000, () => {
     console.log(":3000,Service online,Please start.");
 });

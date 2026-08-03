@@ -28,7 +28,7 @@ const to_reset_btn = document.getElementById("to_reset_redirection")
 
 //sub-funcs
 async function send() {
-    const url = 'http://127.0.0.1:3000/api/login';
+    const url = 'http://127.0.0.1:3000/auth/login';
     const data = { user_name: username, passwd: pwd };
     try {
 
@@ -46,7 +46,7 @@ async function send() {
             localStorage.setItem('user', username);
             window.location.href = '../main/main.html';
         } else {
-            signin_status.innerText = result.msg;
+            signin_status.innerText ='pwd incorrect';
         }
     } catch (error) {
         signin_status.innerText = "Service in Maintenance,try again later";
@@ -112,7 +112,7 @@ signup_btn.onclick = function (event) {
         signup();
     }
     async function signup() {
-        const url = 'http://127.0.0.1:3000/api/signup'
+        const url = 'http://127.0.0.1:3000/auth/signup'
         const data = { username: username, email: email, pwd: pwd };
         try {
             const resp = await fetch(url, {

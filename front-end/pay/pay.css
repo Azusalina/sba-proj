@@ -1,8 +1,62 @@
-html,body{
-    margin:0;
-    padding:0;
+html,
+body {
+    margin: 0;
+    padding: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-self:center;
+    justify-self: center;
+}
+
+.main {
+    display: flex;
+    flex-direction: column;
+    gap: 3%;
+}
+
+.container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 2%;
+    margin-top: 1vw;
+}
+
+.container * {
+    font-size: large;
+    white-space: nowrap;
+
+}
+
+.container label {
+    min-width: 50%;
+}
+
+.container p {
+    text-align: end;
+    width: 50%
+}
+
+
+
+
+.btn {
+    display: flex;
+    flex-direction: row;
+    gap: 30px;
+}
+
+.btn button {
+    cursor:pointer;
+    height: 3vh;
+    font-size: 20px;
+    background: none;
+    border-radius: 3px;
+    border: 1px solid black;
+}
+
+#return:hover,#continue:hover{
+    transition: 0.1s ease-in-out;
+    background: cornflowerblue;
 }

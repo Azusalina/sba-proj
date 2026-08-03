@@ -29,8 +29,18 @@ let btn_current = null;
 const operaName = localStorage.getItem('selected');
 //
 const sub_btn = document.getElementById('sub-btn');
+//
+let authStatus = false;
+let authName = null;
 
-
+try {
+    authStatus = localStorage.getItem('isLoggedIn') === 'true';
+    authName = localStorage.getItem('user');
+} catch (error) {
+    console.error("LocalStorage is disabled or inaccessible:", error);
+    authStatus = false;
+    authName = null;
+}
 
 
 //subfunctions
@@ -70,13 +80,27 @@ function updateSumPrices() {
 
 
 
-
-
-
-
-
-
-
+function StoreData() {
+    const opera = operaTitle.innerText.split(':')[1];
+    const level = btn_current.id;
+    //abbr: A=amount,a=adult,s=student,w=wheelchair
+    const adult = Number(a.innerText)
+    const student = Number(s.innerText)
+    const wheelchair = Number(w.innerText)
+    const details = {
+        opera: opera,
+        level: level,
+        user: authName,
+        price_adult: Number(pA.innerText.match(/\d+/)),
+        adult: adult,
+        price_student: Number(pS.innerText.match(/\d+/)),
+        student: student,
+        price_wheelchair: Number(pW.innerText.match(/\d+/)),
+        wheelchair: wheelchair,
+        sum_price: Number(sum_price.innerText.match(/\d+/))
+    }
+    localStorage.setItem('details', JSON.stringify(details))
+}
 
 //initialize
 const data = await getPrices();
@@ -131,12 +155,7 @@ change.forEach(btn => {
 });
 //redir
 
-sub_btn.onclick = function (e) {
-    e.preventDefault();
-    const sum_p=sum_price.textContent.match(/\d+/);
-    localStorage.setItem('price',sum_p)
-    window.location.href = "../pay/pay.html";
-}
+
 
 //prices work zone
 lv.forEach(async (btn) => {
@@ -177,6 +196,14 @@ sub_form.addEventListener('submit', (e) => {
         alert("Please select a seat class.");
         return;
     }
+
+    if (authStatus == false) {
+        alert('you havent sign in yet, redirecting to auth page:')
+        window.location.href = '../auth/auth.html'
+        return;
+    }
     localStorage.setItem("ticket", JSON.stringify(ticket));
-    window.location.href = "../pay.html"
+    StoreData();
+    window.location.href = "../pay/pay.html"
 })
+

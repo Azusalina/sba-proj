@@ -106,24 +106,37 @@
     * pwd:Aa714714!
     
 
-* 1st Aug 2026
+* ***1st Aug 2026***
   * add more content data in sql in order to fir the basic requirement of the project
 
 
 * ### ***2nd Aug 2026***
 
-* ### `search.html`:
+  * ### `search.html`:
 
-*  Eliminated manual updates to the element for opera content; `serv.js` now dynamically fetches and renders this data directly from the SQL database.
-*  Successfully implemented full functionality for the `Previous Page` and `Next Page` navigational elements.
-*  Integrated keyboard listener events, enabling users to ***transition between pages*** using the ***left and right arrow keys***.
+    *  Eliminated manual updates to the element for opera content; `serv.js` now dynamically fetches and renders this data directly from the SQL database.
+    *  Successfully implemented full functionality for the `Previous Page` and `Next Page` navigational elements.
+    *  Integrated keyboard listener events, enabling users to ***transition between pages*** using the ***left and right arrow keys***.
 
-* ### `settings.html` & `pay.html`:
+  * ### `settings.html` & `pay.html`:
 
-*  Provisions made for the upcoming payment gateway by architecture mapping and deploying `wallet` and `wallet_transaction` tables.
-*  Refactored the registration pipeline to ***automatically instantiate*** a corresponding row in the wallet table upon user sign-up.
-*  Designed and deployed a `gift-code tracking table` to manage unique keys, usage statuses, and balance top-ups.
-*  Programmed client-side logic to handle `code` redemption and adjust database account balances.
-*  Achieved 50% feature completion for the `settings.html` interface.
-*  Bundled a helper `utility toolkit package` into the workspace to expedite object generation and runtime debugging.
-  * `dev's page` pwd: **aaaa**
+    *  Provisions made for the upcoming payment gateway by architecture mapping and deploying `wallet` and `wallet_transaction` tables.
+    *  Refactored the registration pipeline to ***automatically instantiate*** a corresponding row in the wallet table upon user sign-up.
+    *  Designed and deployed a `gift-code tracking table` to manage unique keys, usage statuses, and balance top-ups.
+    *  Programmed client-side logic to handle `code` redemption and adjust database account balances.
+    *  Achieved 50% feature completion for the `settings.html` interface.
+    *  Bundled a helper `utility toolkit package` into the workspace to expedite object generation and runtime debugging.
+      * `dev's page` pwd: **aaaa**
+
+* ***3rd Aug 2026***:
+  * **Auth**: Mandatory user signup and verification enforced prior to order placement; payments require database-backed `wallet` balance linked via foreign key `uid` (`user_infor`).
+  * **Frontend (`pay.html`)**: Order review interface displaying selected opera details, seat classes, time-based pricing (`getPricePlan()`), and total sum price (`sum_fee`).
+  * **Backend Payment & Ticketing Pipeline**:
+  * **Atomicity**: Initiated database transaction via `BEGIN`.
+  * **Concurrency Lock**: Executed row-level lock via `SELECT balance FROM wallet WHERE uid = $1 FOR UPDATE`.
+  * **Balance Validation**: Evaluated `wallet.balance < sum_fee`; if insufficient, executed `ROLLBACK` and aborted.
+  * **Wallet Deduction**: Executed `UPDATE wallet SET balance = balance - sum_fee WHERE uid = $1`.
+  * **Ledger Logging**: Inserted audit record into `wallet_transaction` (`tx_type = 'DEBIT'`, deduction amount, running balance).
+  * **Order Generation**: Inserted record into `orders` (`uid`, `sum_fee`, `transac_status`) to generate `order_id`.
+  * **Ticket Generation**: Inserted records into `ticket` linked to `order_id` to generate unique `ticket_id` identifiers.
+  * **Finalization**: Executed `COMMIT`.

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+
+<head>
+    <link rel="stylesheet" href="OrderConfirm.css">
+    <script src="OrderConfirm.js" defer></script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Confirm your Order</h1>
+        <p class="subtitle">Your order has been successfully processed.</p>
+
+        <div class="container">
+            <h3>Order Summary</h3>
+            <div class="info"><span><strong>Order ID:</strong></span> <span id="display-order-id">Loading...</span>
+            </div>
+            <div class="info"><span><strong>User:</strong></span> <span id="display-user">Loading...</span></div>
+            <div class="info"><span><strong>Opera:</strong></span> <span id="display-opera">Loading...</span></div>
+            <div class="info"><span><strong>Seat Level:</strong></span> <span id="display-level">Loading...</span>
+            </div>
+        </div>
+
+        <div class="container">
+            <h3>Ticket Breakdown & Total</h3>
+            <div class="info">
+                <span>Adult Tickets:</span>
+                <span id="display-adult">0</span>
+            </div>
+            <div class="info">
+                <span>Student Tickets:</span>
+                <span id="display-student">0</span>
+            </div>
+            <div class="info">
+                <span>Wheelchair Tickets:</span>
+                <span id="display-wheelchair">0</span>
+            </div>
+            <br>
+            <div class="info" style="font-size: 18px; margin-top: 10px; color: #2c3e50;">
+                <span><strong>TotalPaid:</strong></span><strong id="display-total">HK$0.00</strong>
+            </div>
+        </div>
+
+        <div class="container">
+            <h3>Generated Ticket IDs & Classes</h3>
+            <ul id="ticket-list" class="ticket-list">
+            </ul>
+        </div>
+
+        <div id="email-status">Do you want us to send a copy to your email?</div>
+
+        <div class="btn-container">
+            <button type="button" class="btn" id="SendEmail">Send me a copy</button>
+            <a href="../main/main.html" class="btn">Return to Home</a>
+        </div>
+    </div>
+
+
+</body>
+
+</html>

@@ -1,4 +1,3 @@
-
 const search = document.getElementById("search_content");
 const search_btn = document.getElementById("s_Btn")
 
@@ -10,6 +9,7 @@ const dev = document.getElementById('dev')
 //sub-func
 function logout() {
     localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('user');
     window.location.href = 'main.html';
 }
 
@@ -30,9 +30,10 @@ function dev_pwd(event) {
 
 document.addEventListener('DOMContentLoaded', () => {
     const authBtn = document.getElementById('authBtn');
-
     const isLoggedIn = localStorage.getItem('isLoggedIn');
-
+    if (isLoggedIn === null) {
+        localStorage.setItem('isLoggedIn', 'false');
+    }
     if (isLoggedIn === 'true') {
         authBtn.innerText = 'Settings';
         authBtn.href = '../settings/settings.html';
