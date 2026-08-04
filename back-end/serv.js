@@ -6,7 +6,6 @@ import cors from 'cors';
 import crypto from 'crypto';
 import 'dotenv/config';
 import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
-import { time } from 'console';
 
 export const app = express();
 app.use(cors());
@@ -14,32 +13,23 @@ app.use(express.json());
 
 //initialize
 
-// const pool = new Pool({
-//     user: 'a_sql',
-//     host: 'localhost',
-//     database: 'my_dev_db',
-//     password: 'a',
-//     port: 5432,
-// });
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://127.0.0.1:5500/front-end';
+const BACKEND_URL = process.env.BACKEND_URL || 'http://127.0.0.1:3000';
 console.log(`email sender:${process.env.MAILERSEND_API_KEY}`)
 console.log(`database:${process.env.DATABASE_URL}`);
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: {
-        rejectUnauthorized: false,
-    },
+    ssl: process.env.DATABASE_URL?.includes('localhost') ? false : { rejectUnauthorized: false },
     connectionTimeoutMillis: 5000,
 });
 
-try {
-    const client = await pool.connect();
-    console.log("✅ Connected");
-    client.release();
-} catch (err) {
-    console.error(err);
-}
-
+pool.connect()
+    .then(client => {
+        console.log("Connected to Database");
+        client.release();
+    })
+    .catch(err => console.error("Database Connection Error:", err.message));
 
 const ver_email = new MailerSend({ apiKey: process.env.MAILERSEND_API_KEY, });
 const NoreplySentFrom = new Sender("noreply@test-z0vklo6xwxpl7qrx.mlsender.net", "noreply verification");
@@ -53,7 +43,7 @@ function random_generate_web() {
     const result = crypto.randomUUID().replace(/-/g, '');
     return {
         token: result,
-        url: `http://127.0.0.1:3000/auth/${result}`
+        url: `${BACKEND_URL}/auth/${result}`
     };
 }
 async function send_ver_mail(target, token, url, userid) {
@@ -209,7 +199,7 @@ app.get("/auth/:token", async (req, res) => {
     await pool.query(`INSERT INTO wallet(uid, balance) SELECT uid, 0.00 FROM user_infor WHERE id = $1 ON CONFLICT (uid) DO NOTHING`, [usernameId]);
     console.log('wallet successfully generated')
     console.log("before redirect");
-    res.redirect("http://127.0.0.1:5500/front-end/auth/confirm.html");
+    res.redirect(`${FRONTEND_URL}/auth/confirm.html`);
     console.log('redirected!')
 });
 app.post('/auth/login', async (req, res) => {
@@ -452,8 +442,12 @@ app.post('/toolkit/gen_redeem_code', async (req, res) => {
 
 
 /////////////////////////////////////////////////////////////////////////////////////
-const PORT = process.env.PORT || 3000;
+if (!process.env.VERCEL) {
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+        console.log(`Local service online on http://localhost:${PORT}`);
+    });
+}
 
-app.listen(PORT, () => {
-    console.log(`Service online on port ${PORT}`);
-});
+//for online vercel needs:
+export default app;

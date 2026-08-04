@@ -1,3 +1,6 @@
+const isLocal = window.location.hostname === '127.0.0.1'
+const API_BASE_URL = isLocal ? 'http://127.0.0.1:3000' : 'https://backend-sba.vercel.app';
+
 const operaTitle = document.getElementById('operaTitle')
 
 const budget = document.getElementById("budget")
@@ -45,7 +48,7 @@ try {
 
 //subfunctions
 async function getPrices(name) {
-    const url = "http://127.0.0.1:3000/operaName";
+    const url = `${API_BASE_URL}/operaName`;
     const data = { name: operaName };
     try {
         const resp = await fetch(url, {

@@ -1,3 +1,5 @@
+const isLocal = window.location.hostname === '127.0.0.1'
+const API_BASE_URL = isLocal ? 'http://127.0.0.1:3000' : 'https://backend-sba.vercel.app';
 
 const gen_gift_card = document.getElementById('gen-gift-card')
 const gift_amount = document.getElementById('gift-amount')
@@ -12,8 +14,8 @@ function generateCode() {
 
 
 //main
-window.addEventListener('DOMContentLoaded',()=>{
-    gift_amount.value=""
+window.addEventListener('DOMContentLoaded', () => {
+    gift_amount.value = ""
     gift_amount.blur();
 })
 
@@ -26,19 +28,19 @@ gen_gift_card.addEventListener('click', async (event) => {
     }
     const value = Number(gift_amount.value)
     const code = generateCode();
-    const url = 'http://127.0.0.1:3000/toolkit/gen_redeem_code'
+    const url = `${API_BASE_URL}/toolkit/gen_redeem_code`
     const data = { code: code, value: value }
     try {
         const resp = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body:JSON.stringify(data)
+            body: JSON.stringify(data)
         });
-        if(resp.ok){
-            const result=await resp.json();
-            if(result.msg==='success'){
+        if (resp.ok) {
+            const result = await resp.json();
+            if (result.msg === 'success') {
                 window.prompt(`Gift card with value $${value}. Use Ctrl+C or Cmd+C to copy:`, code);
-            }else{
+            } else {
                 alert('unknown error')
             }
         }

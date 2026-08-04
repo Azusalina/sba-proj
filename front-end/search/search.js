@@ -1,3 +1,7 @@
+const isLocal = window.location.hostname === '127.0.0.1'
+const API_BASE_URL = isLocal ? 'http://127.0.0.1:3000' : 'https://backend-sba.vercel.app';
+const FRONTEND_URL=isLocal?'http://127.0.0.1:5500':'https://frontend-sba.vercel.app'
+
 import * as sort from './sort.js'
 
 const price_indicator = document.getElementById("p_indicator");
@@ -71,7 +75,7 @@ function levenshtein(searchInput, data) {
     return result;
 }
 async function updateOperaData(name) {
-    const url = 'http://127.0.0.1:3000/updateOperaData';
+    const url = `${API_BASE_URL}/updateOperaData`;
     const data = { name: name };
     try {
         const resp = await fetch(url, {
@@ -195,7 +199,7 @@ filterlist.forEach((status) => {
 slide_bar.addEventListener("input", () => {
     price_indicator.innerText = `price:${slide_bar.value}`;
 });
-const redir_link = 'http://127.0.0.1:5500/front-end/book/book.html'
+const redir_link = `${FRONTEND_URL}/front-end/book/book.html`
 window.addEventListener('keydown', (event) => {
     if (event.key === 'ArrowLeft') {
         event.preventDefault();

@@ -1,3 +1,7 @@
+const isLocal = window.location.hostname === '127.0.0.1'
+const API_BASE_URL = isLocal ? 'http://127.0.0.1:3000' : 'https://backend-sba.vercel.app';
+
+
 const uid = document.getElementById('uid')
 const id = document.getElementById('id')
 const create_at = document.getElementById('create_at')
@@ -14,7 +18,7 @@ const redeem_status = document.getElementById('redeem-status')
 
 
 async function GetData(user) {
-    const url = 'http://127.0.0.1:3000/settingGetData';
+    const url = `${API_BASE_URL}/settingGetData`;
     const data = { username: user };
     try {
         const resp = await fetch(url, {
@@ -42,9 +46,9 @@ async function updateData() {
 }
 let isRedeeming = false;
 async function redeem(user, code) {
-    if (isRedeeming) return; 
+    if (isRedeeming) return;
     if (!code) return;
-    const url = 'http://127.0.0.1:3000/redeem'
+    const url = `${API_BASE_URL}/redeem`
     const data = { user: user, code: code }
     try {
         const resp = await fetch(url, {
@@ -57,7 +61,7 @@ async function redeem(user, code) {
             if (result.msg === 'redeemed') {
                 redeem_status.innerText = 'Successfully redeemed!';
                 redeem_status.style.color = "green";
-                wallet.innerText = result.balance; 
+                wallet.innerText = result.balance;
                 gift_code.value = "";
             } else if (result.msg === 'invalid') {
                 redeem_status.innerText = 'Code is invalid.';
@@ -69,7 +73,7 @@ async function redeem(user, code) {
         }
     } catch (error) {
         console.log(error)
-    }finally{
+    } finally {
         isRedeeming = false;
     }
 

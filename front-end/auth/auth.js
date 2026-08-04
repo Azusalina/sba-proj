@@ -1,3 +1,7 @@
+const isLocal = window.location.hostname === '127.0.0.1'
+const API_BASE_URL = isLocal ? 'http://127.0.0.1:3000' : 'https://backend-sba.vercel.app';
+
+
 
 const stage = document.getElementById("stage");
 const to_signin_switch = document.getElementById("to_signin_redirection");
@@ -27,8 +31,8 @@ const to_reset_btn = document.getElementById("to_reset_redirection")
 
 
 //sub-funcs
-async function send() {
-    const url = 'http://127.0.0.1:3000/auth/login';
+async function signin() {
+    const url = `${API_BASE_URL}/auth/login`;
     const data = { user_name: username, passwd: pwd };
     try {
 
@@ -46,12 +50,32 @@ async function send() {
             localStorage.setItem('user', username);
             window.location.href = '../main/index.html';
         } else {
-            signin_status.innerText ='pwd incorrect';
+            signin_status.innerText = 'pwd incorrect';
         }
     } catch (error) {
         signin_status.innerText = "Service in Maintenance,try again later";
     }
 }
+async function signup() {
+    const url = `${API_BASE_URL}/auth/signup`
+    const data = { username: username, email: email, pwd: pwd };
+    try {
+        const resp = await fetch(url, {
+            method: 'POST',
+            headers: { "Content-type": "application/json" },
+            body: JSON.stringify(data)
+        })
+        const result = await resp.json();
+        if (result.success) {
+            signup_status.innerText = result.msg;
+        } else {
+            signup_status.innerText = result.msg;
+        }
+    } catch (error) {
+        signup_status.innerText = "Service in Maintenance,try again later";
+    }
+}
+
 function valid_check(pwd) {
     if (!pwd) return {
         Valid: false,
@@ -67,11 +91,9 @@ function valid_check(pwd) {
     const missing = cases.filter(item => !item.case).map(item => item.msg)
     return {
         isValid: missing.length === 0,
-        errors: missing.msg
+        errors: missing
     };
 }
-
-
 
 //main
 
@@ -86,7 +108,7 @@ singin_btn.onclick = function (event) {
         signin_status.innerText = "Fill in both Name and Password to Continue";
         return;
     } else {
-        send();
+        signin();
     }
 }
 
@@ -107,28 +129,8 @@ signup_btn.onclick = function (event) {
     } else if (!valid_condition.isValid) {
         signup_status.innerText = valid_condition.errors.join("\n")
     }
-
     else {
         signup();
-    }
-    async function signup() {
-        const url = 'http://127.0.0.1:3000/auth/signup'
-        const data = { username: username, email: email, pwd: pwd };
-        try {
-            const resp = await fetch(url, {
-                method: 'POST',
-                headers: { "Content-type": "application/json" },
-                body: JSON.stringify(data)
-            })
-            const result = await resp.json();
-            if (result.success) {
-                signup_status.innerText = result.msg;
-            } else {
-                signup_status.innerText = result.msg;
-            }
-        } catch (error) {
-            signup_status.innerText = "Service in Maintenance,try again later";
-        }
     }
 }
 

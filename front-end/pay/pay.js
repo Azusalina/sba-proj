@@ -1,3 +1,4 @@
+
 const opera = document.getElementById('opera')
 const seatClass = document.getElementById('class')
 const Pa = document.getElementById('Pa')

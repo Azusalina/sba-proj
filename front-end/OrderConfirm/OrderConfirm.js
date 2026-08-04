@@ -1,3 +1,6 @@
+const isLocal = window.location.hostname === '127.0.0.1'
+const API_BASE_URL = isLocal ? 'http://127.0.0.1:3000' : 'https://backend-sba.vercel.app';
+
 
 const orderId = localStorage.getItem('orderId');
 const detailsStr = localStorage.getItem('details');
@@ -44,7 +47,7 @@ if (sendEmailBtn) {
         emailStatus.style.color = '#e67e22';
 
         try {
-            const resp = await fetch('http://127.0.0.1:3000/SendConfirmationEmail', {
+            const resp = await fetch(`${API_BASE_URL}/SendConfirmationEmail`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
