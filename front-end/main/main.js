@@ -10,7 +10,7 @@ const dev = document.getElementById('dev')
 function logout() {
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('user');
-    window.location.href = 'main.html';
+    window.location.href = 'index.html';
 }
 
 function dev_pwd(event) {

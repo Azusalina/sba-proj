@@ -44,7 +44,7 @@ async function send() {
             signin_status.innerText = result.msg;
             localStorage.setItem('isLoggedIn', 'true');
             localStorage.setItem('user', username);
-            window.location.href = '../main/main.html';
+            window.location.href = '../main/index.html';
         } else {
             signin_status.innerText ='pwd incorrect';
         }

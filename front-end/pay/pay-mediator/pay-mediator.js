@@ -35,16 +35,16 @@ async function handlingOrder() {
             } else if (result.msg === 'insufficientBalance') {
                 note.innerText = 'Order was canceled due to insufficient amount left in your wallet.';
                 await sleep(2000);
-                window.location.href = '../../main/main.html'
+                window.location.href = '../../main/index.html'
             } else {
                 note.innerText = 'An unexpected error occurred.';
                 await sleep(2000);
-                window.location.href = '../../main/main.html'
+                window.location.href = '../../main/index.html'
             }
         } else {
             note.innerText = 'Server error. Please try again.';
             await sleep(3000);
-            window.location.href = '../../main/main.html'
+            window.location.href = '../../main/index.html'
         }
     } catch (error) {
         console.log(error)
