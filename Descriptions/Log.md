@@ -140,3 +140,8 @@
   * **Order Generation**: Inserted record into `orders` (`uid`, `sum_fee`, `transac_status`) to generate `order_id`.
   * **Ticket Generation**: Inserted records into `ticket` linked to `order_id` to generate unique `ticket_id` identifiers.
   * **Finalization**: Executed `COMMIT`.
+  * ##### main progress line is done, further functions will be added in upcoming updates.
+
+
+
+* ***4th Aug 2026:***

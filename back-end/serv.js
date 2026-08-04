@@ -14,13 +14,32 @@ app.use(express.json());
 
 //initialize
 
+// const pool = new Pool({
+//     user: 'a_sql',
+//     host: 'localhost',
+//     database: 'my_dev_db',
+//     password: 'a',
+//     port: 5432,
+// });
+console.log(`email sender:${process.env.MAILERSEND_API_KEY}`)
+console.log(`database:${process.env.DATABASE_URL}`);
+
 const pool = new Pool({
-    user: 'a_sql',
-    host: 'localhost',
-    database: 'my_dev_db',
-    password: 'a',
-    port: 5432,
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+        rejectUnauthorized: false,
+    },
+    connectionTimeoutMillis: 5000,
 });
+
+try {
+    const client = await pool.connect();
+    console.log("✅ Connected");
+    client.release();
+} catch (err) {
+    console.error(err);
+}
+
 
 const ver_email = new MailerSend({ apiKey: process.env.MAILERSEND_API_KEY, });
 const NoreplySentFrom = new Sender("noreply@test-z0vklo6xwxpl7qrx.mlsender.net", "noreply verification");
@@ -432,13 +451,9 @@ app.post('/toolkit/gen_redeem_code', async (req, res) => {
 
 
 
-
-
-
-
-
-
 /////////////////////////////////////////////////////////////////////////////////////
-app.listen(3000, () => {
-    console.log(":3000,Service online,Please start.");
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+    console.log(`Service online on port ${PORT}`);
 });
