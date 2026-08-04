@@ -7,7 +7,6 @@ import crypto from 'crypto';
 import 'dotenv/config';
 import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
 
-export const app = express();
 app.use(cors());
 app.use(express.json());
 
@@ -437,4 +436,4 @@ if (!process.env.VERCEL) {
 }
 
 //for online vercel needs:
-export default app;
+module.exports = router;
