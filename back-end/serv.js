@@ -34,6 +34,9 @@ pool.connect()
 const ver_email = new MailerSend({ apiKey: process.env.MAILERSEND_API_KEY, });
 const NoreplySentFrom = new Sender("noreply@test-z0vklo6xwxpl7qrx.mlsender.net", "noreply verification");
 
+app.get('/', (req, res) => {
+    res.json({ status: "running", message: "backend server's online,please continue." });
+});
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //subfunctions
 function hash(pwd, salt) {
