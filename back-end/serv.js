@@ -7,6 +7,7 @@ import crypto from 'crypto';
 import 'dotenv/config';
 import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
 
+const app = express();
 app.use(cors());
 app.use(express.json());
 
@@ -20,7 +21,7 @@ console.log(`database:${process.env.DATABASE_URL}`);
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.DATABASE_URL?.includes('localhost') ? false : { rejectUnauthorized: false },
-    connectionTimeoutMillis: 10000 ,
+    connectionTimeoutMillis: 10000,
 });
 
 pool.connect()
@@ -228,7 +229,7 @@ app.post('/auth/login', async (req, res) => {
             res.json({ success: false, msg: "account not found" })
         }
     } catch (error) {
-        res.json({ success: false,msg: "unknown error" })
+        res.json({ success: false, msg: "unknown error" })
     }
 
 });
@@ -436,4 +437,4 @@ if (!process.env.VERCEL) {
 }
 
 //for online vercel needs:
-module.exports = router;
+export default app;
