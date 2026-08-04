@@ -437,4 +437,4 @@ if (!process.env.VERCEL) {
 }
 
 //for online vercel needs:
-export default app;
+export { app };
