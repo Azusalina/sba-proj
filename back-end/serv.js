@@ -86,12 +86,10 @@ async function send_confirmation_email(targetEmail, orderId, opera, level, sum_p
     }
 }
 //
-
 function TimeToSeconds(timestr) {
     const [hr, min, sec] = timestr.split(':').map(Number);
     return hr * 3600 + min * 60 + sec;
 }
-
 function getPricePlan(time) {
     const mid = '12:00:00';
     const current = new Date();
@@ -115,14 +113,12 @@ function sub_ID_time() {
     const result = `${yyyy}${mm}${dd}-${hr}${min}${sec}`;
     return result;
 }
-
 function generate_TransacID() {
     const prefix = 'tx-';
     const time = `${sub_ID_time()}-`;
     const ID = Math.random().toString(36).substring(2, 8).toUpperCase();
     return `${prefix}${time}${ID}`
 }
-
 function generate_ticketID(operaName) {
     const prefix = `${operaName}-`
     const time = `${sub_ID_time()}-`;
@@ -233,13 +229,11 @@ app.post('/auth/login', async (req, res) => {
             res.json({ success: false, msg: "account not found" })
         }
     } catch (error) {
-        res.json({ msg: "unknown error" })
+        res.json({ success: false,msg: "unknown error" })
     }
 
 });
-
 //settings fetch data work zone
-
 app.post('/settingGetData', async (req, res) => {
     const username = req.body.username;
     try {
@@ -255,7 +249,6 @@ app.post('/settingGetData', async (req, res) => {
         res.json({ msg: 'unknown or fatal error' })
     }
 })
-
 //redeem
 app.post('/redeem', async (req, res) => {
     const user = req.body.user;
@@ -291,7 +284,6 @@ app.post('/redeem', async (req, res) => {
 
     }
 })
-
 //search work zone
 app.post('/updateOperaData', async (req, res) => {
     const op_name = req.body?.name;
@@ -315,7 +307,6 @@ app.post('/updateOperaData', async (req, res) => {
         return res.json({ status: false, msg: 'data not found' });
     }
 });
-
 //book work zone
 app.post('/operaName', async (req, res) => {
     const operaName = req.body.name;
@@ -334,7 +325,6 @@ app.post('/operaName', async (req, res) => {
         return res.json({ status: false, msg: 'unknown fatal error' })
     }
 })
-
 //payment zone 
 app.post('/PaymentOrder', async (req, res) => {
     const { user, opera, level, sum_price, adult, student, wheelchair } = req.body;
@@ -396,7 +386,6 @@ app.post('/PaymentOrder', async (req, res) => {
         return res.json({ msg: 'error', details: 'service in maintainance' });
     }
 });
-
 //OrderConfirm zone
 app.post('/SendConfirmationEmail', async (req, res) => {
     const { user, orderId, opera, level, sum_price, tickets } = req.body;
@@ -438,10 +427,6 @@ app.post('/toolkit/gen_redeem_code', async (req, res) => {
         return res.json({ msg: 'fail' })
     }
 })
-
-
-
-
 
 /////////////////////////////////////////////////////////////////////////////////////
 if (!process.env.VERCEL) {
