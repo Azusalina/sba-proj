@@ -21,7 +21,7 @@ console.log(`database:${process.env.DATABASE_URL}`);
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.DATABASE_URL?.includes('localhost') ? false : { rejectUnauthorized: false },
-    connectionTimeoutMillis: 5000,
+    connectionTimeoutMillis: 10000 ,
 });
 
 pool.connect()
