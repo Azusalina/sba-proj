@@ -31,7 +31,7 @@ const to_reset_btn = document.getElementById("to_reset_redirection")
 
 
 //sub-funcs
-async function signin() {
+async function signin(username,pwd) {
     const url = `${API_BASE_URL}/auth/login`;
     const data = { user_name: username, passwd: pwd };
     try {
@@ -48,7 +48,7 @@ async function signin() {
             signin_status.innerText = result.msg;
             localStorage.setItem('isLoggedIn', 'true');
             localStorage.setItem('user', username);
-            window.location.href = '../main/index.html';
+            window.location.href = '../index.html';
         } else {
             signin_status.innerText = 'pwd incorrect';
         }
@@ -56,23 +56,20 @@ async function signin() {
         signin_status.innerText = "Service in Maintenance,try again later";
     }
 }
-async function signup() {
-    const url = `${API_BASE_URL}/auth/signup`
+async function signup(username, email, pwd) {
+    const url = `${API_BASE_URL}/auth/signup`;
     const data = { username: username, email: email, pwd: pwd };
     try {
         const resp = await fetch(url, {
             method: 'POST',
-            headers: { "Content-type": "application/json" },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data)
-        })
+        });
         const result = await resp.json();
-        if (result.success) {
-            signup_status.innerText = result.msg;
-        } else {
-            signup_status.innerText = result.msg;
-        }
+        signup_status.innerText = result.msg;
     } catch (error) {
-        signup_status.innerText = "Service in Maintenance,try again later";
+        console.error("Signup error:", error);
+        signup_status.innerText = "Service in Maintenance, try again later";
     }
 }
 
@@ -108,7 +105,7 @@ singin_btn.onclick = function (event) {
         signin_status.innerText = "Fill in both Name and Password to Continue";
         return;
     } else {
-        signin();
+        signin(username,pwd);
     }
 }
 
@@ -130,7 +127,7 @@ signup_btn.onclick = function (event) {
         signup_status.innerText = valid_condition.errors.join("\n")
     }
     else {
-        signup();
+        signup(username,email,pwd);
     }
 }
 

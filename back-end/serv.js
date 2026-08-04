@@ -80,7 +80,6 @@ async function send_confirmation_email(targetEmail, orderId, opera, level, sum_p
         .setHtml(htmlContent);
     try {
         await ver_email.email.send(emailParams);
-        console.log('Confirmation email sent successfully.');
     } catch (err) {
         console.error('Failed to send confirmation email:', err);
         throw err;
