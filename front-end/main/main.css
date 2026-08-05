@@ -43,7 +43,7 @@ body {
 
 .title {
     color: var(--gold);
-    font-family: "Grenze Gotisch", serif;
+    font-style: oblique;
     font-size: clamp(2rem, 3vw, 4rem);
     white-space: nowrap;
 }
@@ -101,14 +101,15 @@ body {
     filter: invert(100%);
 }
 
-.auth,.logoutBtn {
+.auth,
+.logoutBtn {
     color: var(--gold2);
     text-decoration: none;
     font-family: "Grenze Gotisch", serif;
     font-size: clamp(1.2rem, 1.4vw, 1.8rem);
     transition: .25s;
-    margin-right:2%;
-    cursor:pointer;
+    margin-right: 2%;
+    cursor: pointer;
 }
 
 .auth:hover {
@@ -189,7 +190,7 @@ body {
     .container_delta {
         align-items: center;
     }
-    
+
     .book {
         align-self: center;
     }

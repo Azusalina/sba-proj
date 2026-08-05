@@ -44,6 +44,13 @@ CREATE TABLE if not exists email_verification (
     expire_time TIMESTAMP not null,
     used BOOLEAN DEFAULT FALSE
 );
+
+create table if not exists pwd_reset(
+    email varchar(255) not null,
+    token text primary key,
+    expire_time timestamp not null,
+    used boolean default FALSE
+)
 create table if not EXISTS opera(
     opera_id  int primary key,
     opera_name varchar(30),
@@ -87,7 +94,8 @@ create table if not exists ticket(
 
 --user-related
 select * from user_infor order by uid;  
-select * from email_verification
+select * from email_verification;
+select * from pwd_reset;
 select * from gift_code
 --opera-related&prices
 select * from opera ORDER BY opera_id;

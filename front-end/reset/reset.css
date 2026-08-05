@@ -24,7 +24,7 @@ body {
     border-radius: 30px;
     width: 40%;
     height: 40vh;
-    align-items: center;
+    align-items: center;   
     justify-content: center;
     margin-top: 5%;
 }
@@ -47,6 +47,17 @@ body {
 
 
 .container button {
-    margin-top: auto;
-    margin-bottom: 5%;
+    cursor: pointer;
+    margin-top:auto;
+    width: 5vw;
+    height:2vh;
+    background: none;
+    border: 1px solid black;
+    border-radius: 3px;
+}
+
+.container button:hover {
+    background: bisque;
+    transition: 0.2s ease-in-out;
+
 }

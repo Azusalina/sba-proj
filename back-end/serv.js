@@ -1,10 +1,12 @@
 //header files
+//front-back communication
 import express from 'express';
+import cors from 'cors';
+//postgre
 import pkg from 'pg';
 const { Pool } = pkg;
-import cors from 'cors';
+//email&pwd
 import crypto from 'crypto';
-import 'dotenv/config';
 import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
 
 
@@ -12,46 +14,31 @@ import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
 const app = express();
 app.use(cors());
 app.use(express.json());
-
-// const allowedOrigins = [
-//     'http://127.0.0.1:5500',
-//     'http://localhost:5500',
-//     process.env.FRONTEND_URL || 'https://frontend-sba.vercel.app'
-// ];
-// app.use(cors({
-//     origin: function (origin, callback) {
-//         if (!origin || allowedOrigins.includes(origin)) {
-//             callback(null, true);
-//         } else {
-//             callback(new Error('Not allowed by CORS'));
-//         }
-//     },
-//     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], 
-//     allowedHeaders: ['Content-Type', 'Authorization'],    
-//     credentials: true,                                    
-//     optionsSuccessStatus: 200                             
-// }));
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-
-
-
-
+///////////////////////////////////////
 
 //initialize
+const isLocal = !process.env.VERCEL
+const FRONTEND_URL = isLocal ? 'http://127.0.0.1:5500/front-end' : process.env.FRONTEND_URL;
+const BACKEND_URL = isLocal ? 'http://127.0.0.1:3000' : process.env.BACKEND_URL;
 
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://127.0.0.1:5500/front-end';
-const BACKEND_URL = process.env.BACKEND_URL || 'http://127.0.0.1:3000';
+console.log(`frontendURL:${FRONTEND_URL}`);
+console.log(`backendURL: ${BACKEND_URL}`);
 
 
+//local
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.DATABASE_URL?.includes('localhost') ? false : { rejectUnauthorized: false },
-    connectionTimeoutMillis: 10000,
+    user: 'a_sql',
+    host: 'localhost',
+    database: 'my_dev_db',
+    password: 'a',
+    port: 5432,
 });
+//supabase
+// const pool = new Pool({
+//     connectionString: process.env.DATABASE_URL,
+//     ssl: process.env.DATABASE_URL?.includes('localhost') ? false : { rejectUnauthorized: false },
+//     connectionTimeoutMillis: 10000,
+// });
 
 pool.connect()
     .then(client => {
@@ -60,7 +47,7 @@ pool.connect()
     })
     .catch(err => console.error("Database Connection Error:", err.message));
 
-const ver_email = new MailerSend({ apiKey: process.env.MAILERSEND_API_KEY, });
+const EmailSender = new MailerSend({ apiKey: process.env.MAILERSEND_API_KEY, });
 const NoreplySentFrom = new Sender("noreply@test-z0vklo6xwxpl7qrx.mlsender.net", "noreply verification");
 
 app.get('/', (req, res) => {
@@ -78,14 +65,21 @@ function random_generate_web() {
         url: `${BACKEND_URL}/auth/${result}`
     };
 }
+function random_generate_ResetWeb() {
+    const result = crypto.randomUUID().replace(/-/g, '');
+    return {
+        token: result,
+        url: `${BACKEND_URL}/reset/${result}`
+    };
+}
 async function send_ver_mail(target, token, url, userid) {
     const verification_mail = new EmailParams()
         .setFrom(NoreplySentFrom)
         .setTo(target)
         .setSubject("Signup Verification")
-        .setHtml(`<p>Click here:<a href="${url}">Verify Email</a></p>`);
+        .setHtml(`<p>Click here to verify your email: <a href="${url}">Verify Email</a></p>`);
     try {
-        await ver_email.email.send(verification_mail);
+        await EmailSender.email.send(verification_mail);
     } catch (err) {
         throw err;
     }
@@ -107,11 +101,36 @@ async function send_confirmation_email(targetEmail, orderId, opera, level, sum_p
         .setTo(recipient)
         .setSubject(`Order Confirmation #${orderId} - ${opera}`)
         .setHtml(htmlContent);
+
     try {
-        await ver_email.email.send(emailParams);
+        await EmailSender.email.send(emailParams);
     } catch (err) {
         console.error('Failed to send confirmation email:', err);
         throw err;
+    }
+}
+
+async function send_reset_email(targetEmail) {
+    const recipient = [new Recipient(targetEmail, 'request user')];
+    const { token, url } = random_generate_ResetWeb();
+
+    await pool.query(`INSERT INTO pwd_reset(email, token, expire_time, used) VALUES($1, $2, NOW() + INTERVAL '15 minutes', false)`, [targetEmail, token]);
+
+    const htmlContent = `
+        <h1>Reset your password</h1>
+        <p>We have received a request to reset your password. If this request is from you, click <a href="${url}">here</a> to reset your password.</p>
+    `;
+    const emailParams = new EmailParams()
+        .setFrom(NoreplySentFrom)
+        .setTo(recipient)
+        .setSubject('Reset your Password')
+        .setHtml(htmlContent);
+
+    try {
+        await EmailSender.email.send(emailParams);
+    } catch (error) {
+        console.error('fail to send reset email:', error);
+        throw error;
     }
 }
 //
@@ -139,24 +158,25 @@ function sub_ID_time() {
     const hr = String(now.getHours()).padStart(2, '0');
     const min = String(now.getMinutes()).padStart(2, '0');
     const sec = String(now.getSeconds()).padStart(2, '0');
-    const result = `${yyyy}${mm}${dd}-${hr}${min}${sec}`;
+    const result = `${yyyy}${mm}${dd} -${hr}${min}${sec} `;
     return result;
 }
 function generate_TransacID() {
     const prefix = 'tx-';
-    const time = `${sub_ID_time()}-`;
+    const time = `${sub_ID_time()} -`;
     const ID = Math.random().toString(36).substring(2, 8).toUpperCase();
-    return `${prefix}${time}${ID}`
+    return `${prefix}${time}${ID} `
 }
 function generate_ticketID(operaName) {
-    const prefix = `${operaName}-`
-    const time = `${sub_ID_time()}-`;
+    const prefix = `${operaName} -`
+    const time = `${sub_ID_time()} -`;
     const ID1 = Math.random().toString(36).substring(2, 8).toUpperCase();
     const ID2 = Math.random().toString(36).substring(2, 8).toUpperCase();
     if (ID1 == ID2) { return generate_ticketID(operaName) };
-    return `${prefix}${time}${ID1}${ID2}`
+    return `${prefix}${time}${ID1}${ID2} `
 }
 ////////////////////////////////////////////////////////////////////////////
+
 //auth work zone
 app.post('/auth/signup', async (req, res) => {
     const userid = req.body.username;
@@ -184,7 +204,7 @@ app.post('/auth/signup', async (req, res) => {
             //signup verify email here 
             const { token, url } = random_generate_web();
             const v_receiver = [new Recipient(email, "Receiver alpha")];
-            await pool.query(`INSERT INTO email_verification(token, userid, expire_time) VALUES($1,$2,NOW()+INTERVAL '1 day')`, [token, userid]);
+            await pool.query(`INSERT INTO email_verification(token, userid, expire_time) VALUES($1, $2, NOW() + INTERVAL '1 day')`, [token, userid]);
             await pool.query("COMMIT");
             try {
                 await send_ver_mail(v_receiver, token, url, userid);
@@ -207,7 +227,7 @@ app.get("/auth/:token", async (req, res) => {
     const token = req.params.token;
     console.log("token:", token);
 
-    const result = await pool.query(`SELECT userid FROM email_verification WHERE token=$1 AND expire_time > NOW() AND used = FALSE`, [token]);
+    const result = await pool.query(`SELECT userid FROM email_verification WHERE token = $1 AND expire_time > NOW() AND used = FALSE`, [token]);
     console.log(result.rows);
 
 
@@ -222,7 +242,7 @@ app.get("/auth/:token", async (req, res) => {
     await pool.query("UPDATE email_verification SET used=TRUE WHERE token=$1 and used=FALSE", [token]);
     console.log('successfully signup ')
     const usernameId = result.rows[0].userid;
-    await pool.query(`INSERT INTO wallet(uid, balance) SELECT uid, 0.00 FROM user_infor WHERE id = $1 ON CONFLICT (uid) DO NOTHING`, [usernameId]);
+    await pool.query(`INSERT INTO wallet(uid, balance) SELECT uid, 0.00 FROM user_infor WHERE id = $1 ON CONFLICT(uid) DO NOTHING`, [usernameId]);
     console.log('wallet successfully generated')
     console.log("before redirect");
     res.redirect(`${FRONTEND_URL}/auth/confirm.html`);
@@ -261,6 +281,55 @@ app.post('/auth/login', async (req, res) => {
     }
 
 });
+//reset zone
+app.post('/reset', async (req, res) => {
+    const email = req.body.email;
+    try {
+        //existence check
+        const { rows } = await pool.query('SELECT EXISTS(SELECT 1 FROM user_infor WHERE email=$1)', [email]);
+        if (rows[0].exists) {
+            await send_reset_email(email);
+            console.log('reset email sent');
+            return res.json({ success: true, msg: 'email has been sent' });
+        } else {
+            return res.json({ success: false, msg: 'account not found' });
+        }
+    } catch (err) {
+        console.error(err);
+        return res.json({ success: false, msg: 'server error' });
+    }
+});
+app.get("/reset/:token", async (req, res) => {
+    const token = req.params.token;
+    console.log("token:", token);
+    res.redirect(`${FRONTEND_URL}/reset/resetTrue.html?token=${token}`);
+});
+app.post('/reset/updatepwd', async (req, res) => {
+    const { token, newPwd } = req.body;
+
+    try {
+        await pool.query("BEGIN");
+        //verify token still can be use
+        const tokenCheck = await pool.query(`SELECT email FROM pwd_reset WHERE token = $1 AND expire_time > NOW() AND used = FALSE FOR UPDATE`, [token]);
+        if (tokenCheck.rowCount === 0) {
+            await pool.query("ROLLBACK");
+            return res.json({ success: false, msg: "Invalid or expired token" });
+        }
+        const userEmail = tokenCheck.rows[0].email;
+        const newSalt = crypto.randomBytes(16).toString('hex');
+        const newHashedPwd = hash(newPwd, newSalt);
+        await pool.query(`UPDATE user_infor SET pwd = $1, salt = $2 WHERE email = $3`, [newHashedPwd, newSalt, userEmail]);
+        await pool.query(`UPDATE pwd_reset SET used = TRUE WHERE token = $1`, [token]);
+        await pool.query("COMMIT");
+        return res.json({ success: true, msg: "Password updated successfully" });
+    } catch (error) {
+        await pool.query("ROLLBACK");
+        console.error("Reset password error:", error);
+        return res.status(500).json({ success: false, msg: "Server error" });
+    }
+})
+
+
 //settings fetch data work zone
 app.post('/settingGetData', async (req, res) => {
     const username = req.body.username;
@@ -386,7 +455,7 @@ app.post('/PaymentOrder', async (req, res) => {
         const operaRes = await pool.query('SELECT opera_id FROM opera WHERE opera_name = $1', [opera]);
         if (operaRes.rows.length === 0) throw new Error('Opera not found');
         const operaId = operaRes.rows[0].opera_id;
-        console.log(`opera:${operaId}`)
+        console.log(`opera:${operaId} `)
         //generate ticketId
         const generatedTicketIDs = [];
         //application of push/pop of *queue*?
@@ -443,7 +512,7 @@ app.post('/toolkit/gen_redeem_code', async (req, res) => {
     let status = false;
     try {
         await pool.query('insert into gift_code(code,amount) values($1,$2)', [code, value]);
-        console.log(`gift code generated:${code}`)
+        console.log(`gift code generated:${code} `)
         status = true;
     } catch (error) {
         console.log(error);
@@ -456,16 +525,13 @@ app.post('/toolkit/gen_redeem_code', async (req, res) => {
     }
 })
 
+
+
+
 /////////////////////////////////////////////////////////////////////////////////////
 if (!process.env.VERCEL) {
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
-        console.log(`Local service online on http://localhost:${PORT}`);
+        console.log(`Local service online on http://127.0.0.1:${PORT}`);
     });
 }
-
-
-
-//for online vercel needs:
-
-export default app;

@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-
+<html>
 
 
 <head>
+    <title>Reset Pwd</title>
     <link rel="stylesheet" href="reset.css">
+    <script src="reset.js" defer></script>
 </head>
 
 
@@ -11,22 +13,16 @@
 <body>
     <h1 class="title">reset password</h1>
     <div class="container">
-    <label>
-        <p>name</p>
-        <input placeholder="name">
-    </label>
-    <label>
-        <p>Email</p>
-        <input placeholder="Email">
-    </label>
-    <label>
-        <p>name</p>
-        <input placeholder="name">
-    </label>
-    <label>
-        <p>name</p>
-        <input placeholder="name">
-    </label>
-    <button type="submit">reset</button>
+        <label>
+            <p>Email</p>
+        </label>
+        <form id="ResetSubmit">
+            <input placeholder="Email" id="email">
+            <button type="submit" id="reset">reset</button>
+        </form>
+
+        <p id="ProgressDisplay">Progress tracking:</p>
     </div>
 </body>
+
+</html>

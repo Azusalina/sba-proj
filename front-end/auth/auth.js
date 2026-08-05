@@ -22,8 +22,9 @@ let pwd = "";
 const signup_id = document.getElementById("signup_id");
 const signup_email = document.getElementById("signup_email");
 const signup_pwd = document.getElementById("signup_pwd");
+const signup_pwd_confirm = document.getElementById("signup_pwd_confirm");
 const signup_status = document.getElementById("signup_status");
-const signup_btn = document.getElementById("signup_btn");
+const signupSubmit = document.getElementById("signupSubmit");
 
 const to_reset_btn = document.getElementById("to_reset_redirection")
 
@@ -31,7 +32,7 @@ const to_reset_btn = document.getElementById("to_reset_redirection")
 
 
 //sub-funcs
-async function signin(username,pwd) {
+async function signin(username, pwd) {
     const url = `${API_BASE_URL}/auth/login`;
     const data = { user_name: username, passwd: pwd };
     try {
@@ -105,29 +106,32 @@ singin_btn.onclick = function (event) {
         signin_status.innerText = "Fill in both Name and Password to Continue";
         return;
     } else {
-        signin(username,pwd);
+        signin(username, pwd);
     }
 }
-
-///////
-
-
-
-signup_btn.onclick = function (event) {
+signupSubmit.addEventListener('submit', (event) => {
     event.preventDefault();
     const username = signup_id.value.trim();
     const email = signup_email.value.trim();
     const pwd = signup_pwd.value.trim();
+    const pwd_confirm = signupSubmit.value.trim();
     const valid_condition = valid_check(pwd);
 
     if (!username || !email || !pwd) {
         signup_status.innerText = "Please fill all missing blanks";
         return;
+    } else if (pwd != pwd_confirm) {
+        signup_status.innerText = 'please confirm your password.'
     } else if (!valid_condition.isValid) {
         signup_status.innerText = valid_condition.errors.join("\n")
     }
     else {
-        signup(username,email,pwd);
+        signup(username, email, pwd);
     }
-}
+})
+
+
+
+
+
 

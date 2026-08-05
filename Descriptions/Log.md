@@ -144,4 +144,8 @@
 
 
 
-* ***4th Aug 2026:***
+* ***4th&5th Aug 2026:***
+  * first attempt on deploying the project online but failed;
+  * users now are allowed to reset their password via a reset email in case they forget them.
+  ### we are considering Deconstruct the `serv.js` file in order to implement the idea of modulization and for more efficient coding 
+  

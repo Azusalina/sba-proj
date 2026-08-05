@@ -8,12 +8,21 @@ const create_at = document.getElementById('create_at')
 const email = document.getElementById('email')
 const birth = document.getElementById('birth')
 
+const updatePwd_btn = document.getElementById('updatePwd-btn')
+const updateEmail_btn = document.getElementById('updateEmail-btn')
+const updateBirth_btn = document.getElementById('updateBirth-btn')
+
 const wallet = document.getElementById('wallet')
 const redemption = document.getElementById('redemption')
 const gift_code = document.getElementById('gift-code')
 
 
 const redeem_status = document.getElementById('redeem-status')
+
+
+
+
+
 //subfunc
 
 
@@ -39,10 +48,6 @@ async function GetData(user) {
     } catch (error) {
         console.log(error)
     }
-}
-
-async function updateData() {
-
 }
 let isRedeeming = false;
 async function redeem(user, code) {
@@ -93,5 +98,10 @@ redemption.addEventListener('submit', (e) => {
     e.preventDefault();
     const code = gift_code.value
     redeem(user, code);
+})
+
+updatePwd_btn.addEventListener('click',(event)=>{
+    event.preventDefault();
+    window.location.href='../reset/reset.html'
 })
 //main

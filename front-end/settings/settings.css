@@ -54,7 +54,7 @@ button:hover {
     opacity: 0.9;
 }
 
-.update-btn {
+#updatePwd-btn,#updateEmail-btn,#updateBirth-btn {
     background-color: #2196F3;
     margin-left: auto; 
 }

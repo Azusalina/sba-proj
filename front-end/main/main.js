@@ -35,12 +35,21 @@ function dev_pwd(event) {
 document.addEventListener('DOMContentLoaded', () => {
     const authBtn = document.getElementById('authBtn');
     const isLoggedIn = localStorage.getItem('isLoggedIn');
+    const user=localStorage.getItem('user')
     if (isLoggedIn === null) {
         localStorage.setItem('isLoggedIn', 'false');
     }
     if (isLoggedIn === 'true') {
         authBtn.innerText = 'Settings';
         authBtn.href = './settings/settings.html';
+        logoutBtn.style.opacity = 1;
+        logoutBtn.style.removeProperty('pointer-events');
+
+    } else if (isLoggedIn==='false' ||user===null){
+        authBtn.innerText = 'Sign in/up';
+        authBtn.href = './auth/auth.html'
+        logoutBtn.style.opacity = 0;
+        logoutBtn.style['pointer-events'] = 'none';
     }
 });
 //main
