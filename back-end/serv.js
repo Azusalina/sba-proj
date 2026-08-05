@@ -7,13 +7,14 @@ import crypto from 'crypto';
 import 'dotenv/config';
 import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 const app = express();
 const allowedOrigins = [
     'http://127.0.0.1:5500',
     'http://localhost:5500',
     process.env.FRONTEND_URL || 'https://frontend-sba.vercel.app'
 ];
-
 app.use(cors({
     origin: function (origin, callback) {
         if (!origin || allowedOrigins.includes(origin)) {
@@ -22,19 +23,28 @@ app.use(cors({
             callback(new Error('Not allowed by CORS'));
         }
     },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Explicitly allow these methods
-    allowedHeaders: ['Content-Type', 'Authorization'],    // Explicitly allow these headers
-    credentials: true,                                    // Allow cookies/tokens if needed
-    optionsSuccessStatus: 200                             // Fixes issues with older browsers
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], 
+    allowedHeaders: ['Content-Type', 'Authorization'],    
+    credentials: true,                                    
+    optionsSuccessStatus: 200                             
 }));
 app.use(express.json());
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
 
 //initialize
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://127.0.0.1:5500/front-end';
 const BACKEND_URL = process.env.BACKEND_URL || 'http://127.0.0.1:3000';
-console.log(`email sender:${process.env.MAILERSEND_API_KEY}`)
-console.log(`database:${process.env.DATABASE_URL}`);
+// console.log(`email sender:${process.env.MAILERSEND_API_KEY}`)
+// console.log(`database:${process.env.DATABASE_URL}`);
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -44,7 +54,7 @@ const pool = new Pool({
 
 pool.connect()
     .then(client => {
-        console.log("Connected to Database");
+        console.log("Connected to Database , success");
         client.release();
     })
     .catch(err => console.error("Database Connection Error:", err.message));
