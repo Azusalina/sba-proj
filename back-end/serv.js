@@ -10,25 +10,27 @@ import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 const app = express();
-const allowedOrigins = [
-    'http://127.0.0.1:5500',
-    'http://localhost:5500',
-    process.env.FRONTEND_URL || 'https://frontend-sba.vercel.app'
-];
-app.use(cors({
-    origin: function (origin, callback) {
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], 
-    allowedHeaders: ['Content-Type', 'Authorization'],    
-    credentials: true,                                    
-    optionsSuccessStatus: 200                             
-}));
+app.use(cors());
 app.use(express.json());
+
+// const allowedOrigins = [
+//     'http://127.0.0.1:5500',
+//     'http://localhost:5500',
+//     process.env.FRONTEND_URL || 'https://frontend-sba.vercel.app'
+// ];
+// app.use(cors({
+//     origin: function (origin, callback) {
+//         if (!origin || allowedOrigins.includes(origin)) {
+//             callback(null, true);
+//         } else {
+//             callback(new Error('Not allowed by CORS'));
+//         }
+//     },
+//     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], 
+//     allowedHeaders: ['Content-Type', 'Authorization'],    
+//     credentials: true,                                    
+//     optionsSuccessStatus: 200                             
+// }));
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -43,8 +45,7 @@ app.use(express.json());
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://127.0.0.1:5500/front-end';
 const BACKEND_URL = process.env.BACKEND_URL || 'http://127.0.0.1:3000';
-// console.log(`email sender:${process.env.MAILERSEND_API_KEY}`)
-// console.log(`database:${process.env.DATABASE_URL}`);
+
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -156,7 +157,6 @@ function generate_ticketID(operaName) {
     return `${prefix}${time}${ID1}${ID2}`
 }
 ////////////////////////////////////////////////////////////////////////////
-
 //auth work zone
 app.post('/auth/signup', async (req, res) => {
     const userid = req.body.username;
@@ -463,6 +463,8 @@ if (!process.env.VERCEL) {
         console.log(`Local service online on http://localhost:${PORT}`);
     });
 }
+
+
 
 //for online vercel needs:
 
