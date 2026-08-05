@@ -8,7 +8,25 @@ import 'dotenv/config';
 import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
 
 const app = express();
-app.use(cors());
+const allowedOrigins = [
+    'http://127.0.0.1:5500',
+    'http://localhost:5500',
+    process.env.FRONTEND_URL || 'https://frontend-sba.vercel.app'
+];
+
+app.use(cors({
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Explicitly allow these methods
+    allowedHeaders: ['Content-Type', 'Authorization'],    // Explicitly allow these headers
+    credentials: true,                                    // Allow cookies/tokens if needed
+    optionsSuccessStatus: 200                             // Fixes issues with older browsers
+}));
 app.use(express.json());
 
 //initialize
