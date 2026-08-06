@@ -146,6 +146,13 @@
 
 * ***4th&5th Aug 2026:***
   * first attempt on deploying the project online but failed;
+
+* ***6th Aug 2026***
   * users now are allowed to reset their password via a reset email in case they forget them.
-  ### we are considering Deconstruct the `serv.js` file in order to implement the idea of modulization and for more efficient coding 
-  
+  * `serv.js` now is reconstructed(i.e. modulization) into
+    * `serv-config.js`, to store configurations (e.g. database, emailsender)
+    * `serv-utils.js` , to sotre sub-functions
+    * `serv-auth.js`  , to store user_related codes
+    * `serv.main.js`  , to store the main progress code
+    * `serv.js`(*new*), to initialze and start the backend server
+

@@ -96,7 +96,7 @@ create table if not exists ticket(
 select * from user_infor order by uid;  
 select * from email_verification;
 select * from pwd_reset;
-select * from gift_code
+select * from gift_code;
 --opera-related&prices
 select * from opera ORDER BY opera_id;
 --raw
