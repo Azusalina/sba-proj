@@ -108,8 +108,13 @@ button:hover {
 
 /* newly added 08.08.2026 for refund part */
 
-
 .order-history .container {
+    width: max-content;
+    min-width: 20vw;
+    /* Keeps your original 20vw as a baseline, but allows it to grow if needed */
+    max-width: 100%;
+    /* Prevents it from breaking past the main screen border */
+
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -117,12 +122,30 @@ button:hover {
     margin-bottom: 8px;
     border: 1px solid #ddd;
     border-radius: 6px;
+    box-sizing: border-box;
 }
 
 .order-info {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+}
+
+.order-info * {
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-right:3px;
+    min-width: max-content;
+}
+
+.ticket-breakdown {
+    display: flex;
+    flex-direction: row;
     gap: 4px;
+    margin: 0;
+    flex-shrink: 0;
 }
 
 .order-opera {
@@ -134,13 +157,6 @@ button:hover {
 .order-status {
     font-size: 0.85em;
     color: #555;
-}
-
-.ticket-breakdown {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    margin: 4px 0;
 }
 
 .ticket-line {
