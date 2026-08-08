@@ -54,9 +54,11 @@ button:hover {
     opacity: 0.9;
 }
 
-#updatePwd-btn,#updateEmail-btn,#updateBirth-btn {
+#updatePwd-btn,
+#updateEmail-btn,
+#updateBirth-btn {
     background-color: #2196F3;
-    margin-left: auto; 
+    margin-left: auto;
 }
 
 .hidden {
@@ -66,7 +68,7 @@ button:hover {
 .edit-area {
     display: flex;
     gap: 8px;
-    margin-left: auto; 
+    margin-left: auto;
 }
 
 .edit-area input {
@@ -100,4 +102,68 @@ button:hover {
     padding: 6px;
     border: 1px solid #ccc;
     border-radius: 4px;
+}
+
+
+
+/* newly added 08.08.2026 for refund part */
+
+
+.order-history .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+.order-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.order-opera {
+    font-weight: bold;
+}
+
+.order-date,
+.order-amount,
+.order-status {
+    font-size: 0.85em;
+    color: #555;
+}
+
+.ticket-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 4px 0;
+}
+
+.ticket-line {
+    font-size: 0.8em;
+    color: #777;
+}
+
+.refund-btn {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.refund-btn:hover:not(:disabled) {
+    background-color: #c0392b;
+    transform: scale(1.05);
+}
+
+.refund-btn:disabled {
+    background-color: #aaa;
+    cursor: not-allowed;
 }

@@ -29,7 +29,10 @@ CREATE TABLE IF NOT EXISTS wallet_transaction (
     CONSTRAINT check_positive_amount CHECK (amount > 0),
     CONSTRAINT check_tx_type CHECK (tx_type IN ('CREDIT', 'DEBIT'))
 );
+
     CREATE INDEX idx_wallet_tx_uid_date ON wallet_transaction(uid, created_at DESC);
+
+
 CREATE table if not exists gift_code(
     code varchar(15)  primary key,--4+1+4+1+4=14, where 4 is 4 digit code and 1 is hyphen
     current_status BOOLEAN default FALSE,
@@ -67,7 +70,8 @@ CREATE table if not exists prices(
     std_low int,
     budget int,
 
-    note varchar(100)
+    note varchar(100),
+    time timestamp
 );
 create table if not exists lv(
     id serial primary key,
@@ -113,3 +117,42 @@ select * from ticket order by ticket_id;
 --reset all data
 update wallet set balance=0 where uid=1;
 delete from wallet_transaction;delete from orders;delete from ticket;delete from gift_code;
+delete from pwd_reset;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- ALTER TABLE prices ADD COLUMN time TIMESTAMP;
+
+-- UPDATE prices
+-- SET time = CASE
+--     WHEN note ILIKE '%caseII%' THEN TIMESTAMP '2025-01-01 19:30:00'
+--     WHEN note ILIKE '%caseI%'  THEN TIMESTAMP '2025-01-01 10:00:00'
+-- END;
+
+-- ALTER TABLE prices ALTER COLUMN time SET NOT NULL;
+
+-- UPDATE prices p
+-- SET time = CASE
+--     WHEN p.note ILIKE '%caseII%' THEN o.show_time
+--     WHEN p.note ILIKE '%caseI%'  THEN date_trunc('day', o.show_time)
+--                                        + ((floor(random() * 5) + 8)::int || ' hours')::interval
+-- END
+-- FROM opera o
+-- WHERE p.opera_id = o.opera_id;
+
+

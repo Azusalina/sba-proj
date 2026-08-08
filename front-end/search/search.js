@@ -1,8 +1,9 @@
+import * as sort from './sort.js'
+//#region
+
 const isLocal = window.location.hostname === '127.0.0.1'
 const API_BASE_URL = isLocal ? 'http://127.0.0.1:3000' : 'https://backend-sba.vercel.app';
-const FRONTEND_URL=isLocal?'http://127.0.0.1:5500':'https://frontend-sba.vercel.app'
-
-import * as sort from './sort.js'
+const FRONTEND_URL = isLocal ? 'http://127.0.0.1:5500' : 'https://frontend-sba.vercel.app'
 
 const price_indicator = document.getElementById("p_indicator");
 const slide_bar = document.getElementById("s_bar");
@@ -29,10 +30,22 @@ const algo_display = document.getElementById("algo-display");
 const time_display = document.getElementById('time-display')
 const plan_display = document.getElementById('plan-display')
 //
+//#endregion
+
 const FilterStatusList = [FilterStatus_name, FilterStatus_price, FilterStatus_time, FilterStatus_rate, FilterStatus_avail]
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //sub-functions
+function formatShowtime(time) {
+    if (!time) return 'N/A';
+    return new Date(time).toLocaleString([], {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
 function updateTime() {
     if (!time_display) {
         time_display = document.getElementById('time-display');
@@ -44,6 +57,7 @@ function updateTime() {
     }
 }
 updateTime();
+
 setInterval(updateTime, 1000)
 function levenshtein(searchInput, data) {
     const a = searchInput.length;
@@ -102,41 +116,81 @@ async function ReqOperaData() {
     const operaResult = await updateOperaData();
     if (operaResult?.status && Array.isArray(operaResult.data)) {
         return operaResult.data.map(opera => ({
-            id: opera.opera_name.toLowerCase().replace(/\s+/g, '-'),
-            name: opera.opera_name,
+            id: opera.id,
+            name: opera.name,
             duration: opera.duration,
-            time: opera.show_time,
             rate: Number(opera.rate),
-            price: Number(opera.price)
+            plans: opera.plans
         }));
     }
     return [];
 }
+
 function createOperaArticle(opera) {
     const article = document.createElement('article');
     article.id = opera.id;
 
-    const date = new Date(opera.time);
+    const currentPlan = opera.plans[0];
+
     article.innerHTML = `
-        <img src="placeholder.png">
-        <div class="info_container">
-            <h1 data-id="${opera.id}">${opera.name}</h1>
-            <label class="price">Budget Price: $${opera.price}</label>
-            <label class="rate">Rate: ${opera.rate}/10</label>
-            <label class="time">Show Time: ${date.toLocaleString()}</label>
-            <label class="duration">Duration: ${opera.duration} min</label>
+    <img src="placeholder.png">
+    <div class="info_container">
+        <h1 data-id="${opera.id}">${opera.name}</h1>
+        <label class="price">Budget Price: $${currentPlan.budget}</label>
+        <label class="rate">Rate: ${opera.rate}/10</label>
+        
+        <div class="time-hover-container">
+            <label class="time">Show Time: <span class="time-text">${formatShowtime(currentPlan.time)}</span></label>
+            <ul class="time-dropdown">
+                <li data-priceid="${opera.plans[0].price_id}" data-time="${opera.plans[0].time}" data-budget="${opera.plans[0].budget}">
+                    Case I: ${formatShowtime(opera.plans[0].time)} (Plan ${opera.plans[0].price_id})
+                </li>
+                <li data-priceid="${opera.plans[1].price_id}" data-time="${opera.plans[1].time}" data-budget="${opera.plans[1].budget}">
+                    Case II: ${formatShowtime(opera.plans[1].time)} (Plan ${opera.plans[1].price_id})
+                </li>
+            </ul>
         </div>
-    `;
+        
+        <label class="duration">Duration: ${opera.duration} min</label>
+    </div>
+`;
 
     const titleTag = article.querySelector('h1');
     titleTag.style.cursor = 'pointer';
     titleTag.addEventListener('click', () => {
         localStorage.setItem('selected', opera.id);
-        window.location.href = redir_link;
+        localStorage.setItem('selected_price_id', currentPlan.price_id);
+        localStorage.setItem('selected_time', currentPlan.time);
+        window.location.href = '../book/book.html';
     });
 
+    const timeItems = article.querySelectorAll('.time-dropdown li');
+    timeItems.forEach(li => {
+        li.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const selectedPriceId = e.target.getAttribute('data-priceid');
+            const selectedTime = e.target.getAttribute('data-time');
+            const selectedBudget = e.target.getAttribute('data-budget');
+            article.querySelector('.price').innerText = `Budget Price: $${selectedBudget}`;
+            article.querySelector('.time-text').innerText = formatShowtime(selectedTime);
+            currentPlan.price_id = selectedPriceId;
+            currentPlan.time = selectedTime;
+            currentPlan.budget = selectedBudget;
+            const planDisplay = document.getElementById('plan-display');
+            if (planDisplay) {
+                planDisplay.innerText = `current price plan adopted: ${selectedPriceId}`;
+            }
+            const dropdown = article.querySelector('.time-dropdown');
+            dropdown.style.display = 'none';
+            setTimeout(() => { dropdown.style.display = ''; }, 200);
+        });
+    });
     return article;
 }
+
+
+
+
 function renderPage(dataList) {
     currentDataset = dataList;
     content_container.innerHTML = '';
@@ -180,7 +234,8 @@ function executeSearch() {
 
     algo_display.innerText = 'Current Algo implied: Levenshtein distance';
 }
-//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 //startup inialize
 const Final = await ReqOperaData();
 //inherit

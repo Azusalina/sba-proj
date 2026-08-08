@@ -34,7 +34,7 @@ body {
 
 
 .container_A {
-    height: 80vh; 
+    height: 80vh;
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -74,7 +74,7 @@ body {
 
 
 .container_A1_content_a {
-    height: 76%;             
+    height: 76%;
     width: 95%;
     display: flex;
     flex-direction: column;
@@ -86,7 +86,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    overflow-y: auto;         
+    overflow-y: auto;
     padding-right: 5px;
 }
 
@@ -98,7 +98,7 @@ body {
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 4px;
-    flex-shrink: 0;  
+    flex-shrink: 0;
 }
 
 .content-display article img {
@@ -110,7 +110,11 @@ body {
 }
 
 
-#carmen,#aida,#rigoletto,#zauberflote,#la-traviata {
+#carmen,
+#aida,
+#rigoletto,
+#zauberflote,
+#la-traviata {
     display: flex;
     align-items: center;
     gap: 20px;
@@ -127,7 +131,7 @@ body {
     display: flex;
     flex-direction: row;
     width: 95%;
-    height: 8%;      
+    height: 8%;
     justify-content: space-between;
     align-items: center;
     flex-shrink: 0;
@@ -190,4 +194,54 @@ body {
     height: 3vh;
     width: 3vh;
     border: none;
+}
+
+/* added 07.08.2026 */
+.time-hover-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.time-hover-container:hover {
+    background-color: #e2dfcf;
+}
+
+.time-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: #ffffff;
+    border: 1px solid #333;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.15);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    min-width: 220px;
+    z-index: 999;
+}
+
+.time-hover-container:hover .time-dropdown {
+    display: block;
+}
+
+.time-dropdown li {
+    padding: 10px 12px;
+    font-size: 13px;
+    color: #333;
+    border-bottom: 1px solid #eee;
+}
+
+.time-dropdown li:last-child {
+    border-bottom: none;
+}
+
+.time-dropdown li:hover {
+    background-color: #007bff;
+    color: #fff;
 }

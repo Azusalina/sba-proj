@@ -156,3 +156,13 @@
     * `serv.main.js`  , to store the main progress code
     * `serv.js`(*new*), to initialze and start the backend server
 
+* **7th Aug 2026**
+  * General update:
+    * box displaying seat class and seat level now would change background color according to sear class in `OrderConfirm.html`
+    
+
+  * **8th Aug 2026**
+  * General update:
+    * price plan now show their diffrence with respect to opera's show time instead of system time
+    * **MAJOR**: add refund ticket function, users are now be able to refund their ticket via setting page,refund infor email will be send once the order was canceled
+        * # exist limitations that users could only refund order instead of single ticket inside one order

@@ -40,13 +40,21 @@ export async function send_ver_mail(target, token, url, userid) {
         throw err;
     }
 }
-export async function send_confirmation_email(targetEmail, orderId, opera, level, sum_price, tickets) {
+export async function send_confirmation_email(targetEmail, orderId, opera, showtime, level, sum_price, tickets) {
     const recipient = [new Recipient(targetEmail, "Opera Customer")];
     const ticketRows = tickets.map(t => `<li><strong>${t.ticketId}</strong> — Level: <em>${t.level}</em>, Class: <em>${t.seatClass2}</em></li>`).join('');
+    const showtimeDisplay = showtime ? new Date(showtime).toLocaleString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    }) : 'N/A';
     const htmlContent = `
         <h2>Booking Confirmation #${orderId}</h2>
         <p>Ticket Booking order record</p>
         <p><strong>Opera:</strong> ${opera}</p>
+        <p><strong>Showtime:</strong> ${showtimeDisplay}</p>
         <p><strong>Seat Level:</strong> ${level}</p>
         <p><strong>Total Paid:</strong> HK$${sum_price}</p>
         <h3>Your Ticket IDs:</h3>
@@ -65,7 +73,28 @@ export async function send_confirmation_email(targetEmail, orderId, opera, level
         throw err;
     }
 }
+export async function send_refund_email(targetEmail, orderId, opera, refundAmount) {
+    const recipient = [new Recipient(targetEmail, "Opera Customer")];
+    const htmlContent = `
+        <h2>Refund Confirmation #${orderId}</h2>
+        <p>Your refund has been processed successfully.</p>
+        <p><strong>Opera:</strong> ${opera}</p>
+        <p><strong>Refunded Amount:</strong> HK$${Number(refundAmount).toFixed(2)}</p>
+        <p>The amount has been credited back to your wallet balance.</p>
+    `;
+    const emailParams = new EmailParams()
+        .setFrom(NoreplySentFrom)
+        .setTo(recipient)
+        .setSubject(`Refund Confirmation #${orderId}`)
+        .setHtml(htmlContent);
 
+    try {
+        await EmailSender.email.send(emailParams);
+    } catch (err) {
+        console.error('Failed to send refund email:', err);
+        throw err;
+    }
+}
 export async function send_reset_email(targetEmail) {
     const recipient = [new Recipient(targetEmail, 'request user')];
     const { token, url } = random_generate_ResetWeb();
@@ -96,9 +125,9 @@ export function TimeToSeconds(timestr) {
 }
 export function getPricePlan(time) {
     const mid = '12:00:00';
-    const current = new Date();
+    const targetDate = time ? new Date(time) : new Date();
     const midSec = TimeToSeconds(mid);
-    const currentSec = current.getHours() * 3600 + current.getMinutes() * 60 + current.getSeconds();
+    const currentSec = targetDate.getHours() * 3600 + targetDate.getMinutes() * 60 + targetDate.getSeconds();
     if (currentSec <= 43200) {
         return 1;
     } else {

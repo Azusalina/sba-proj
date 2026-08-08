@@ -2,13 +2,17 @@ const isLocal = window.location.hostname === '127.0.0.1'
 const API_BASE_URL = isLocal ? 'http://127.0.0.1:3000' : 'https://backend-sba.vercel.app';
 
 const operaTitle = document.getElementById('operaTitle')
-
+const showtimeTitle = document.getElementById('showtimeTitle');
+const selectedTime = localStorage.getItem('selected_time');
+const operaName = localStorage.getItem('selected');
 const budget = document.getElementById("budget")
 const std_low = document.getElementById("std_low")
 const std_high = document.getElementById("std_high")
 const premium = document.getElementById("premium")
 
 const lv = [budget, std_low, std_high, premium];
+
+
 //abbr notes:a=adult,s=student,w=wheelchair
 //p=price
 
@@ -28,11 +32,9 @@ const ticket = {
     wheelchair: 0,
 };
 let btn_current = null;
-//important items:
-const operaName = localStorage.getItem('selected');
-//
 const sub_btn = document.getElementById('sub-btn');
 //
+const username = localStorage.getItem('user');
 let authStatus = false;
 let authName = null;
 
@@ -44,26 +46,33 @@ try {
     authStatus = false;
     authName = null;
 }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 //subfunctions
-async function getPrices(name) {
+function formatShowtime(time) {
+    if (!time) return 'N/A';
+    return new Date(time).toLocaleString([], {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+async function getPrices(name, time) {
     const url = `${API_BASE_URL}/operaName`;
-    const data = { name: operaName };
+    const data = { name: name, time: time };
     try {
         const resp = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data)
         });
-        if (!resp.ok) {
-            throw new Error(`HTTP error! status: ${resp.status}`);
-        } else {
-            const result = await resp.json();
-            return result;
-        }
+        if (!resp.ok) throw new Error(`HTTP error! status: ${resp.status}`);
+        return await resp.json();
     } catch (error) {
-        console.log(error)
+        console.log(error);
     }
 }
 
@@ -93,7 +102,7 @@ function StoreData() {
     const details = {
         opera: opera,
         level: level,
-        user: authName,
+        user: username,
         price_adult: Number(pA.innerText.match(/\d+/)),
         adult: adult,
         price_student: Number(pS.innerText.match(/\d+/)),
@@ -104,9 +113,14 @@ function StoreData() {
     }
     localStorage.setItem('details', JSON.stringify(details))
 }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //initialize
-const data = await getPrices();
+window.addEventListener('DOMContentLoaded', async () => {
+    if (operaName) operaTitle.innerText = `Opera selected: ${operaName}`;
+    if (showtimeTitle) showtimeTitle.innerText = `Showtime: ${formatShowtime(selectedTime)}`;
+});
+let data = await getPrices(operaName, selectedTime);
 if (operaName) {
     operaTitle.innerText = `Opera selected:${operaName}`
 }
@@ -159,7 +173,8 @@ change.forEach(btn => {
 //redir
 
 
-
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+`       `
 //prices work zone
 lv.forEach(async (btn) => {
     btn.addEventListener('click', async (event) => {
@@ -187,26 +202,37 @@ lv.forEach(async (btn) => {
     })
 })
 
-
-
-
-
-
-
 sub_form.addEventListener('submit', (e) => {
     e.preventDefault();
     if (!ticket.level) {
         alert("Please select a seat class.");
         return;
     }
-
-    if (authStatus == false) {
-        alert('you havent sign in yet, redirecting to auth page:')
-        window.location.href = '../auth/auth.html'
+    if (!authStatus) {
+        alert('You haven\'t signed in yet, redirecting to auth page...');
+        window.location.href = '../auth/auth.html';
         return;
     }
-    localStorage.setItem("ticket", JSON.stringify(ticket));
-    StoreData();
-    window.location.href = "../pay/pay.html"
-})
+    const totalMatch = sum_price.innerText.match(/\d+(\.\d+)?/);
+    const total = totalMatch ? Number(totalMatch[0]) : 0;
 
+    const getMultiplier = (type) => {
+        const obj = data.multipliers.find(m => m.name === type);
+        return obj ? obj.multiplier : 1;
+    };
+    const details = {
+        user: username,
+        opera: operaName,
+        showtime: selectedTime,
+        level: ticket.level,
+        adult: ticket.adult,
+        student: ticket.student,
+        wheelchair: ticket.wheelchair,
+        price_adult: data.prices[ticket.level] * getMultiplier('adult'),
+        price_student: data.prices[ticket.level] * getMultiplier('student'),
+        price_wheelchair: data.prices[ticket.level] * getMultiplier('wheelchair'),
+        sum_price: total
+    };
+    localStorage.setItem('details', JSON.stringify(details));
+    window.location.href = '../pay/pay.html';
+});
