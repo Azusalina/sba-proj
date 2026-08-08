@@ -188,65 +188,53 @@ app.post('/operaName', async (req, res) => {
         return res.json({ status: false, msg: 'unknown fatal error' });
     }
 });
-
-app.post('/refundOrder', async (req, res) => {
-    const { user, order_id } = req.body;
+app.post('/PaymentOrder', async (req, res) => {
+    const { user, opera, level, sum_price, adult, student, wheelchair } = req.body;
+    const payAmount = parseFloat(sum_price);
     try {
         await pool.query('BEGIN');
-        const orderRes = await pool.query(
-            `SELECT o.order_id, o.uid, o.sum_fee, o.transac_status
-             FROM orders o
-             JOIN user_infor u ON o.uid = u.uid
-             WHERE o.order_id = $1 AND u.id = $2
-             FOR UPDATE`,
-            [order_id, user]
-        );
-        if (orderRes.rows.length === 0) {
+        const userRes = await pool.query('SELECT u.uid, w.balance FROM user_infor u JOIN wallet w ON u.uid = w.uid WHERE u.id = $1', [user]);
+        if (userRes.rows.length === 0) throw new Error('User or wallet not found');
+
+        const { uid, balance } = userRes.rows[0];
+        const currentBalance = parseFloat(balance);
+        if (currentBalance < payAmount) {
             await pool.query('ROLLBACK');
-            return res.json({ msg: 'not_found' });
+            return res.json({ msg: 'insufficientBalance' });
         }
-        const order = orderRes.rows[0];
-        if (order.transac_status !== 'COMPLETED') {
-            await pool.query('ROLLBACK');
-            return res.json({ msg: 'not_refundable' });
-        }
-        const refundAmount = parseFloat(order.sum_fee);
-        const walletRes = await pool.query(
-            'UPDATE wallet SET balance = balance + $1, updated_at = NOW() WHERE uid = $2 RETURNING balance',
-            [refundAmount, order.uid]
-        );
-        const newBalance = parseFloat(walletRes.rows[0].balance);
+
+        const orderRes = await pool.query("INSERT INTO orders (uid, book_time, transac_time, transac_method, sum_fee, transac_status) VALUES ($1, NOW(), NOW(), 'WALLET_BALANCE', $2, 'COMPLETED') RETURNING order_id", [uid, payAmount]);
+        const newOrderId = orderRes.rows[0].order_id;
+
+        const walletRes = await pool.query('UPDATE wallet SET balance = balance - $1, updated_at = NOW() WHERE uid = $2 RETURNING balance', [payAmount, uid]);
+        const newWalletBal = parseFloat(walletRes.rows[0].balance);
+
         const txId = utils.generate_TransacID();
-        await pool.query(
-            `INSERT INTO wallet_transaction (tx_id, uid, order_id, tx_type, amount, running_balance, source_destination, description)
-             VALUES ($1, $2, $3, 'CREDIT', $4, $5, 'ORDER_REFUND', $6)`,
-            [txId, order.uid, order_id, refundAmount, newBalance, `Refund for order #${order_id}`]
-        );
-        await pool.query(
-            `UPDATE orders SET transac_status = 'REFUNDED' WHERE order_id = $1`,
-            [order_id]
-        );
-        const infoRes = await pool.query(
-            `SELECT u.email, op.opera_name
-             FROM user_infor u, ticket t
-             JOIN opera op ON op.opera_id = t.opera_id
-             WHERE u.id = $1 AND t.order_id = $2
-             LIMIT 1`,
-            [user, order_id]
-        );
-        await pool.query('COMMIT');
-        if (infoRes.rows.length > 0 && infoRes.rows[0].email) {
-            try {
-                await utils.send_refund_email(infoRes.rows[0].email, order_id, infoRes.rows[0].opera_name, refundAmount);
-            } catch (mailErr) {
-                console.error('refund email failed but refund succeeded:', mailErr);
+        await pool.query("INSERT INTO wallet_transaction (tx_id, uid, order_id, tx_type, amount, running_balance, source_destination, description) VALUES ($1, $2, $3, 'DEBIT', $4, $5, 'OPERA_TICKET_PURCHASE', $6)", [txId, uid, newOrderId, payAmount, newWalletBal, `Purchased ticket for ${opera}`]);
+
+        const operaRes = await pool.query("SELECT opera_id FROM opera WHERE LOWER(REPLACE(opera_name, ' ', '-')) = $1", [opera]);
+        if (operaRes.rows.length === 0) throw new Error('Opera not found');
+        const operaId = operaRes.rows[0].opera_id;
+
+        const generatedTicketIDs = [];
+        const insertTickets = async (seatClass2, quantity) => {
+            for (let i = 0; i < quantity; i++) {
+                const ticketId = utils.generate_ticketID(opera);
+                generatedTicketIDs.push({ ticketId, level, seatClass2 });
+                await pool.query('INSERT INTO ticket (ticket_id, opera_id, order_id, seat_class, seat_class2, seat_num) VALUES ($1, $2, $3, $4, $5, 1)', [ticketId, operaId, newOrderId, level, seatClass2]);
             }
-        }
-        return res.json({ msg: 'success', balance: newBalance });
+        };
+
+        if (adult > 0) await insertTickets('ADULT', adult);
+        if (student > 0) await insertTickets('STUDENT', student);
+        if (wheelchair > 0) await insertTickets('WHEELCHAIR', wheelchair);
+
+        await pool.query('COMMIT');
+        return res.json({ msg: 'success', orderId: newOrderId, tickets: generatedTicketIDs });
     } catch (error) {
         await pool.query('ROLLBACK');
-        console.error('Refund Error:', error);
-        return res.json({ msg: 'error' });
+        console.error('Transaction Error:', error);
+        return res.json({ msg: 'error', details: 'service in maintainance' });
     }
 });
 

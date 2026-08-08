@@ -1,3 +1,6 @@
+const isLocal = window.location.hostname === '127.0.0.1'
+const API_BASE_URL = isLocal ? 'http://127.0.0.1:3000' : 'https://backend-sba.vercel.app';
+
 const note = document.getElementById('note')
 const texts = ['we are handling with your order, please wait for a few seconds.',
     'we are handling with your order, please wait for a few seconds..',
@@ -15,7 +18,7 @@ const noteInterval = setInterval(updateNote, 500);
 
 
 async function handlingOrder() {
-    url = 'http://127.0.0.1:3000/PaymentOrder'
+    const url = `${API_BASE_URL}/PaymentOrder`
     data = JSON.parse(localStorage.getItem('details'))
     try {
         const resp = await fetch(url, {
@@ -31,7 +34,7 @@ async function handlingOrder() {
                 localStorage.setItem('orderId', result.orderId);
                 localStorage.setItem('tickets', JSON.stringify(result.tickets));
                 await sleep(2000);
-                window.location.href='../../OrderConfirm/OrderConfirm.html'
+                window.location.href = '../../OrderConfirm/OrderConfirm.html'
             } else if (result.msg === 'insufficientBalance') {
                 note.innerText = 'Order was canceled due to insufficient amount left in your wallet.';
                 await sleep(2000);
