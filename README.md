@@ -180,10 +180,10 @@ Import the provided schema backup file (database_dump.sql included in the root f
 ```Bash
 psql -U postgres -d sba_opera < database_dump.sql
 ```
-Update the database credentials in `serv-config.js` if necessary.
+Update the database credentials in serv-config.js if necessary.
 
 ### Step 3: Launch the Backend Server
-Install Visual Studio Code and live server extension;
+Install Visual Studio Code and live server extention;
 
 click go live button at right bottom corner;
 
