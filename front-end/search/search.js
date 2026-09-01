@@ -28,7 +28,6 @@ const FilterStatus_rate = document.getElementById('FilterStatus_rate')
 const FilterStatus_avail = document.getElementById('FilterStatus_avail')
 const algo_display = document.getElementById("algo-display");
 const time_display = document.getElementById('time-display')
-const plan_display = document.getElementById('plan-display')
 //
 //#endregion
 
@@ -101,12 +100,6 @@ async function updateOperaData(name) {
             throw new Error(`HTTP error! status: ${resp.status}`);
         }
         const result = await resp.json();
-        if (result.status && result.plan) {
-            const plan_display = document.getElementById('plan-display');
-            if (plan_display) {
-                plan_display.innerText = `current price plan adopted: Plan ${result.plan}`;
-            }
-        }
         return result;
     } catch (error) {
         console.log(error);
@@ -176,10 +169,7 @@ function createOperaArticle(opera) {
             currentPlan.price_id = selectedPriceId;
             currentPlan.time = selectedTime;
             currentPlan.budget = selectedBudget;
-            const planDisplay = document.getElementById('plan-display');
-            if (planDisplay) {
-                planDisplay.innerText = `current price plan adopted: ${selectedPriceId}`;
-            }
+            
             const dropdown = article.querySelector('.time-dropdown');
             dropdown.style.display = 'none';
             setTimeout(() => { dropdown.style.display = ''; }, 200);
