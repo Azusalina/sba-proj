@@ -103,6 +103,7 @@ body {
 
 .auth,
 .logoutBtn {
+    margin-left:2vw;
     color: var(--gold2);
     text-decoration: none;
     font-family: "Grenze Gotisch", serif;
