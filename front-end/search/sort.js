@@ -1,3 +1,8 @@
+//util file
+
+
+
+
 export function selection(data = []) {
     const n = data.length;
     for (let i = 0; i < n; i++) {
@@ -206,7 +211,7 @@ export function quick_v2(data = []) {
     return data;
 }
 
-function quick_v2_InPlace(data, start, end) {
+export function quick_v2_InPlace(data, start, end) {
     if (start >= end) return;
 
     const midIdx = Math.floor((start + end) / 2);

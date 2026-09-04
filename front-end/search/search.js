@@ -5,8 +5,7 @@ const isLocal = window.location.hostname === '127.0.0.1'
 const API_BASE_URL = isLocal ? 'http://127.0.0.1:3000' : 'https://backend-sba.vercel.app';
 const FRONTEND_URL = isLocal ? 'http://127.0.0.1:5500' : 'https://frontend-sba.vercel.app'
 
-const price_indicator = document.getElementById("p_indicator");
-const slide_bar = document.getElementById("s_bar");
+
 const main = document.getElementById('main')
 const bar = document.getElementById("bar");
 //operas
@@ -25,13 +24,12 @@ const FilterStatus_name = document.getElementById('FilterStatus_name')
 const FilterStatus_price = document.getElementById('FilterStatus_price')
 const FilterStatus_time = document.getElementById('FilterStatus_time')
 const FilterStatus_rate = document.getElementById('FilterStatus_rate')
-const FilterStatus_avail = document.getElementById('FilterStatus_avail')
 const algo_display = document.getElementById("algo-display");
 const time_display = document.getElementById('time-display')
 //
 //#endregion
 
-const FilterStatusList = [FilterStatus_name, FilterStatus_price, FilterStatus_time, FilterStatus_rate, FilterStatus_avail]
+const FilterStatusList = [FilterStatus_name, FilterStatus_price, FilterStatus_time, FilterStatus_rate]
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //sub-functions
@@ -169,7 +167,7 @@ function createOperaArticle(opera) {
             currentPlan.price_id = selectedPriceId;
             currentPlan.time = selectedTime;
             currentPlan.budget = selectedBudget;
-            
+
             const dropdown = article.querySelector('.time-dropdown');
             dropdown.style.display = 'none';
             setTimeout(() => { dropdown.style.display = ''; }, 200);
@@ -241,9 +239,6 @@ filterlist.forEach((status) => {
     if (status) status.checked = false;
 });
 
-slide_bar.addEventListener("input", () => {
-    price_indicator.innerText = `price:${slide_bar.value}`;
-});
 const redir_link = `${FRONTEND_URL}/front-end/book/book.html`
 window.addEventListener('keydown', (event) => {
     if (event.key === 'ArrowLeft') {
