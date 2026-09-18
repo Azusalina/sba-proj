@@ -166,3 +166,9 @@
     * price plan now show their diffrence with respect to opera's show time instead of system time
     * **MAJOR**: add refund ticket function, users are now be able to refund their ticket via setting page,refund infor email will be send once the order was canceled
         * # exist limitations that users could only refund order instead of single ticket inside one order
+
+
+
+
+
+
