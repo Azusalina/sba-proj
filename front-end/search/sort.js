@@ -16,61 +16,6 @@ export function selection(data = []) {
     }
     return data;
 }
-
-export function bubble_ascending_price(data = []) {
-    for (let i = 0; i < data.length - 1; i++) {
-        let status = false;
-        for (let j = 0; j < data.length - i - 1; j++) {
-            if (data[j].price > data[j + 1].price) {
-                [data[j], data[j + 1]] = [data[j + 1], data[j]];
-                status = true;
-            }
-        }
-        if (!status) break;
-    }
-    return data;
-};
-export function bubble_ascending_rate(data = []) {
-    for (let i = 0; i < data.length - 1; i++) {
-        let status = false;
-        for (let j = 0; j < data.length - i - 1; j++) {
-            if (data[j].rate < data[j + 1].rate) {
-                [data[j], data[j + 1]] = [data[j + 1], data[j]];
-                status = true;
-            }
-        }
-        if (!status) break;
-    }
-    return data;
-};
-
-export function insertion(data = []) {
-    const n = data.length;
-    for (let i = 1; i < n; i++) {
-        let key = data[i];
-        let j = i - 1;
-        while (j >= 0 && data[j] > key) {
-            data[j + 1] = data[j];
-            j -= 1;
-        }
-        data[j + 1] = key;
-    }
-    return data;
-};
-export function insertion_time(data = []) {
-    const n = data.length;
-    for (let i = 1; i < n; i++) {
-        let key = data[i];
-        let j = i - 1;
-        while (j >= 0 && data[j].time > key.time) {
-            data[j + 1] = data[j];
-            j -= 1;
-        }
-        data[j + 1] = key;
-    }
-    return data;
-};
-
 export function merge(data = []) {
     let width = 1;
     const n = data.length;
@@ -113,6 +58,81 @@ export function merge(data = []) {
     }
     return data;
 };
+export function insertion(data = []) {
+    const n = data.length;
+    for (let i = 1; i < n; i++) {
+        let key = data[i];
+        let j = i - 1;
+        while (j >= 0 && data[j] > key) {
+            data[j + 1] = data[j];
+            j -= 1;
+        }
+        data[j + 1] = key;
+    }
+    return data;
+};
+export function quick(data = []) {
+    if (data.length <= 1) return data;
+    const len = data.length;
+    const first = data[0];
+    const mid = data[Math.floor((len - 1) / 2)];
+    const last = data[len - 1];
+    const pivot = median(first, mid, last);
+    const pivotIdx = data.indexOf(pivot);
+    data.splice(pivotIdx, 1);
+    let left = [];
+    let right = [];
+    for (let i = 0; i < data.length; i++) {
+        if (data[i] <= pivot) {
+            left.push(data[i]);
+        } else {
+            right.push(data[i]);
+        }
+    }
+    return [...quick(left), pivot, ...quick(right)];
+}
+
+export function bubble_ascending_price(data = []) {
+    for (let i = 0; i < data.length - 1; i++) {
+        let status = false;
+        for (let j = 0; j < data.length - i - 1; j++) {
+            if (data[j].budget > data[j + 1].budget) {
+                [data[j], data[j + 1]] = [data[j + 1], data[j]];
+                status = true;
+            }
+        }
+        if (!status) break;
+    }
+    return data;
+};
+export function bubble_ascending_rate(data = []) {
+    for (let i = 0; i < data.length - 1; i++) {
+        let status = false;
+        for (let j = 0; j < data.length - i - 1; j++) {
+            if (data[j].rate < data[j + 1].rate) {
+                [data[j], data[j + 1]] = [data[j + 1], data[j]];
+                status = true;
+            }
+        }
+        if (!status) break;
+    }
+    return data;
+};
+export function insertion_time(data = []) {
+    const n = data.length;
+    for (let i = 1; i < n; i++) {
+        let key = data[i];
+        let j = i - 1;
+        while (j >= 0 && data[j].plans[0].budget > key.plans[0].budget) {
+            data[j + 1] = data[j];
+            j -= 1;
+        }
+        data[j + 1] = key;
+    }
+    return data;
+};
+
+
 export function merge_name(data = []) {
     let width = 1;
     const n = data.length;
@@ -155,27 +175,6 @@ export function merge_name(data = []) {
 };
 
 
-export function quick(data = []) {
-    if (data.length <= 1) return data;
-    const len = data.length;
-    const first = data[0];
-    const mid = data[Math.floor((len - 1) / 2)];
-    const last = data[len - 1];
-    const pivot = median(first, mid, last);
-    const pivotIdx = data.indexOf(pivot);
-    data.splice(pivotIdx, 1);
-    let left = [];
-    let right = [];
-    for (let i = 0; i < data.length; i++) {
-        if (data[i] <= pivot) {
-            left.push(data[i]);
-        } else {
-            right.push(data[i]);
-        }
-    }
-    return [...quick(left), pivot, ...quick(right)];
-}
-
 export function quick_v1(data = []) {
     if (data.length <= 1) return data;
     const len = data.length;
@@ -188,9 +187,9 @@ export function quick_v1(data = []) {
     const vpivot = vfirst + vmid + vlast - Math.max(vfirst, vmid, vlast) - Math.min(vfirst, vmid, vlast);
     let pivotIdx = 0;
     if (vpivot === vmid) {
-        pivotIdx = Math.floor((len-1)/2);
+        pivotIdx = Math.floor((len - 1) / 2);
     } else if (vpivot === vlast) {
-        pivotIdx = len-1
+        pivotIdx = len - 1
     }
     const pivot = data[pivotIdx];
     data.splice(pivotIdx, 1);

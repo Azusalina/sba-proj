@@ -175,10 +175,6 @@ function createOperaArticle(opera) {
     });
     return article;
 }
-
-
-
-
 function renderPage(dataList) {
     currentDataset = dataList;
     content_container.innerHTML = '';

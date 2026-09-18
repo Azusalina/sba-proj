@@ -111,10 +111,7 @@ button:hover {
 .order-history .container {
     width: max-content;
     min-width: 20vw;
-    /* Keeps your original 20vw as a baseline, but allows it to grow if needed */
     max-width: 100%;
-    /* Prevents it from breaking past the main screen border */
-
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -136,7 +133,7 @@ button:hover {
 .order-info * {
     white-space: nowrap;
     flex-shrink: 0;
-    margin-right:3px;
+    margin-right: 3px;
     min-width: max-content;
 }
 
