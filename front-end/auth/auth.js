@@ -24,7 +24,7 @@ const signup_email = document.getElementById("signup_email");
 const signup_pwd = document.getElementById("signup_pwd");
 const signup_pwd_confirm = document.getElementById("signup_pwd_confirm");
 const signup_status = document.getElementById("signup_status");
-const signupSubmit = document.getElementById("signupSubmit");
+const signupSubmit = document.getElementById("signupform");
 
 const to_reset_btn = document.getElementById("to_reset_redirection")
 
@@ -114,7 +114,7 @@ signupSubmit.addEventListener('submit', (event) => {
     const username = signup_id.value.trim();
     const email = signup_email.value.trim();
     const pwd = signup_pwd.value.trim();
-    const pwd_confirm = signupSubmit.value.trim();
+    const pwd_confirm = signup_pwd_confirm.value.trim();
     const valid_condition = valid_check(pwd);
 
     if (!username || !email || !pwd) {

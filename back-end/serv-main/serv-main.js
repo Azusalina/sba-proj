@@ -5,6 +5,9 @@ import pool from '../serv-config/serv-config.js';
 import * as utils from '../serv-utils/serv-utils.js';
 import { Recipient } from "mailersend";
 
+import { Queue } from '../../syl.mjs'
+
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -188,6 +191,7 @@ app.post('/operaName', async (req, res) => {
         return res.json({ status: false, msg: 'unknown fatal error' });
     }
 });
+
 app.post('/PaymentOrder', async (req, res) => {
     const { user, opera, level, sum_price, adult, student, wheelchair } = req.body;
     const payAmount = parseFloat(sum_price);
@@ -217,18 +221,28 @@ app.post('/PaymentOrder', async (req, res) => {
         const operaId = operaRes.rows[0].opera_id;
 
         const generatedTicketIDs = [];
-        const insertTickets = async (seatClass2, quantity) => {
+        const ticketQueue = new Queue();
+
+        const enqueueTickets = (seatClass2, quantity) => {
             for (let i = 0; i < quantity; i++) {
-                const ticketId = utils.generate_ticketID(opera);
-                generatedTicketIDs.push({ ticketId, level, seatClass2 });
-                await pool.query('INSERT INTO ticket (ticket_id, opera_id, order_id, seat_class, seat_class2, seat_num) VALUES ($1, $2, $3, $4, $5, 1)', [ticketId, operaId, newOrderId, level, seatClass2]);
+                ticketQueue.enqueue(seatClass2);
             }
         };
 
-        if (adult > 0) await insertTickets('ADULT', adult);
-        if (student > 0) await insertTickets('STUDENT', student);
-        if (wheelchair > 0) await insertTickets('WHEELCHAIR', wheelchair);
+        enqueueTickets('ADULT', adult);
+        enqueueTickets('STUDENT', student);
+        enqueueTickets('WHEELCHAIR', wheelchair);
 
+        while (!ticketQueue.isEmpty()) {
+            const seatClass2 = ticketQueue.dequeue();
+            const ticketId = utils.generate_ticketID(opera);
+
+            generatedTicketIDs.push({ ticketId, level, seatClass2 });
+            await pool.query(
+                'INSERT INTO ticket (ticket_id, opera_id, order_id, seat_class, seat_class2, seat_num) VALUES ($1, $2, $3, $4, $5, $6)',
+                [ticketId, operaId, newOrderId, level, seatClass2, generatedTicketIds.length]
+            );
+        }
         await pool.query('COMMIT');
         return res.json({ msg: 'success', orderId: newOrderId, tickets: generatedTicketIDs });
     } catch (error) {
