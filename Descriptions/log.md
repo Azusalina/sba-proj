@@ -62,7 +62,7 @@
 
 * **25th July 2026** 
   * Connect front-end search page `search.js` with backend `serv.js` in order to update opera-related data dynamically.
-  * Implement **Merge Sort** for "sort by name" and **Insertion Sort** for "sort by show_time" in `search.html`,more algorithms will be implemented in the future *(est. <=2 days)*
+  * Implement **Merge Sort** for "sort by name" and **Insertion Sort** for "sort by show-time" in `search.html`,more algorithms will be implemented in the future *(est. <=2 days)*
     * To support the front-end search page, new columns were added to the `opera` table in the database:
       * **Original version:**
         ```sql
@@ -152,7 +152,7 @@
   * `serv.js` now is reconstructed(i.e. modulization) into
     * `serv-config.js`, to store configurations (e.g. database, emailsender)
     * `serv-utils.js` , to sotre sub-functions
-    * `serv-auth.js`  , to store user_related codes
+    * `serv-auth.js`  , to store user-related codes
     * `serv.main.js`  , to store the main progress code
     * `serv.js`(*new*), to initialze and start the backend server
 
@@ -168,6 +168,11 @@
         * # exist limitations that users could only refund order instead of single ticket inside one order
 
 
+* **27.09.26'**
+    * newly-added:
+        - `syl.mjs` to furfill special requirements by the syllabus to include several unccommonly-used structures like linked list
+        - integrate functions and structures in `syl.mjs` into the projects, in both front-end (e.g. `search/search.js`) and back-end (e.g. `serv-main/serv-main.js)
+    * essay'll be updated by est. tmr
 
 
 

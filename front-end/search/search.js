@@ -198,18 +198,37 @@ function renderPage(dataList) {
 function AccordingToSearchBar() {
     const content = bar.value.trim().toLowerCase();
 
-    const sortedData = [...Final].sort((a, b) => {
-        const aName = a.id.toLowerCase();
-        const bName = b.id.toLowerCase();
+    if (!content) return [...Final];
 
-        const distA = aName.includes(content) ? -1 : levenshtein(content, aName);
-        const distB = bName.includes(content) ? -1 : levenshtein(content, bName);
+    const exact = operaIndex.findExact(content);
+    const partialIds = new Set(
+        operaIndex.findPartial(content).map(opera => opera.id)
+    );
 
-        return distA - distB;
+    const ranked = Final.map((opera, originalIndex) => {
+        let score;
+
+        if (exact && opera.id === exact.id) {
+            score = -2; 
+        } else if (partialIds.has(opera.id)) {
+            score = -1; 
+        } else {
+            score = levenshtein(content, opera.id.toLowerCase());
+        }
+
+        return { opera, originalIndex, score };
     });
 
-    return sortedData;
+    quickSortInPlace(
+        ranked,
+        (a, b) => a.score - b.score || a.originalIndex - b.originalIndex
+    );
+
+    return ranked.map(result => result.opera);
 }
+
+
+
 function executeSearch() {
     const searchResults = AccordingToSearchBar();
 
