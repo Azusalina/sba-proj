@@ -39,7 +39,7 @@ CREATE table if not exists gift_code(
     claim_by varchar(30) references user_infor(id),
     claim_time timestamp,
     amount decimal(10,2)
-)
+);
 CREATE TABLE if not exists email_verification (
     token TEXT PRIMARY KEY,
     userid TEXT REFERENCES user_infor(id),

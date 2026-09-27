@@ -178,10 +178,16 @@
     * fixed many bugs 
     * add many new things
     * lost many hairs
-    * waste many times
-    //:wq
+    * wasted many times
+    //
+    :wq
     :wq
     :qa
+    ^C
+    ^C
+    ^C
+    :qa
+
 
 
 
