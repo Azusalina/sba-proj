@@ -30,7 +30,7 @@ const time_display = document.getElementById('time-display')
 //
 //#endregion
 
-const FilterStatusList = [FilterStatus_name, FilterStatus_price, FilterStatus_time, FilterStatus_rate]
+const FilterStatusList = [FilterStatus_name, FilterStatus_price, FilterStatus_time, FilterStatus_rate, FilterStatus_duration]
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //sub-functions
@@ -315,6 +315,10 @@ FilterStatusList.forEach((status) => {
                 sort.bubble_ascending_rate(Final);
                 algo_display.innerText = 'Current Algorithm implemented: bubble sort';
             }
+          if (section === 'duration') {
+                sort.selectionDuration(Final);
+                algo_display.innerText = 'Current Algorithm implemented: selection sort';
+          }
             currentPage = 1;
             renderPage(Final);
         }

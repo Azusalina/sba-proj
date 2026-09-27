@@ -15,38 +15,69 @@ if (!token) {
     form.style.display = 'none';
 }
 
+
+
+function validatePassword(value) {
+    const errors = [];
+
+    if (typeof value !== 'string' || value.length === 0) {
+        return ['Password cannot be empty.'];
+    }
+    if (value.length < 8 || value.length > 64) {
+        errors.push('Password must contain 8–64 characters.');
+    }
+    if (!/[A-Z]/.test(value)) {
+        errors.push('At least one uppercase letter is required.');
+    }
+    if (!/[a-z]/.test(value)) {
+        errors.push('At least one lowercase letter is required.');
+    }
+    if (!/\d/.test(value)) {
+        errors.push('At least one digit is required.');
+    }
+    if (!/[^\w\s]/.test(value)) {
+        errors.push('At least one special character is required.');
+    }
+
+    return errors;
+}
+
+
+
+
+
+
 form.addEventListener('submit', async (event) => {
-    event.preventDefault();
+  event.preventDefault();
+  const newPwd = pwdInput.value;
+  const confirmPwd = pwdConfirmInput.value;
 
-    const newPwd = pwdInput.value;
-    const confirmPwd = pwdConfirmInput.value;
-    
-    
-    if (!newPassword || !confirmation) {
-        StatusDisplay.innerText = 'Both password fields are required.';
-        StatusDisplay.style.color = 'red';
-        return;
-    }
+  if (!newPwd || !confirmPwd) {
+      StatusDisplay.innerText = 'Both pwd fields are required.';
+      StatusDisplay.style.color = 'red';
+      return;
+  }
 
-    const errors = validatePassword(newPassword);
+  const errors = validatePassword(newPwd);
 
-    if (errors.length > 0) {
-        StatusDisplay.innerText = errors.join('\n');
-        StatusDisplay.style.color = 'red';
-        return;
-    }
+  if (errors.length > 0) {
+      StatusDisplay.innerText = errors.join('\n');
+      StatusDisplay.style.color = 'red';
+      return;
+  }
 
-    if (newPassword !== confirmation) {
-        StatusDisplay.innerText = 'Passwords do not match.';
-        StatusDisplay.style.color = 'red';
-        return;
-    }    
-    
-    if (newPwd !== confirmPwd) {
-        StatusDisplay.innerText = "Error: Passwords do not match!";
-        StatusDisplay.style.color = "red";
-        return;
-    }
+  if (newPwd !== confirmPwd) {
+      StatusDisplay.innerText = 'Pwds do not match.';
+      StatusDisplay.style.color = 'red';
+      return;
+  }
+
+
+
+
+
+
+
     StatusDisplay.innerText = "Updating password, please wait...";
     StatusDisplay.style.color = "black"
     const url = `${API_BASE_URL}/reset/updatepwd`;

@@ -264,17 +264,24 @@ export function selectionDuration(data = []) {
     return data;
 }
 
-export function recursiveMergeSort(items, compare) {
-    if (items.length <= 1) {
-        return items;
+
+function mergeHalves(left, right, compare) {
+    const result = [];
+    let i = 0;
+    let j = 0;
+
+    while (i < left.length && j < right.length) {
+        if (compare(left[i], right[j]) <= 0) {
+            result.push(left[i++]);
+        } else {
+            result.push(right[j++]);
+        }
     }
 
-    const middle = Math.floor(items.length / 2);
-    const left = recursiveMergeSort(items.slice(0, middle), compare);
-    const right = recursiveMergeSort(items.slice(middle), compare);
-
-    return mergeHalves(left, right, compare);
+    return result.concat(left.slice(i), right.slice(j));
 }
+
+
 
 // let data = [1, 6, 3, 5, 7, 9, 0, 9, 6, 4, 2];
 // data = quick(data);

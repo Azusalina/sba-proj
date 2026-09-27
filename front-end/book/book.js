@@ -212,6 +212,13 @@ lv.forEach(async (btn) => {
 
 sub_form.addEventListener('submit', (e) => {
     e.preventDefault();
+    const quantity =
+    ticket.adult + ticket.student + ticket.wheelchair;
+
+    if (quantity === 0) {
+      alert('Please select at least one ticket.');
+      return;
+    }
     if (!ticket.level) {
         alert("Please select a seat class.");
         return;

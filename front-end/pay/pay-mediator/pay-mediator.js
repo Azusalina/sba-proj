@@ -19,7 +19,7 @@ const noteInterval = setInterval(updateNote, 500);
 
 async function handlingOrder() {
     const url = `${API_BASE_URL}/PaymentOrder`
-    data = JSON.parse(localStorage.getItem('details'))
+    const data = JSON.parse(localStorage.getItem('details'))
     try {
         const resp = await fetch(url, {
             method: "POST",

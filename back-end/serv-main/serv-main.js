@@ -199,6 +199,21 @@ app.post('/operaName', async (req, res) => {
 app.post('/PaymentOrder', async (req, res) => {
     const { user, opera, level, sum_price, adult, student, wheelchair } = req.body;
     const payAmount = parseFloat(sum_price);
+    
+    const quantities = [adult, student, wheelchair].map(Number);
+
+  if (
+     quantities.some(value =>
+          !Number.isInteger(value) || value < 0
+     ) ||
+      quantities.every(value => value === 0)
+  ) {
+      return res.status(400).json({ msg: 'invalid_quantity' });
+  }
+
+  if (!Number.isFinite(payAmount) || payAmount <= 0) {
+      return res.status(400).json({ msg: 'invalid_amount' });
+  }
     try {
         await pool.query('BEGIN');
         const userRes = await pool.query('SELECT u.uid, w.balance FROM user_infor u JOIN wallet w ON u.uid = w.uid WHERE u.id = $1', [user]);

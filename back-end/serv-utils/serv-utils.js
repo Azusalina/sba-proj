@@ -11,7 +11,7 @@ const NoreplySentFrom = new Sender("noreply@test-z0vklo6xwxpl7qrx.mlsender.net",
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 export function hash(pwd, salt) {
-    return crypto.createHash("sha256").update(pwd + salt).digest("hex");
+    return crypto.scrypt("sha256").update(pwd + salt).digest("hex");
 }
 
 export function random_generate_web() {
@@ -161,3 +161,19 @@ export function generate_ticketID(operaName) {
     return `${prefix}${time}${ID1}${ID2} `
 }
 
+export function validatePassword(value) {
+    const errors = [];
+
+    if (typeof value !== 'string' || value.length === 0) {
+        return ['Password cannot be empty.'];
+    }
+    if (value.length < 8 || value.length > 64) {
+        errors.push('Password must contain 8–64 characters.');
+    }
+    if (!/[A-Z]/.test(value)) errors.push('Uppercase letter required.');
+    if (!/[a-z]/.test(value)) errors.push('Lowercase letter required.');
+    if (!/\d/.test(value)) errors.push('Digit required.');
+    if (!/[^\w\s]/.test(value)) errors.push('Special character required.');
+
+    return errors;
+}

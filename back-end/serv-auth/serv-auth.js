@@ -43,13 +43,25 @@ app.post('/auth/signup', async (req, res) => {
             const v_receiver = [new Recipient(email, "Receiver alpha")];
             await pool.query(`INSERT INTO email_verification(token, userid, expire_time) VALUES($1, $2, NOW() + INTERVAL '1 day')`, [token, userid]);
             await pool.query("COMMIT");
-            try {
-                await utils.send_ver_mail(v_receiver, token, url, userid);
-                console.log('mail has been sent.')
-            } catch (err) {
-                console.log('failed to send ver_email', err);
-            }
-            res.json({ success: true, msg: "ver_email has been sent to you,check your inbox" });
+        
+        try {
+    await utils.send_ver_mail(v_receiver, token, url, userid);
+    return res.json({
+        success: true,
+        msg: 'Verification email has been sent.'
+    });
+} catch (error) {
+    return res.status(502).json({
+        success: false,
+        accountCreated: true,
+        msg: 'Account created, but verification email delivery failed.'
+    });
+}
+
+
+
+
+
         } else {
             res.json({ success: false, msg: "Invalid username or password" });
         }
@@ -152,7 +164,7 @@ app.post('/reset/updatepwd', async (req, res) => {
             await pool.query("ROLLBACK");
             return res.json({ success: false, msg: "Invalid or expired token" });
         }
-        const passwordErrors = validatePassword(newPwd);
+        const passwordErrors = utils.validatePassword(newPwd);
 
 if (passwordErrors.length > 0) {
     await pool.query('ROLLBACK');
