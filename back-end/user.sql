@@ -8,6 +8,7 @@ create table if not EXISTS user_infor (
     email varchar(50),
     birth date, 
     verified BOOLEAN default FALSE
+    salt varchar(64);
 );
 CREATE TABLE IF NOT EXISTS wallet (
     uid INT PRIMARY KEY REFERENCES user_infor(uid) ON DELETE CASCADE,
@@ -142,8 +143,4 @@ select * from ticket order by ticket_id;
 -----
 
 
-
-
-
---------------------------
 

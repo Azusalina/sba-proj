@@ -34,7 +34,7 @@ app.post('/auth/signup', async (req, res) => {
     try {
         await pool.query("BEGIN");
         const salt = crypto.randomBytes(16).toString('hex');
-        const pwd2 = utils.hash(pwd, salt);
+        const pwd2 = await utils.hash(pwd, salt);
         const sql_command = "insert into user_infor(id,email,pwd,salt) values($1,$2,$3,$4)";
         const db_result = await pool.query(sql_command, [userid, email, pwd2, salt]);
         if (db_result.rowCount > 0) {
@@ -113,7 +113,19 @@ app.post('/auth/login', async (req, res) => {
             const salt = salt_result.rows[0].salt;
             const saved_pwd = salt_result.rows[0].pwd;
             try {
-                const enc_pwd = utils.hash(pwd, salt);
+                const enc_pwd = await utils.hash(pwd, salt);
+                const calculated = Buffer.from(enc_pwd, 'hex');
+                const stored = Buffer.from(saved_pwd, 'hex');
+
+                const matches =
+                  calculated.length === stored.length &&
+                  crypto.timingSafeEqual(calculated, stored);
+
+                  if (matches) {
+    return res.json({ success: true, msg: 'success' });
+}
+
+return res.json({ success: false, msg: 'error' });
                 if (enc_pwd === saved_pwd) {
                     res.json({ success: true, msg: "success" });
                 } else {
@@ -176,7 +188,7 @@ if (passwordErrors.length > 0) {
 
         const userEmail = tokenCheck.rows[0].email;
         const newSalt = crypto.randomBytes(16).toString('hex');
-        const newHashedPwd = utils.hash(newPwd, newSalt);
+        const newHashedPwd = await utils.hash(newPwd, newSalt);
         await pool.query(`UPDATE user_infor SET pwd = $1, salt = $2 WHERE email = $3`, [newHashedPwd, newSalt, userEmail]);
         await pool.query(`UPDATE pwd_reset SET used = TRUE WHERE token = $1`, [token]);
         await pool.query("COMMIT");

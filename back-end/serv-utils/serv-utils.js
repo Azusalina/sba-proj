@@ -10,9 +10,26 @@ const EmailSender = new MailerSend({ apiKey: process.env.MAILERSEND_API_KEY });
 const NoreplySentFrom = new Sender("noreply@test-z0vklo6xwxpl7qrx.mlsender.net", "noreply verification");
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
 export function hash(pwd, salt) {
-    return crypto.scrypt("sha256").update(pwd + salt).digest("hex");
+    return new Promise((resolve, reject) => {
+        if (typeof pwd !== 'string' || typeof salt !== 'string') {
+            reject(new TypeError('Password and salt must be strings.'));
+            return;
+        }
+
+        crypto.scrypt(pwd, salt, 64, (error, derivedKey) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+
+            resolve(derivedKey.toString('hex'));
+        });
+    });
 }
+
+
 
 export function random_generate_web() {
     const result = crypto.randomUUID().replace(/-/g, '');
