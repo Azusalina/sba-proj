@@ -174,6 +174,14 @@
         - integrate functions and structures in `syl.mjs` into the projects, in both front-end (e.g. `search/search.js`) and back-end (e.g. `serv-main/serv-main.js)
     * essay'll be updated by est. tmr
 
+* **27.09.26'-II**
+    * fixed many bugs 
+    * add many new things
+    * lost many hairs
+    * waste many times
+    //:wq
+    :wq
+    :qa
 
 
 
