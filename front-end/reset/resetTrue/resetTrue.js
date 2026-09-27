@@ -20,7 +20,28 @@ form.addEventListener('submit', async (event) => {
 
     const newPwd = pwdInput.value;
     const confirmPwd = pwdConfirmInput.value;
+    
+    
+    if (!newPassword || !confirmation) {
+        StatusDisplay.innerText = 'Both password fields are required.';
+        StatusDisplay.style.color = 'red';
+        return;
+    }
 
+    const errors = validatePassword(newPassword);
+
+    if (errors.length > 0) {
+        StatusDisplay.innerText = errors.join('\n');
+        StatusDisplay.style.color = 'red';
+        return;
+    }
+
+    if (newPassword !== confirmation) {
+        StatusDisplay.innerText = 'Passwords do not match.';
+        StatusDisplay.style.color = 'red';
+        return;
+    }    
+    
     if (newPwd !== confirmPwd) {
         StatusDisplay.innerText = "Error: Passwords do not match!";
         StatusDisplay.style.color = "red";

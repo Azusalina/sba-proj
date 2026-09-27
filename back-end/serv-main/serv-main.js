@@ -183,7 +183,7 @@ app.post('/operaName', async (req, res) => {
    }
   const sqlQuery = `SELECT premium, std_high, std_low, budget FROM prices p LEFT JOIN opera o ON p.opera_id = o.opera_id WHERE LOWER(REPLACE(o.opera_name, ' ', '-')) = $1 AND p.price_id = $2`;
     try {
-      const {rows:prices}=await pool.query(sqlQuery,[operaName,Number(priceId); 
+      const {rows:prices}=await pool.query(sqlQuery,[operaName,Number(priceId)]); 
       const { rows: multipliers } = await pool.query('select name,multiplier from lv');
         if (prices.length > 0) {
             return res.json({ status: true, prices: prices[0], multipliers: multipliers });
@@ -244,7 +244,7 @@ app.post('/PaymentOrder', async (req, res) => {
             generatedTicketIDs.push({ ticketId, level, seatClass2 });
             await pool.query(
                 'INSERT INTO ticket (ticket_id, opera_id, order_id, seat_class, seat_class2, seat_num) VALUES ($1, $2, $3, $4, $5, $6)',
-                [ticketId, operaId, newOrderId, level, seatClass2, generatedTicketIds.length]
+                [ticketId, operaId, newOrderId, level, seatClass2, generatedTicketIDs.length]
             );
         }
         await pool.query('COMMIT');

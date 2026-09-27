@@ -124,8 +124,8 @@ window.addEventListener('DOMContentLoaded', async () => {
 let data = await getPrices(operaName, selectedPriceId);
 
 if(!data?.status || !data.prices || !Array.isArray(data.multipliers)){
-  documents.getElementById('price-status').textContent=data?.msg || 'Price could not be loaded';
-  lc.forEach(btn=>btn.disabled=true);
+  document.getElementById('price-status').textContent=data?.msg || 'Price could not be loaded';
+  lv.forEach(btn=>btn.disabled=true);
 }
 
 

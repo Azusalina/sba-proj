@@ -243,10 +243,38 @@ export function quick_v2_InPlace(data, start, end) {
     quick_v2_InPlace(data, j + 1, end);
 }
 
+//newly add!
+export function selectionDuration(data = []) {
+    for (let i = 0; i < data.length - 1; i++) {
+        let shortest = i;
 
+        for (let j = i + 1; j < data.length; j++) {
+            if (Number(data[j].duration) <
+                Number(data[shortest].duration)) {
+                shortest = j;
+            }
+        }
 
+        if (shortest !== i) {
+            [data[i], data[shortest]] =
+                [data[shortest], data[i]];
+        }
+    }
 
+    return data;
+}
 
+export function recursiveMergeSort(items, compare) {
+    if (items.length <= 1) {
+        return items;
+    }
+
+    const middle = Math.floor(items.length / 2);
+    const left = recursiveMergeSort(items.slice(0, middle), compare);
+    const right = recursiveMergeSort(items.slice(middle), compare);
+
+    return mergeHalves(left, right, compare);
+}
 
 // let data = [1, 6, 3, 5, 7, 9, 0, 9, 6, 4, 2];
 // data = quick(data);

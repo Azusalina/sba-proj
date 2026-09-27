@@ -154,10 +154,6 @@ export class Queue {
     isEmpty() {
         return this.length === 0;
     }
-
-    get length() {
-        return this.length;
-    }
 }
 
 export function linearSearch(items, predicate, startIndex) {

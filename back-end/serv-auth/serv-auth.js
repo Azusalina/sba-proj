@@ -152,6 +152,16 @@ app.post('/reset/updatepwd', async (req, res) => {
             await pool.query("ROLLBACK");
             return res.json({ success: false, msg: "Invalid or expired token" });
         }
+        const passwordErrors = validatePassword(newPwd);
+
+if (passwordErrors.length > 0) {
+    await pool.query('ROLLBACK');
+    return res.status(400).json({
+        success: false,
+        msg: passwordErrors.join(' ')
+    });
+}
+
         const userEmail = tokenCheck.rows[0].email;
         const newSalt = crypto.randomBytes(16).toString('hex');
         const newHashedPwd = utils.hash(newPwd, newSalt);

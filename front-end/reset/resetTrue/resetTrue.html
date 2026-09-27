@@ -35,8 +35,24 @@
     <div class="container">
         <form id="NewPwdForm">
             <p>New Password</p>
-            <input type="password" placeholder="Enter new password" id="pwd" required>
-            <input type="password" placeholder="Confirm" id="pwd-confirm" required>
+            <input
+    type="password"
+    id="pwd"
+    minlength="8"
+    maxlength="64"
+    autocomplete="new-password"
+    required
+>
+
+<input
+    type="password"
+    id="pwd-confirm"
+    minlength="8"
+    maxlength="64"
+    autocomplete="new-password"
+    required
+>
+
             <br><br>
             <button type="submit">Update Password</button>
         </form>

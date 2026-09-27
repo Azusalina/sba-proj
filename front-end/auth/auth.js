@@ -76,8 +76,8 @@ async function signup(username, email, pwd) {
 
 function valid_check(pwd) {
     if (!pwd) return {
-        Valid: false,
-        msg: ["Pwd Cannot be empty"]
+        isValid:false,
+        errors:['pwd must not by empty']
     }
     const cases = [
         { case: /[A-Z]/.test(pwd), msg: "At least one uppercase character is required", },
@@ -99,50 +99,59 @@ to_reset_btn.onclick = function () {
     window.location.href = '../reset/reset.html'
 }
 
-signinForm.addEventListener('submit',async event=>{
-    event.preventDefault();
-    username = signin_name.value.trim();
-    pwd = signin_pwd.value.trim();
-    if (!username || !pwd) {
-        signin_status.innerText = "Fill in both Name and Password to Continue";
-        return;
-    } else {
-      signin_status.innerText='Signing in...';
-      await signin(Username,pwd);
-    });
-}
-signupSubmit.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const username = signup_id.value.trim();
-    const email = signup_email.value.trim();
-    const pwd = signup_pwd.value.trim();
-    const pwd_confirm = signup_pwd_confirm.value.trim();
-    const valid_condition = valid_check(pwd);
+const signupButton = document.getElementById('signup-btn');
 
-    if (!username || !email || !pwd) {
-        signup_status.innerText = "Please fill all missing blanks";
+signinForm.addEventListener('submit', async event => {
+    event.preventDefault();
+
+    const username = signin_name.value.trim();
+    const password = signin_pwd.value;
+
+    if (!username || !password) {
+        signin_status.innerText =
+            'Fill in both Name and Password to continue';
         return;
-    } else if (pwd != pwd_confirm) {
-        signup_status.innerText = 'please confirm your password.'
-    } else if (!valid_condition.isValid) {
-        signup_status.innerText = valid_condition.errors.join("\n")
-    }
-    else {
-        signup(username, email, pwd);
     }
 
-
-  button.disabled=true;
-  signup.status.innerText='Creating account and sending verification email...';
-
-  try{
-    await signup(username,email,pwd);
-  }finally{
-    button.disabled=false;
-  }
-
+    signin_status.innerText = 'Signing in...';
+    await signin(username, password);
 });
 
+signupSubmit.addEventListener('submit', async event => {
+    event.preventDefault();
+
+    const username = signup_id.value.trim();
+    const email = signup_email.value.trim();
+    const password = signup_pwd.value;
+    const confirmation = signup_pwd_confirm.value;
+
+    if (!username || !email || !password || !confirmation) {
+        signup_status.innerText = 'Please fill in every field.';
+        return;
+    }
+
+    const validation = valid_check(password);
+
+    if (!validation.isValid) {
+        signup_status.innerText = validation.errors.join('\n');
+        return;
+    }
+
+    if (password !== confirmation) {
+        signup_status.innerText = 'Passwords do not match.';
+        return;
+    }
+
+    signupButton.disabled = true;
+    signup_status.innerText =
+        'Creating account and sending verification email...';
+
+    try {
+        await signup(username, email, password);
+    } finally {
+        signupButton.disabled = false;
+    }
+});
 
 
 

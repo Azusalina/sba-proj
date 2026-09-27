@@ -30,29 +30,29 @@
             </form>
             <p id="signin_status" class="signin_status">status:</p>
             <button id="to_signup_redirection" type="button" class="signup_redirection">Don't have an account yet? click
-                here-></button>
-            <button id="to_reset_redirection" type="button">If forget pwd click here-></button>
+                here</button>
+            <button id="to_reset_redirection" type="button">If forget pwd click here</button>
         </div>
         <div id="signup" class="signup_overall">
             <p class="title">Sign up an account now</p>
             <form id="signupform">
                 <div class="signup_pair">
                     <label for="signup_id">ID:</label>
-                    <input id="signup_id" type="input" placeholder="ID:">
+                    <input id="signup_id" placeholder="ID:">
                 </div>
                 <div class="signup_pair">
                     <label for="signup_email">Email:</label>
-                    <input id="signup_email" type="input" placeholder="Email:">
+                    <input id="signup_email" type="email" autocomplete="email" required>
                 </div>
                 <div class="signup_pair">
                     <label for="signup_pwd">Password:</label>
-                    <input id="signup_pwd" type="password" placeholder="Password:">
+                    <input id="signup_pwd" type="password" placeholder="Password:" minlength="8" maxlength="64" required >
                 </div>
                 <div class="signup_pair">
                     <label for="signup_pwd_confirm">Confirm:</label>
-                    <input id="signup_pwd_confirm" type="password" placeholder="Confirm:">
+                    <input id="signup_pwd_confirm" type="password" placeholder="Confirm:" minlength="8" maxlength="64" required>
                 </div>
-                <button id="signup-btn" type="submit" class="signup-btn">signup</button>
+                <button id="signup-btn" type="submit" class="signup_btn">signup</button>
             </form>
             <p id="signup_status" class="signup_status">Status:</p>
             <button id="to_signin_redirection" type="button" class="signin_redirection">
