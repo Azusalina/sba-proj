@@ -28,7 +28,8 @@ app.post('/auth/signup', async (req, res) => {
         }
     } catch (error) {
         console.error("Database check error:", error);
-        return res.json({ success: true, msg: "database error" })
+        return res.status(500).json({ success: false, msg: "database error" })
+        
     }
     try {
         await pool.query("BEGIN");

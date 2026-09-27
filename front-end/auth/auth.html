@@ -17,8 +17,8 @@
     <div id="stage" class="stage">
         <div id="signin" class="signin_overall">
             <p class="signin_title">Sign in </p>
-            <form class="inputs">
-                <div class="signin_pair">
+            <form id="signin-form" class="inputs">    
+              <div class="signin_pair">
                     <label for="signin_name">Name:</label>
                     <input id="signin_name" placeholder="name:" class="input_boxes">
                 </div>
@@ -52,11 +52,12 @@
                     <label for="signup_pwd_confirm">Confirm:</label>
                     <input id="signup_pwd_confirm" type="password" placeholder="Confirm:">
                 </div>
-                <button type="submit" class="signup_btn">Sign up</button>
+                <button id="signup-btn" type="submit" class="signup-btn">signup</button>
             </form>
             <p id="signup_status" class="signup_status">Status:</p>
-            <button id="to_signin_redirection" type="button" class="signin_redirection">Already have an account?
-                click-></a></button>
+            <button id="to_signin_redirection" type="button" class="signin_redirection">
+              Already have an account?click
+            </button>
         </div>
     </div>
 </body>

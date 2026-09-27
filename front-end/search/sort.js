@@ -1,8 +1,4 @@
 //util file
-
-
-
-
 export function selection(data = []) {
     const n = data.length;
     for (let i = 0; i < n; i++) {
@@ -94,14 +90,16 @@ export function quick(data = []) {
 
 export function bubble_ascending_price(data = []) {
     for (let i = 0; i < data.length - 1; i++) {
-        let status = false;
+        let swapped = false;
         for (let j = 0; j < data.length - i - 1; j++) {
-            if (data[j].budget > data[j + 1].budget) {
+            const leftPrice=Number(data[j].plans[0].budget);
+            const rightPrice=Number(data[j+1].plans[0].budget);
+            if (leftPrice>rightPrice){
                 [data[j], data[j + 1]] = [data[j + 1], data[j]];
-                status = true;
+                swapped = true;
             }
         }
-        if (!status) break;
+        if (!swapped) break;
     }
     return data;
 };
@@ -123,8 +121,8 @@ export function insertion_time(data = []) {
     for (let i = 1; i < n; i++) {
         let key = data[i];
         let j = i - 1;
-        while (j >= 0 && data[j].plans[0].budget > key.plans[0].budget) {
-            data[j + 1] = data[j];
+       while(j>=0&& new Date(data[j].plans[0].time).getTime()>new Date(key.plans[0].time).getTime()){    
+      data[j + 1] = data[j];
             j -= 1;
         }
         data[j + 1] = key;

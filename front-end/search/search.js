@@ -1,7 +1,8 @@
 import * as sort from './sort.js'
+import {OperaSearchIndex, quickSortInPlace} from '../../syl.mjs';
 //#region
 
-const isLocal = window.location.hostname === '127.0.0.1'
+const isLocal = window.location.hostname === '127.0.0.1'|| window.location.hostname==='localhost';
 const API_BASE_URL = isLocal ? 'http://127.0.0.1:3000' : 'https://backend-sba.vercel.app';
 const FRONTEND_URL = isLocal ? 'http://127.0.0.1:5500' : 'https://frontend-sba.vercel.app'
 
@@ -241,6 +242,7 @@ function executeSearch() {
 
 //startup inialize
 const Final = await ReqOperaData();
+const operaIndex=new OperaSearchIndex(Final);
 //inherit
 const hist = localStorage.getItem("search_content");
 if (hist) {

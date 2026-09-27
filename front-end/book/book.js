@@ -4,6 +4,7 @@ const API_BASE_URL = isLocal ? 'http://127.0.0.1:3000' : 'https://backend-sba.ve
 const operaTitle = document.getElementById('operaTitle')
 const showtimeTitle = document.getElementById('showtimeTitle');
 const selectedTime = localStorage.getItem('selected_time');
+const selectedPriceId= Number(localStorage.getItem('selected_price_id'));
 const operaName = localStorage.getItem('selected');
 const budget = document.getElementById("budget")
 const std_low = document.getElementById("std_low")
@@ -60,9 +61,9 @@ function formatShowtime(time) {
         minute: '2-digit'
     });
 }
-async function getPrices(name, time) {
+async function getPrices(name, priceId) {
     const url = `${API_BASE_URL}/operaName`;
-    const data = { name: name, time: time };
+    const data = {name,priceId };
     try {
         const resp = await fetch(url, {
             method: "POST",
@@ -120,7 +121,14 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (operaName) operaTitle.innerText = `Opera selected: ${operaName}`;
     if (showtimeTitle) showtimeTitle.innerText = `Showtime: ${formatShowtime(selectedTime)}`;
 });
-let data = await getPrices(operaName, selectedTime);
+let data = await getPrices(operaName, selectedPriceId);
+
+if(!data?.status || !data.prices || !Array.isArray(data.multipliers)){
+  documents.getElementById('price-status').textContent=data?.msg || 'Price could not be loaded';
+  lc.forEach(btn=>btn.disabled=true);
+}
+
+
 if (operaName) {
     operaTitle.innerText = `Opera selected:${operaName}`
 }

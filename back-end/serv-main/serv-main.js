@@ -174,13 +174,17 @@ app.post('/updateOperaData', async (req, res) => {
 });
 
 app.post('/operaName', async (req, res) => {
-    const operaName = req.body.name;
-    const selectedTime = req.body.time;
-    const priceID = utils.getPricePlan(selectedTime);
-    const sqlQuery = `SELECT premium, std_high, std_low, budget FROM prices p LEFT JOIN opera o ON p.opera_id = o.opera_id WHERE LOWER(REPLACE(o.opera_name, ' ', '-')) = $1 AND p.price_id = $2`;
+  const {name:operaName,priceId}=req.body;
+    if(!operaName||!Number.isInteger(Number(priceId))){
+      return res.status(400).json({
+      status:false,
+      msg:'Invalid opera|| price plan'
+      });
+   }
+  const sqlQuery = `SELECT premium, std_high, std_low, budget FROM prices p LEFT JOIN opera o ON p.opera_id = o.opera_id WHERE LOWER(REPLACE(o.opera_name, ' ', '-')) = $1 AND p.price_id = $2`;
     try {
-        const { rows: prices } = await pool.query(sqlQuery, [operaName, priceID]);
-        const { rows: multipliers } = await pool.query('select name,multiplier from lv');
+      const {rows:prices}=await pool.query(sqlQuery,[operaName,Number(priceId); 
+      const { rows: multipliers } = await pool.query('select name,multiplier from lv');
         if (prices.length > 0) {
             return res.json({ status: true, prices: prices[0], multipliers: multipliers });
         } else {

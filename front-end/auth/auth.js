@@ -12,7 +12,7 @@ to_signin_switch.onclick = function () { stage.classList.remove('swipe'); }
 ///////
 const signin_name = document.getElementById("signin_name");
 const signin_pwd = document.getElementById("signin_pwd");
-const singin_btn = document.getElementById("signin_btn");
+const signinForm=document.getElementById("signin-form");
 const signin_status = document.getElementById("signin_status");
 
 let username = "";
@@ -98,7 +98,8 @@ function valid_check(pwd) {
 to_reset_btn.onclick = function () {
     window.location.href = '../reset/reset.html'
 }
-singin_btn.onclick = function (event) {
+
+signinForm.addEventListener('submit',async event=>{
     event.preventDefault();
     username = signin_name.value.trim();
     pwd = signin_pwd.value.trim();
@@ -106,8 +107,9 @@ singin_btn.onclick = function (event) {
         signin_status.innerText = "Fill in both Name and Password to Continue";
         return;
     } else {
-        signin(username, pwd);
-    }
+      signin_status.innerText='Signing in...';
+      await signin(Username,pwd);
+    });
 }
 signupSubmit.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -128,7 +130,18 @@ signupSubmit.addEventListener('submit', (event) => {
     else {
         signup(username, email, pwd);
     }
-})
+
+
+  button.disabled=true;
+  signup.status.innerText='Creating account and sending verification email...';
+
+  try{
+    await signup(username,email,pwd);
+  }finally{
+    button.disabled=false;
+  }
+
+});
 
 
 
