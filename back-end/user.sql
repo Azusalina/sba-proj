@@ -126,7 +126,7 @@ SELECT pid,budget,note,time from prices ORDER BY budget
 
 
 
-
+delete from email_verification;delete from user_infor;
 
 ------
 select * from user_infor order by uid;  

@@ -18,13 +18,12 @@ body {
 }
 
 .signin_overall {
-    background-image: url(signin_back.png);
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
     height: 100vh;
     width: 100vw;
-
+    background: #f5eed4;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -135,7 +134,7 @@ body {
 /*------------------------------------*/
 
 .signup_overall {
-    background-image: url(signup_back.png);
+    background-color: #45050e;
     background-repeat: no-repeat;
     background-size: cover;
     background-position: center;

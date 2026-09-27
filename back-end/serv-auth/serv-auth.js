@@ -44,18 +44,32 @@ app.post('/auth/signup', async (req, res) => {
             await pool.query(`INSERT INTO email_verification(token, userid, expire_time) VALUES($1, $2, NOW() + INTERVAL '1 day')`, [token, userid]);
             await pool.query("COMMIT");
         
-        try {
-    await utils.send_ver_mail(v_receiver, token, url, userid);
+       try {
+    const mailResponse =
+        await utils.send_ver_mail(v_receiver, token, url, userid);
+
+    console.log('MailerSend accepted verification email:', {
+        statusCode: mailResponse.statusCode,
+        messageId: mailResponse.headers?.['x-message-id']
+    });
+
     return res.json({
         success: true,
-        msg: 'Verification email has been sent.'
+        msg: 'Verification email has been accepted for delivery.'
     });
 } catch (error) {
+    console.error('MailerSend rejected verification email:', {
+        statusCode: error?.statusCode,
+        body: error?.body,
+        message: error?.message
+    });
+
     return res.status(502).json({
         success: false,
         accountCreated: true,
         msg: 'Account created, but verification email delivery failed.'
     });
+}
 }
 
 

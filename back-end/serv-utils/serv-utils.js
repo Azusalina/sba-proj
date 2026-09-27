@@ -51,11 +51,7 @@ export async function send_ver_mail(target, token, url, userid) {
         .setTo(target)
         .setSubject("Signup Verification")
         .setHtml(`<p>Click here to verify your email: <a href="${url}">Verify Email</a></p>`);
-    try {
-        await EmailSender.email.send(verification_mail);
-    } catch (err) {
-        throw err;
-    }
+   return EmailSender.email.send(verification_mail);
 }
 export async function send_confirmation_email(targetEmail, orderId, opera, showtime, level, sum_price, tickets) {
     const recipient = [new Recipient(targetEmail, "Opera Customer")];
