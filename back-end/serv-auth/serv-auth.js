@@ -70,12 +70,6 @@ app.post('/auth/signup', async (req, res) => {
         msg: 'Account created, but verification email delivery failed.'
     });
 }
-}
-
-
-
-
-
         } else {
             res.json({ success: false, msg: "Invalid username or password" });
         }
