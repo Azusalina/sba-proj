@@ -1,4 +1,4 @@
-# Presentation Essay on the Algorithms and Constructs of `sba-proj`
+# Presentation Essay 
 ### A Full-Stack Opera Ticket Booking System (HKDSE ICT SBA — Option C: Algorithm & Programming)
 
 **Author of the essay:** Clifford,Wu Jia An
@@ -7,11 +7,10 @@
 
 ---
 
-## 1. Introduction and Project Context
+## 1. Intro
 
 The project is a **full-stack web-based Opera Ticket Booking System**: users sign up (with email verification), browse and search a catalogue of operas, filter and sort the results with hand-implemented sorting algorithms, pick a seat class and ticket quantities, pay through a simulated wallet, and later view or refund their orders. The server is a Node.js/Express application backed by PostgreSQL, and the front end is a set of static HTML/JS pages.
 
-The project was built for the Hong Kong Diploma of Secondary Education (HKDSE) ICT School-Based Assessment under **Option C (Algorithm and Programming)**, whose brief (`Descriptions/guidelines.pdf`) asks for a **Booking System** with at least three modules and 10–15 resources, and requires:
 
 | Guidelines requirement | Where this essay covers it |
 | :--- | :--- |
@@ -22,78 +21,75 @@ The project was built for the Hong Kong Diploma of Secondary Education (HKDSE) I
 | Task 1(e) — flowcharts for the algorithms in (d)                      | every Mermaid flowchart in this essay |
 | Task 2 — testing & evaluation                                         | §8 (debugging, marginal cases, portability, feature extension) |
 
-The developer’s own planning notes (`presentation.md`) list exactly the topics this essay formalises: the flowchart and ER diagram, SQL, `localStorage` parameter passing, **hash & salt** authentication, the five **sorting algorithms** (bubble, selection, insertion, merge, quick), **fuzzy search via Levenshtein distance**, keyword detection, `+ − × ÷` arithmetic in ticket-price calculation, `console.log()` error tracking, and the marginal case `wallet balance < order price`.
 
 ---
 
-## 2. System Architecture and Core Constructs
+## 2. System Archi && Core 
 
-### 2.1 Modular architecture (construct: *separation of concerns*)
+### 2.1 Modular archi
 
-The backend was refactored on 6 Aug 2026 (see `Descriptions/Log.md`) from a single `serv.js` into a **central router plus four modules**. Each module is an ES-module (`"type": "module"` in `back-end/package.json`) exporting an Express router:
-
-| Module | Responsibility | Key algorithms / constructs inside |
+| Module | Responsibility | Key algo |
 | :--- | :--- | :--- |
-| `serv-config/serv-config.js` | PostgreSQL connection pool, API keys | environment configuration |
-| `serv-utils/serv-utils.js` | pure helper functions | salted SHA-256 hash, token & ID generation, `getPricePlan()`, mail templates |
+| `serv-config/serv-config.js` | Postgre connection pool, API keys | env config |
+| `serv-utils/serv-utils.js` | pure helper functions | salted hash, token & ID generation, `getPricePlan()`, mail templates |
 | `serv-auth/serv-auth.js` | signup / login / verification / password reset | salted hashing pipeline, token lifecycle, `BEGIN…COMMIT/ROLLBACK` |
 | `serv-main/serv-main.js` | catalogue, pricing, payment, refund, gift codes | ACID payment transaction, `FOR UPDATE` locking, ledgering |
-| `serv.js` | entry point: mounts both routers | middleware `cors()`, `express.json()` |
+| `serv.js` | entry point: mounts both routers | start the service |
 
 ```mermaid
 flowchart LR
-    B[Browser pages - Live Server 127.0.0.1:5500] -->|HTTP fetch JSON| S[serv.js - Express entry]
+    B[browser page 127.0.0.1:5500] -->|HTTP fetch JSON| S[serv.js - Express entry]
     S --> AU[serv-auth.js /auth/* /reset/*]
     S --> MN[serv-main.js /updateOperaData /operaName /PaymentOrder /refundOrder /redeem ...]
     AU --> UT[serv-utils.js hash, tokens, mail]
     MN --> UT
-    AU --> DB[(PostgreSQL pool - serv-config.js)]
+    AU --> DB[(Postgre pool - serv-config.js)]
     MN --> DB
     UT --> DB
 ```
 
-The front end mirrors this: each page has its own script, and the sorting algorithms live in a dedicated utility module `front-end/search/sort.js` that `search.js` imports via `import * as sort from './sort.js'`.
+front-end:each page has its own `.js` script, and the sorting algos live in a dedicated utility module `front-end/search/sort.js` that `search.js` imports `sort.js` and use it .
 
-### 2.2 Database design: 3NF normalisation and the full ER diagram
+### 2.2 Db design: 3NF normalization and ER diagram
 
-The schema (`back-end/user.sql`) was redesigned on 1 July 2026 to fix **Third Normal Form (3NF)** violations. Data is split into eleven tables so that no non-key column transitively depends on another non-key column: account data (`user_infor`), balance (`wallet`), money movement (`wallet_transaction`), promo codes (`gift_code`), two token tables (`email_verification`, `pwd_reset`), catalogue (`opera`), price plans (`prices`), seat-class multipliers (`lv`), orders (`orders`) and tickets (`ticket`).
-
-Notable **constructs** (not algorithms, but deliberate design decisions):
-
-* **Primary keys / foreign keys** with `ON DELETE CASCADE` — referential integrity is enforced by the DBMS.
-* **Check constraints** as an algorithmic backstop: `CHECK (balance >= 0)`, `CHECK (amount > 0)`, `CHECK (tx_type IN ('CREDIT','DEBIT'))`, `CHECK (rate <= 10.0)`.
-* **Secondary index** `idx_wallet_tx_uid_date ON wallet_transaction(uid, created_at DESC)` to speed up ledger lookups.
+* **primary / Foreign keys** with `ON DELETE CASCADE` — referential integrity is enforced.
+* **check constraints** : `CHECK (balance >= 0)`, `CHECK (amount > 0)`, `CHECK (tx_type IN ('CREDIT','DEBIT'))`, `CHECK (rate <= 10.0)`.
+* **secondary index** `idx_wallet_tx_uid_date ON wallet_transaction(uid, created_at DESC)` to speed up ledger lookups.
 * **`SERIAL` surrogate keys** (`uid`, `order_id`, `ticket_id`…) so business columns remain free to change.
+* and an index for transaction history table
 
-The complete ER diagram below is derived from `user.sql` and shows **every table, every column, and every foreign-key relation**. FK columns are marked `FK` inside the owning table, and each relation line is labelled with the FK column that carries it.
+ref table below:
 
-**RefersTo:** ![ERD](./Graph_Assets/ERD_Finalized_Version.jpg)
+ ![ERD](./Graph_Assets/ERD_Finalized_Version.jpg)
 
-`lv` is a pure lookup table (name → multiplier) with **no foreign key**; the book page reads it at runtime to price adult/student/wheelchair tickets (§5.2).
 
-### 2.3 Data structures in the running program
+### 2.3 Data structs
 
 | Structure | Concrete form | Where |
-| :--- | :--- | :--- |
+| :---      | :---          | :--- |
 | 2-D array | Levenshtein DP matrix | `search.js` `levenshtein()` |
-| Array / list | opera list `Final`, sorted in place | `search.js`, `sort.js` |
+| Array / list | opera list `Final`, sort | `search.js`, `sort.js` |
 | Hash map | `operaMap` grouping rows by `opera_id` | `serv-main.js` `/updateOperaData` |
 | Object / record | `details` object passed between pages | `book.js`, `pay.js` |
 | JSON serialisation | `localStorage.setItem('details', JSON.stringify(details))` | `book.js` |
-| Stack (implicit) | recursion call stack in quick sort | `sort.js` |
-| Queue (implicit) | browser event queue via `setInterval` | `pay-mediator.js` |
-| Relational tables | the 11 PostgreSQL tables above | `user.sql` |
+| Stack (implicit) | recursion call stack in quick sort | `sort.js` , `./syl.js` |
+| Queue (implicit) | browser event queue via `setInterval` | `pay-mediator.js`, `syl.mjs` |
+| linked list | store data | `syl.mjs` |
+| Relational tables | Postgre tables  | `user.sql` |
 
-**Cross-page parameter passing** (a construct called out in `presentation.md`) is done with `localStorage` keys: `search_content`, `selected`, `selected_price_id`, `selected_time`, `details`, `user`, `isLoggedIn`, `orderId`, `tickets`. This is a key-value store: write with `setItem`, read with `getItem`, remove with `removeItem` (`main.js` logout).
+ `localStorage` keys: `search_content`, `selected`, `selected_price_id`, `selected_time`, `details`, `user`, `isLoggedIn`, `orderId`, `tickets`. 
+
+ This is a key-value store: 
+ - write with `setItem` 
+ - read with `getItem`
+ - remove with `removeItem` (`main.js` logout).
 
 ### 2.4 The main flow (stepwise refinement of the “menu loop”)
 
-The system has no console menu; its “main menu loop” is the page navigation graph, refined step-by-step in `Log.md` across May–August 2026:
-
 ```mermaid
 flowchart LR
-    A[index.html / main.html] -->|type query| B[search.html - fuzzy search + filters]
-    A --> C[auth.html - sign in / sign up]
+    A[index.html] -->|type query| B[search.html - fuzzy search + filters]
+    A --> C[auth.html - sign in / up]
     C --> D[email verification link /auth/token]
     D -->|verified| A
     C --> R[reset.html - forgot password]
@@ -112,25 +108,24 @@ flowchart LR
 
 ## 3. Authentication and Security Constructs
 
-### 3.1 Salted SHA-256 password hashing
+### 3.1 Salted password hashing
 
-Passwords are never stored in plain text. `serv-utils.js:13-15` computes a single-pass digest `SHA256(pwd ‖ salt)` in hex. On sign-up, a fresh 16-byte random **salt** (32 hex characters from `crypto.randomBytes(16)`) is generated per user, so two users with the same password produce different digests (defeating rainbow-table attacks). On login, the stored salt is fetched and the same digest is recomputed and compared.
+Passwords are never stored in plain text. `serv-utils.js:13-15` computes a `crypto.scrypt` function in hex. On sign-up, a fresh 16-byte random **salt** (32 hex characters from `crypto.randomBytes(16)`) is generated per user, so two users with the same password produce different digests (defeating rainbow-table attacks). On login, the stored salt is fetched and the same digest is recomputed and compared.
 
-> **Precision note:** `README.md` calls this “PBKDF2”. The actual implementation is a **single-pass salted SHA-256 digest** — the correct description is the one in `presentation.md`: “hash & salt”. This discrepancy is picked up again in §8.4.
 
 **Sign-up pipeline** — `serv-auth.js:18-60`:
 
 ```mermaid
 flowchart LR
-    A[POST /auth/signup] --> B{id already exists?}
+    A[signup] --> B{id already exists?}
     B -- yes --> Z[return account already exists]
     B -- no --> C[BEGIN]
     C --> D[generate 16-byte random salt]
-    D --> E[digest = SHA256 pwd + salt]
+    D --> E[digest = hashed pwd + salt]
     E --> F[INSERT user_infor with digest + salt]
-    F --> G[generate UUID token, INSERT email_verification, expiry 1 day]
+    F --> G[generate UUID token, INSERT email_verification, expired within 1 day]
     G --> H[COMMIT]
-    H --> I[send verification email via MailerSend]
+    H --> I[send ver.email via MailerSend]
     I --> J[return success]
     C -. any error .-> K[ROLLBACK]
     K --> L[return 500 error]
@@ -140,12 +135,12 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    A[POST /auth/login] --> B[SELECT pwd, salt, verified FROM user_infor WHERE id = user]
+    A[login] --> B[SELECT pwd,salt from table with id = user]
     B --> C{row found?}
     C -- no --> Z[return account not found]
     C -- yes --> D{verified = true?}
     D -- no --> Y[return please verify your email first]
-    D -- yes --> E["digest = SHA256 pwd + stored salt"]
+    D -- yes --> E["digest = hashed pwd + stored salt"]
     E --> F{"digest = stored pwd ?"}
     F -- yes --> G[return success]
     F -- no --> H[return wrong password]
@@ -153,28 +148,27 @@ flowchart LR
 
 ### 3.2 Password-strength validation (the five rules)
 
-`auth.js` `valid_check()` (`front-end/auth/auth.js:77-94`) implements the rules listed in `presentation.md`. The construct worth noting is that it **accumulates all failing rules** (filter + map over a rule table) instead of failing on the first error, so the user sees every unmet requirement at once:
 
 ```mermaid
 flowchart LR
     A[Start] --> B{pwd empty?}
     B -- yes --> E1[return invalid - cannot be empty]
     B -- no --> C1{contains A-Z?}
-    C1 -- no --> R1[append error 1]
+    C1 -- no --> R1[append err 1]
     C1 -- yes --> C2
     R1 --> C2{contains a-z?}
-    C2 -- no --> R2[append error 2]
+    C2 -- no --> R2[append err 2]
     C2 -- yes --> C3
     R2 --> C3{contains special char?}
-    C3 -- no --> R3[append error 3]
+    C3 -- no --> R3[append err 3]
     C3 -- yes --> C4
     R3 --> C4{contains digit?}
-    C4 -- no --> R4[append error 4]
+    C4 -- no --> R4[append err 4]
     C4 -- yes --> C5
     R4 --> C5{length >= 8?}
-    C5 -- no --> R5[append error 5]
+    C5 -- no --> R5[append err 5]
     C5 -- yes --> OK
-    R5 --> OK[errors empty?]
+    R5 --> OK[no errors?]
     OK -- yes --> Y[valid - submit signup]
     OK -- no --> N[invalid - show all errors]
 ```
@@ -211,12 +205,15 @@ flowchart LR
 ```
 
 ---
+---
 
 ## 4. Search and Sorting — the Algorithm Core
 
 ### 4.1 Fuzzy search: Levenshtein edit distance (dynamic programming)
 
-Requirement: users should find an opera even with typos (“carnen” must find “Carmen”). The solution in `front-end/search/search.js:61-89` is the classic **Levenshtein distance** computed by **dynamic programming** over an `(m+1) × (n+1)` integer matrix — the 2-D array explicitly flagged in `Descriptions/progressList.md`. The allowed edits are insertion, deletion and substitution, each costing 1.
+Requirement: users should find an opera even with typos (“carnen” must find “Carmen”). 
+the solution inside `search.js:61-89` is the classic **Levenshtein distance** computed by **dynamic programming** over an `(m+1) × (n+1)` integer matrix.
+The allowed edits are insertion, deletion and substitution, each costing 1.
 
 ```mermaid
 flowchart LR
@@ -235,7 +232,7 @@ flowchart LR
     J -- no --> K["return D[m][n]"]
 ```
 
-Complexity: **O(m·n) time and O(m·n) space**. No transposition step is implemented (true Levenshtein, not Damerau), which matches the coursework scope.
+Complexity: **O(m·n) time and O(m·n) space**
 
 **Worked example** — query `carnen` against candidate `carmen` (one substitution ⇒ distance 1):
 
@@ -247,17 +244,18 @@ Complexity: **O(m·n) time and O(m·n) space**. No transposition step is impleme
 | **r** | 3 | 2 | 1 | 0 | 1 | 2 | 3 |
 | **n** | 4 | 3 | 2 | 1 | 1 | 2 | 3 |
 | **e** | 5 | 4 | 3 | 2 | 2 | 1 | 2 |
-| **n** | 6 | 5 | 4 | 3 | 3 | 2 | **1** |
+| **n** | 6 | 5 | 4 | 3 | 3 | 2 | ***1*** |
 
-Two implementation details matter for correctness: the query is lower-cased and trimmed, and the candidate is the **slug** (`opera_name` lower-cased with spaces replaced by `-`, e.g. `la-traviata`), so a space in the user’s query costs one substitution — a deliberate, documented simplification.
+- the query is lower-cased and trimmed,
+- the candidate is the **slug** (`opera_name` lower-cased with spaces replaced by `-`, e.g. `la-traviata`), so a space in user's input costs one `substitue`
 
 ### 4.2 Keyword detection and relevance ranking (exact-match-first)
 
-`AccordingToSearchBar()` (`search.js:204-218`) combines the two ideas named in `presentation.md` (“keyword detecting” + “fuzzy search”): exact substring matches are forced to weight `-1`, so they outrank every fuzzy match; among fuzzies, smaller edit distance = higher relevance. Ranking is a classic **sort-by-computed-key** problem.
+`AccordingToSearchBar()`  exact substring matches are forced to weight `-1`, so they outrank every fuzzy match; among fuzzies,**smaller edit distance = higher relevance** as a classic **sort-by-computed-key** problem.
 
 ```mermaid
 flowchart LR
-    A[form submit] --> B["query = bar.value.trim().toLowerCase()"]
+    A[form submit] --> B[".trim().toLowerCase()"]
     B --> C{for each opera x in Final}
     C --> D{x.id contains query?}
     D -- yes --> E["weight = -1"]
@@ -266,14 +264,11 @@ flowchart LR
     F --> G[stable sort of a copy by weight ascending]
     C -- all done --> G
     G --> H[page = 1, render first 3 items]
-    H --> I["badge: Current Algo implied - Levenshtein distance"]
+    H --> I["Algo:Levenshtein distance"]
 ```
 
-`Log.md` (29 July 2026) records that a **quick sort was applied to rank the weights**; the code wired into the page today delegates to the engine’s built-in stable `Array.prototype.sort` (Timsort in V8), while `sort.js` retains three purpose-built quick-sort implementations (§4.3.5) — `quick_v1()` in particular is the exact “rank weighted elements descending” sorter the log describes. Edge case: an empty query gives every item weight `-1`, and the stable sort then preserves the original catalogue order — a sensible “show everything” behaviour.
+### 4.3 sorrt algos (`front-end/search/sort.js`)
 
-### 4.3 The five classic sorting algorithms (`front-end/search/sort.js`)
-
-`Descriptions/in_syllabus_list.txt` names the required syllabus sorts — *bubble, selection, insertion, merge* — and the project adds *quick*, exactly the five listed in `presentation.md`. Each lives in `sort.js` as a pure function, and each has its own flowchart below. The page wires one sort per filter radio (`search.js:286-310`):
 
 | Filter radio | Algorithm wired | Function | Order |
 | :--- | :--- | :--- | :--- |
@@ -282,9 +277,12 @@ flowchart LR
 | price | bubble sort (early-exit) | `bubble_ascending_price()` | cheapest→dearest |
 | rate | bubble sort (early-exit) | `bubble_ascending_rate()` | highest rating first |
 
-#### 4.3.1 Bubble sort — with an early-exit flag
+#### 4.3.1 Bubble
 
-Adjacent elements are compared and swapped, bubbling the largest element to the end of each pass. A `swapped` flag turns the best case into **O(n)** (early exit on sorted input); worst/average remain ***O(n²)***. It is **stable** and in-place (***O(1)*** extra space). Note that `bubble_ascending_rate()` uses the mirrored predicate, so despite its name it sorts **descending** — highest rating first, which is the desired UX.
+Adjacent elements are compared and swapped, bubbling the largest element to the end of each pass. 
+- exist `swapped` flag=> best case into **O(n)** (early exit on sorted input);
+- worst/average remain ***O(n²)***. It is **stable** and in-place (***O(1)*** extra space).
+- `bubble_ascending_rate()` uses the mirrored predicate, so despite its name it sorts **descending** — highest rating first, which is the desired UX.
 
 ```mermaid
 flowchart LR
@@ -305,9 +303,11 @@ flowchart LR
     K --> F
 ```
 
-#### 4.3.2 Selection sort — smallest-first, by repeated minimum search
+#### 4.3.2 Selection
 
-Each pass finds the minimum of the unsorted suffix and swaps it into place. Always **O(n²)** comparisons, **O(n)** swaps, **unstable**, in-place. It is implemented for syllabus completeness; the current UI does not call it (see §8.4).
+Each pass finds the minimum of the unsorted suffix and swaps it into place.
+- Always **O(n²)** comparisons,
+- **O(n)** swaps, **unstable**, in-place. 
 
 ```mermaid
 flowchart LR
@@ -327,7 +327,7 @@ flowchart LR
     K --> F
 ```
 
-#### 4.3.3 Insertion sort — adaptive, used for show times
+#### 4.3.3 Insertion
 
 Each element is inserted into the sorted prefix by shifting larger elements one position right. **Adaptive**: O(n) on nearly-sorted input, O(n²) worst case; **stable** and in-place. `insertion_time()` compares `show_time` fields; because the stored timestamps are ISO-8601 strings, lexicographic comparison equals chronological comparison — a neat, correct choice of representation that avoids `Date` parsing inside the loop.
 
@@ -345,9 +345,12 @@ flowchart LR
     H --> C
 ```
 
-#### 4.3.4 Merge sort — iterative (bottom-up) divide-and-conquer
+#### 4.3.4 Merge
 
-Instead of the textbook recursive version, the project uses the **bottom-up** form: merge adjacent runs of width `1, 2, 4, 8, …` until the whole array is one run. Guaranteed **O(n log n)** in all cases, **stable**, but uses **O(n)** auxiliary space for the slices. The bottom-up variant avoids recursion depth issues entirely — relevant because the same file’s quick sort *does* recurse. `merge_name()` keys on `id` with `localeCompare(…, {sensitivity: 'base'})`, i.e. case-insensitive alphabetical order.
+the project uses the **bottom-up** form:
+- merge adjacent runs of width `1, 2, 4, 8, …` until the whole array is one run. 
+- Guaranteed **O(n log n)** in all cases, **stable**,
+- but uses **O(n)** auxiliary space for the slices. 
 
 ```mermaid
 flowchart LR
@@ -370,9 +373,7 @@ flowchart LR
     M --> D
 ```
 
-#### 4.3.5 Quick sort — three variants with median-of-three pivoting
-
-The file contains three quick sorts, all choosing the pivot by the **median-of-three** rule (first / middle / last) to avoid the classic O(n²) trap on sorted input:
+#### 4.3.5 Quick
 
 * **`quick()`** (`sort.js:158-177`) — out-of-place version that picks the pivot *by value* with a `median()` helper.
 * **`quick_v1()`** (`sort.js:179-207`) — the Levenshtein-weight ranker: sorts DOM elements **descending** by a numeric weight stored in `dataset.data`. The median value is computed arithmetically — *sum of the three values minus the maximum minus the minimum equals the middle value* — so no helper function is needed.
@@ -422,24 +423,13 @@ flowchart LR
 The ← / → arrow keys trigger the same handlers (`search.js:248-256`), so the page is navigable by keyboard.
 
 ---
+---
 
 ## 5. Dynamic Pricing and Ticket Arithmetic
 
-`presentation.md` flags the “+-*/ arithmetic calculation in sum ticket price calc”. The pipeline has three layers:
-
 ### 5.1 Time-based price plan — `getPricePlan()` (`serv-utils.js:122-136`)
 
-Each opera has two price plans; the plan is chosen by the **show time** (after the 8 Aug 2026 fix, from the opera’s schedule rather than system time). Time is converted to seconds since midnight by `H × 3600 + M × 60 + S` and compared against the 12:00:00 threshold of 43 200 seconds.
-
-```mermaid
-flowchart LR
-    A["input: show time t"] --> B["secs = hours*3600 + minutes*60 + seconds"]
-    B --> C{"secs <= 43200 ?"}
-    C -- yes --> D[return plan 1]
-    C -- no --> E[return plan 2]
-```
-
-**Boundary case:** the comparison `≤ 43200` means exactly `12:00:00` still selects Plan 1, and `12:00:01` switches to Plan 2 — an off-by-one test point for §8.
+Each opera has two price plans *(or time plans also)*; the plan is chosen  by user from the opera’s schedule
 
 ### 5.2 Seat-class multipliers and the total-price formula (`book.js`)
 
@@ -458,12 +448,13 @@ flowchart LR
 The quantity steppers clamp at zero (`minus` only decrements while `currentVal > 0`, `book.js:158-160`) — another marginal case handled at the UI level. The result object is serialised to `localStorage['details']` and later consumed by `pay.html` and the backend `PaymentOrder`.
 
 ---
+---
 
 ## 6. Payment, Wallet and Concurrency Constructs
 
 ### 6.1 The ACID payment transaction — `/PaymentOrder` (`serv-main.js:191-239`)
 
-This is the centrepiece construct of Task 1(c). A single order touches five tables, so the backend wraps everything in one SQL transaction (`BEGIN … COMMIT / ROLLBACK`), satisfying **Atomicity**: either all five writes happen, or none.
+A single order touches five tables, so the backend wraps everything in one SQL transaction (`BEGIN … COMMIT / ROLLBACK`), satisfying **Atomicity**: either all five writes happen, or none.
 
 ```mermaid
 flowchart LR
@@ -494,11 +485,9 @@ For the money-sensitive single-resource rows the project uses **row-level pessim
 * **Gift-code redemption** — the `gift_code` row is locked before the `current_status` check (`serv-main.js:117`), so two users cannot both redeem the same code (double-spend protection).
 * **Refund** — the `orders` row is locked before re-checking `transac_status = 'COMPLETED'` (`serv-main.js:56-63`), so a double-click cannot refund the same order twice.
 
-`README.md`/`Log.md` describe the same design intent for the purchase path; the current `/PaymentOrder` implementation instead relies on transaction isolation plus the database **CHECK constraint `balance ≥ 0`** as a backstop (an overdraft would raise an error → `ROLLBACK`). Both mechanisms are worth describing in the report: the general lock–validate–mutate pattern, and where each row is protected.
-
 ### 6.3 The refund pipeline (`serv-main.js:52-111`)
 
-Added on 8 Aug 2026 as the Task-2 extension; it reverses a whole order (documented limitation: whole orders only, not single tickets):
+it reverses a whole order (limitation: whole orders only, not single tickets):
 
 ```mermaid
 flowchart LR
@@ -538,6 +527,7 @@ flowchart LR
     H --> I[return redeemed + new balance]
 ```
 
+---
 ---
 
 ## 7. Utility Algorithms and Generators
@@ -594,77 +584,34 @@ The same slug function (`LOWER(REPLACE(opera_name,' ','-'))`) is re-applied in S
 * **Zero-padding** for timestamps: `String(n).padStart(2,'0')` (`serv-utils.js:141-146`).
 
 ---
+---
 
 ## 8. Testing and Evaluation (Guidelines Task 2)
 
 ### 8.1 Debugging strategy
 
-As planned in `presentation.md` (“console.log() in back-end server for error tracking”), the backend routes log every significant transition (`Log.md`, 24 July 2026), e.g. `route entered`, `token:`, `wallet successfully generated`, `redirected!`. This trace-driven debugging found the 24 July bug where the emailed verification link pointed at port `5500` (Live Server) instead of port `3000` (Express) — fixed by computing URLs from the configured `BACKEND_URL`.
+all errors can be tracked by `console.log` & infors printed in the terminal for debug purposes
 
 ### 8.2 Marginal and boundary cases
 
 | Case | Expected behaviour | Where enforced |
 | :--- | :--- | :--- |
-| `wallet.balance < order price` | transaction rolled back, message `insufficientBalance`, user returned to home | `serv-main.js:201-204` (the case named in `presentation.md`) |
+| `wallet.balance < order price` | transaction rolled back, message `insufficientBalance`, user returned to home | `serv-main.js:201-204` |
 | Double refund / refund after refund | `not_refundable` | status re-check under `FOR UPDATE` |
 | Same gift code redeemed twice | `already redeemed` | status check under `FOR UPDATE` |
 | Expired or used reset token | `Invalid or expired token` | `expire_time > NOW()` and `used = FALSE` |
-| Unverified account logs in | `Please verify your email first` | `serv-auth.js:96-98` |
-| Ticket quantity minus at 0 | value stays at 0 | `book.js:158` |
+| Unverified account logs in | `req. verify email first` | `serv-auth.js:96-98` |
+| Ticket quantity minus at 0 | value stays at `0` | `book.js:158` |
 | Price plan at exactly 12:00:00 | Plan 1 (≤ 43200); 12:00:01 → Plan 2 | `serv-utils.js:131` |
 | Pagination at first / last page | Prev/Next disabled; page index clamped | `search.js:188-202` |
 | Empty search box | all weights equal, stable order = original catalogue | `search.js:207-215` |
 
-### 8.3 Portability and the feature-extension route (Task 2(ii))
 
-A first online deployment attempt on 4–5 Aug 2026 (Vercel) failed, documenting the portability limits between a local PostgreSQL database and a cloud host; the code keeps `isLocal` switches that swap `http://127.0.0.1:3000` for the hosted URL. Following testing feedback, the scope was extended on 8 Aug 2026 with the **full-order refund** feature (§6.3) — a concrete “describe how the scope could be extended and implement it” response to Task 2. A system test of the full user journey (registration → verification → search → booking → payment → confirmation) is recorded in `demo.mp4`, with the pre-verified test account `alpha` / `Aa714714!` provided for evaluators.
 
-### 8.4 Findings from the code review (further debugging / optimisation points)
-
-These are honest observations for the evaluation section — evidence that the code was actually tested rather than merely described:
-
-1. **`quick()` calls an undefined helper.** `sort.js:164` calls `median(first, mid, last)`, but no `median` function exists anywhere in the front end — invoking `quick()` throws `ReferenceError`. The working variants `quick_v1`/`quick_v2` compute the median-of-three arithmetically instead.
-2. **Selection sort and the “avail” filter are unwired.** `selection()` is exported but never called by `search.js`, and the `FilterStatus_avail` radio has no matching branch in its change handler — `presentation.md`’s claim that all five sorts filter the catalogue is aspirational relative to the wired code (four are wired: bubble ×2, insertion, merge).
-3. **Sign-up confirm-password check reads the wrong element.** `auth.js:117` reads `signupSubmit.value` — but `signupSubmit` is the `<form>`, which has no `value`, so the client-side confirm check throws a `TypeError` before reaching `valid_check()`. The intended element is `signup_pwd_confirm`.
-4. **Documentation vs implementation on hashing.** `README.md` says PBKDF2; the code is single-pass salted SHA-256 (§3.1). Either upgrade the code to PBKDF2/scrypt (better), or correct the document.
-5. **`Math.random()` for gift codes and transaction IDs** is a non-cryptographic PRNG; `crypto.randomUUID()` (already used for tokens) would be the safer choice for value-bearing identifiers.
-6. **Session state lives in `localStorage` only.** `isLoggedIn` is client-writable and the payment endpoint trusts the username in the request body; adding a server-side session token would harden the system. This is a known scope simplification, not an algorithmic flaw.
-7. **Login digest comparison uses `===`**, which is not constant-time; with a strong salt this is low-risk here, but `crypto.timingSafeEqual` is the standard fix.
 
 ---
 
-## 9. Conclusion and Mapping Back to the Guidelines
-
-The project answers every clause of the Option C brief with recognisable, nameable computer science, and each item maps to source:
-
-* **Data types & structures (Task 1a):** SQL tables in 3NF with PK/FK/CHECK/CASCADE constraints, the 2-D DP matrix, hash-map aggregation, JSON objects, `localStorage` — §2.
-* **Searching & display (Task 1b):** Levenshtein fuzzy search with exact-match-first ranking, four wired sorting algorithms, windowed pagination — §4.
-* **Booking / seat selection / payment simulation (Task 1c):** seat-class multipliers, time-based price plans, quantity arithmetic, ACID wallet transaction with ledgering, refunds and gift codes — §5, §6.
-* **Stepwise refinement (Task 1d) and flowcharts (Task 1e):** the page-level main flow and one flowchart per key algorithm are given throughout this essay.
-* **Testing & evaluation (Task 2):** console-log debugging, the documented marginal cases (especially `walletBal < orderPrice`), the failed deployment as a portability study, and the refund feature as scope extension — §8.
-
-The syllabus list (`in_syllabus_list.txt`) also mentions *stack, queue, linked list*: the project exercises the **stack** implicitly through quick-sort recursion and the **queue** through the browser’s event loop (`setInterval` in the payment mediator), while linked lists are not needed by any part of the design — an honest trade-off worth stating at the presentation.
-
-**Summary of algorithmic complexity (appendix):**
 
 
-
-| Algorithm            | Location             | Best / Average / Worst time        | Space         | Notes                                   |
-| :---                 | :---                 | :---                               | :---          | :---                                    |
-| Levenshtein distance | `search.js:61`       | $O(mn)$ / $O(mn)$ / $O(mn)$        | $O(mn)$       | full-matrix DP                          |
-| Relevance ranking    | `search.js:204`      | $O(n \log n)$                      | $O(n)$        | stable engine sort on computed weights  |
-| Bubble sort          | `sort.js:20,33`      | $O(n)$ / $O(n^2)$ / $O(n^2)$       | $O(1)$        | early-exit flag                         |
-| Selection sort       | `sort.js:6`          | $O(n^2)$                           | $O(1)$        | implemented, currently unwired          |
-| Insertion sort       | `sort.js:47,60`      | $O(n)$ / $O(n^2)$ / $O(n^2)$       | $O(1)$        | adaptive; used for show times           |
-| Merge sort           | `sort.js:74,116`     | $O(n \log n)$                      | $O(n)$        | bottom-up, stable                       |
-| Quick sort v1        | `sort.js:179`        | $O(n \log n)$ avg / $O(n^2)$       | $O(n)$ copies | median-of-3, descending weight ranker   |
-| Quick sort v2        | `sort.js:209`        | $O(n \log n)$ avg / $O(n^2)$       | $O(\log n)$   | in-place, two-pointer partition         |
-| Salted SHA-256       | `serv-utils.js:13`   | $O(\text{len}(\text{pwd}))$        | $O(1)$        | one-way digest + 128-bit random salt    |
-| Price plan           | `serv-utils.js:126`  | $O(1)$                             | $O(1)$        | threshold at 43 200 s                   |
-| Ticket price total   | `book.js:79`         | $O(1)$                             | $O(1)$        | Σ quantity × unit                       |
-| Row aggregation      | `serv-main.js:145`   | $O(n)$                             | $O(n)$        | hash-map grouping                       |
-| Pagination           | `search.js:184`      | $O(1)$ window + $O(n)$ render      | $O(1)$        | clamp + slice                           |
-| Payment transaction  | `serv-main.js:191`   | —                                  | —             | ACID: BEGIN…COMMIT/ROLLBACK, ledgering  |
-| Refund / redeem      | `serv-main.js:52,112`| —                                  | —             | pessimistic `FOR UPDATE` locking        |
-
-*All file references are relative to the repository root `sba-proj/`.*
+***All file references are relative to the repository root `sba-proj/`.*
+**
