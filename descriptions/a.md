@@ -26,33 +26,33 @@ The project is a **full-stack web-based Opera Ticket Booking System**: users sig
 
 ## 2. System Archi && Core 
 
-### 2.1 Modular archi
+### 2.1 Modular architecture
 
 | Module | Responsibility | Key algo |
 | :--- | :--- | :--- |
-| `serv-config/serv-config.js` | Postgre connection pool, API keys | env config |
-| `serv-utils/serv-utils.js` | pure helper functions | salted hash, token & ID generation, `getPricePlan()`, mail templates |
-| `serv-auth/serv-auth.js` | signup / login / verification / password reset | salted hashing pipeline, token lifecycle, `BEGIN…COMMIT/ROLLBACK` |
-| `serv-main/serv-main.js` | catalogue, pricing, payment, refund, gift codes | ACID payment transaction, `FOR UPDATE` locking, ledgering |
-| `serv.js` | entry point: mounts both routers | start the service |
+| `serv-config.js` | PostgreSQL pool, API keys | env config |
+| `serv-utils.js` | utility functions | salted hash, token & ID generation, `getPricePlan()`, mail templates |
+| `serv-auth.js` | signup / login / verification / reset pwd | salted hashing pwd, token lifecycle |
+| `serv-main.js` | catalogue, pricing, payment, refund, gift codes | payment transaction, perssimistic locking, ledgering |
+| `serv.js` | mounts all routers | start the server |
 
 ```mermaid
 flowchart LR
-    B[browser page 127.0.0.1:5500] -->|HTTP fetch JSON| S[serv.js - Express entry]
-    S --> AU[serv-auth.js /auth/* /reset/*]
-    S --> MN[serv-main.js /updateOperaData /operaName /PaymentOrder /refundOrder /redeem ...]
-    AU --> UT[serv-utils.js hash, tokens, mail]
+    B[browser page] -->|HTTP fetch JSON| S[Express entry]
+    S --> AU[/auth/* /reset/*]
+    S --> MN[ /updateOperaData /operaName /PaymentOrder /refundOrder /redeem ...]
+    AU --> UT[hash, tokens, mail]
     MN --> UT
-    AU --> DB[(Postgre pool - serv-config.js)]
+    AU --> DB[(Postgre pool)]
     MN --> DB
     UT --> DB
 ```
 
-front-end:each page has its own `.js` script, and the sorting algos live in a dedicated utility module `front-end/search/sort.js` that `search.js` imports `sort.js` and use it .
+front-end:each page has its own `.js` script, and the sorting algos are in `front-end/search/sort.js` that `search.js` imports `sort.js` and use it .
 
 ### 2.2 Db design: 3NF normalization and ER diagram
 
-* **primary / Foreign keys** with `ON DELETE CASCADE` — referential integrity is enforced.
+* **primary / Foreign keys** with `ON DELETE CASCADE` — ensure referential integrity.
 * **check constraints** : `CHECK (balance >= 0)`, `CHECK (amount > 0)`, `CHECK (tx_type IN ('CREDIT','DEBIT'))`, `CHECK (rate <= 10.0)`.
 * **secondary index** `idx_wallet_tx_uid_date ON wallet_transaction(uid, created_at DESC)` to speed up ledger lookups.
 * **`SERIAL` surrogate keys** (`uid`, `order_id`, `ticket_id`…) so business columns remain free to change.
@@ -64,16 +64,17 @@ ref table below:
 
 
 ### 2.3 Data structs
-
+ all can find from backend servers and frontend search page related files(`search.js`,`sort.js`,`book.js`);
+and algos according to syllabus requirements(`syl.mjs`);
 | Structure | Concrete form | Where |
 | :---      | :---          | :--- |
-| 2-D array | Levenshtein DP matrix | `search.js` `levenshtein()` |
-| Array / list | opera list `Final`, sort | `search.js`, `sort.js` |
-| Hash map | `operaMap` grouping rows by `opera_id` | `serv-main.js` `/updateOperaData` |
-| Object / record | `details` object passed between pages | `book.js`, `pay.js` |
+| 2-D array | Levenshtein DP matrix |  `levenshtein()` |
+| Array / list | opera list `Final`, sort | frontend operaList display |
+| Hash map | `operaMap` grouping rows by `opera_id` |  `/updateOperaData` |
+| Object / record | `details` object passed between pages | `pay.js` |
 | JSON serialisation | `localStorage.setItem('details', JSON.stringify(details))` | `book.js` |
-| Stack (implicit) | recursion call stack in quick sort | `sort.js` , `./syl.js` |
-| Queue (implicit) | browser event queue via `setInterval` | `pay-mediator.js`, `syl.mjs` |
+| Stack  | recursion call stack in quick sort | `sort.js` , `syl.js` |
+| Queue  | browser event queue via `setInterval` | `pay-mediator.js`, `syl.mjs` |
 | linked list | store data | `syl.mjs` |
 | Relational tables | Postgre tables  | `user.sql` |
 
@@ -88,18 +89,18 @@ ref table below:
 
 ```mermaid
 flowchart LR
-    A[index.html] -->|type query| B[search.html - fuzzy search + filters]
-    A --> C[auth.html - sign in / up]
-    C --> D[email verification link /auth/token]
+    A['index'] -->|type query| B['search' - fuzzy search&filters]
+    A --> C['auth' - sign in / up]
+    C --> D[email ver.link /auth/token]
     D -->|verified| A
-    C --> R[reset.html - forgot password]
-    R --> RT[resetTrue.html - new password]
-    B -->|pick opera + showtime| E[book.html - seat class + quantities]
-    E --> F[pay.html - review]
-    F --> G[pay-mediator.html - payment transaction]
+    C --> R['reset' - forgot password]
+    R --> RT['resetTrue' - new password]
+    B -->|pick opera + showtime| E['book' - seat class + quantities]
+    E --> F['pay' - review]
+    F --> G['pay-mediator' - payment transaction]
     G -->|insufficientBalance| A
-    G -->|success| H[OrderConfirm.html - tickets + email]
-    A --> I[settings.html - profile, wallet, orders]
+    G -->|success| H['OrderConfirm' - tickets + email]
+    A --> I['settings' - profile, wallet, orders]
     I -->|redeem code| I
     I -->|refund order| A
 ```
@@ -124,10 +125,10 @@ flowchart LR
     D --> E[digest = hashed pwd + salt]
     E --> F[INSERT user_infor with digest + salt]
     F --> G[generate UUID token, INSERT email_verification, expired within 1 day]
-    G --> H[COMMIT]
+    G --> H[commit]
     H --> I[send ver.email via MailerSend]
     I --> J[return success]
-    C -. any error .-> K[ROLLBACK]
+    C -. any error .-> K[rollback]
     K --> L[return 500 error]
 ```
 
@@ -139,7 +140,7 @@ flowchart LR
     B --> C{row found?}
     C -- no --> Z[return account not found]
     C -- yes --> D{verified = true?}
-    D -- no --> Y[return please verify your email first]
+    D -- no --> Y[return please verify you<F2><F2><F2><F3><F3>r email first]
     D -- yes --> E["digest = hashed pwd + stored salt"]
     E --> F{"digest = stored pwd ?"}
     F -- yes --> G[return success]
@@ -615,3 +616,7 @@ all errors can be tracked by `console.log` & infors printed in the terminal for 
 
 ***All file references are relative to the repository root `sba-proj/`.*
 **
+
+ref:
+    design:[https://urbtix.hk]
+    
