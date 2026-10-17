@@ -1,92 +1,5 @@
 //util file
-export function selection(data = []) {
-    const n = data.length;
-    for (let i = 0; i < n; i++) {
-        let min_idx = i;
-        for (let j = i + 1; j < n; j++) {
-            if (data[j] < data[min_idx]) {
-                min_idx = j;
-            }
-        }
-        [data[i], data[min_idx]] = [data[min_idx], data[i]];
-    }
-    return data;
-}
-export function merge(data = []) {
-    let width = 1;
-    const n = data.length;
-    while (width < n) {
-        for (let i = 0; i < n; i += 2 * width) {
-            let start = i;
-            let mid = Math.min(i + width, n);
-            let end = Math.min(i + 2 * width, n);
-            let left = data.slice(start, mid);
-            let right = data.slice(mid, end);
-            let p1 = 0;
-            let p2 = 0;
-            let k = start;
-            while (p1 < left.length && p2 < right.length) {
-                if (left[p1] <= right[p2]) {
-                    data[k] = left[p1];
-                    k += 1;
-                    p1 += 1;
 
-                } else {
-                    data[k] = right[p2];
-                    k += 1;
-                    p2 += 1;
-                }
-            }
-
-
-            while (p1 < left.length) {
-                data[k] = left[p1];
-                k += 1;
-                p1 += 1;
-            }
-            while (p2 < right.length) {
-                data[k] = right[p2];
-                k += 1;
-                p2 += 1;
-            }
-        }
-        width *= 2;
-    }
-    return data;
-};
-export function insertion(data = []) {
-    const n = data.length;
-    for (let i = 1; i < n; i++) {
-        let key = data[i];
-        let j = i - 1;
-        while (j >= 0 && data[j] > key) {
-            data[j + 1] = data[j];
-            j -= 1;
-        }
-        data[j + 1] = key;
-    }
-    return data;
-};
-export function quick(data = []) {
-    if (data.length <= 1) return data;
-    const len = data.length;
-    const first = data[0];
-    const mid = data[Math.floor((len - 1) / 2)];
-    const last = data[len - 1];
-    const pivot = median(first, mid, last);
-    const pivotIdx = data.indexOf(pivot);
-    data.splice(pivotIdx, 1);
-    let left = [];
-    let right = [];
-    for (let i = 0; i < data.length; i++) {
-        if (data[i] <= pivot) {
-            left.push(data[i]);
-        } else {
-            right.push(data[i]);
-        }
-    }
-    return [...quick(left), pivot, ...quick(right)];
-}
 
 export function bubble_ascending_price(data = []) {
     for (let i = 0; i < data.length - 1; i++) {
@@ -129,85 +42,33 @@ export function insertion_time(data = []) {
     }
     return data;
 };
-
-
 export function merge_name(data = []) {
-    let width = 1;
-    const n = data.length;
-    while (width < n) {
-        for (let i = 0; i < n; i += 2 * width) {
-            let start = i;
-            let mid = Math.min(i + width, n);
-            let end = Math.min(i + 2 * width, n);
-            let left = data.slice(start, mid);
-            let right = data.slice(mid, end);
-            let p1 = 0;
-            let p2 = 0;
-            let k = start;
-            while (p1 < left.length && p2 < right.length) {
-                if (left[p1].id.localeCompare(right[p2].id, undefined, { sensitivity: 'base' }) <= 0) {
-                    data[k] = left[p1];
-                    k += 1;
-                    p1 += 1;
-                } else {
-                    data[k] = right[p2];
-                    k += 1;
-                    p2 += 1;
-                }
-            }
-
-            while (p1 < left.length) {
-                data[k] = left[p1];
-                k += 1;
-                p1 += 1;
-            }
-            while (p2 < right.length) {
-                data[k] = right[p2];
-                k += 1;
-                p2 += 1;
-            }
-        }
-        width *= 2;
+    if (data.length <= 1) {
+        return data;
     }
-    return data;
-};
 
+    const middle = Math.floor(data.length / 2);
 
-export function quick_v1(data = []) {
-    if (data.length <= 1) return data;
-    const len = data.length;
-    const first = data[0];
-    const mid = data[Math.floor((len - 1) / 2)];
-    const last = data[len - 1];
-    const vfirst = Number(first.dataset.data);
-    const vmid = Number(mid.dataset.data);
-    const vlast = Number(last.dataset.data);
-    const vpivot = vfirst + vmid + vlast - Math.max(vfirst, vmid, vlast) - Math.min(vfirst, vmid, vlast);
-    let pivotIdx = 0;
-    if (vpivot === vmid) {
-        pivotIdx = Math.floor((len - 1) / 2);
-    } else if (vpivot === vlast) {
-        pivotIdx = len - 1
+    const left = merge_name(data.slice(0, middle));
+    const right = merge_name(data.slice(middle));
+
+    const merged = mergeHalves(
+        left,
+        right,
+        (a, b) =>
+            String(a.name ?? a.id).localeCompare(
+                String(b.name ?? b.id),
+                undefined,
+                { sensitivity: 'base' }
+            )
+    );
+
+    for (let i = 0; i < merged.length; i++) {
+        data[i] = merged[i];
     }
-    const pivot = data[pivotIdx];
-    data.splice(pivotIdx, 1);
-    const left = [];
-    const right = [];
-    for (let i = 0; i < data.length; i++) {
-        if (Number(data[i].dataset.data) > Number(pivot.dataset.data)) {
-            left.push(data[i]);
-        } else {
-            right.push(data[i]);
-        }
-    }
-    return [...quick_v1(left), pivot, ...quick_v1(right)]
-}
 
-export function quick_v2(data = []) {
-    quick_v2_InPlace(data, 0, data.length - 1);
     return data;
 }
-
 export function quick_v2_InPlace(data, start, end) {
     if (start >= end) return;
 
@@ -242,7 +103,6 @@ export function quick_v2_InPlace(data, start, end) {
     quick_v2_InPlace(data, start, j - 1);
     quick_v2_InPlace(data, j + 1, end);
 }
-
 //newly add!
 export function selectionDuration(data = []) {
     for (let i = 0; i < data.length - 1; i++) {
@@ -263,8 +123,6 @@ export function selectionDuration(data = []) {
 
     return data;
 }
-
-
 function mergeHalves(left, right, compare) {
     const result = [];
     let i = 0;
@@ -280,8 +138,170 @@ function mergeHalves(left, right, compare) {
 
     return result.concat(left.slice(i), right.slice(j));
 }
+export function compareValues(a, b) {
+    if (typeof a === 'string' && typeof b === 'string') {
+        return a.localeCompare(b, undefined, { sensitivity: 'base' });
+    }
 
+    if (a < b) return -1;
+    if (a > b) return 1;
+    return 0;
+}
+export class Stack {
+    constructor() {
+        this.items = [];
+        this.top = -1;
+    }
 
+    push(value) {
+        this.top++;
+        this.items[this.top] = value;
+        return this.top + 1;
+    }
+
+    pop() {
+        if (this.top < 0) {
+            return undefined;
+        }
+
+        const value = this.items[this.top];
+        this.items[this.top] = undefined;
+        this.top--;
+        return value;
+    }
+
+    peek() {
+        if (this.top < 0) {
+            return undefined;
+        }
+
+        return this.items[this.top];
+    }
+
+    isEmpty() {
+        return this.top < 0;
+    }
+
+    get length() {
+        return this.top + 1;
+    }
+}
+function medianOfThreeIndex(items, first, middle, last, compare) {
+    const a = items[first];
+    const b = items[middle];
+    const c = items[last];
+
+    if (compare(a, b) <= 0) {
+        if (compare(b, c) <= 0) {
+            return middle;
+        }
+
+        if (compare(a, c) <= 0) {
+            return last;
+        }
+
+        return first;
+    }
+
+    if (compare(a, c) <= 0) {
+        return first;
+    }
+
+    if (compare(b, c) <= 0) {
+        return last;
+    }
+
+    return middle;
+}
+export function quickSortInPlace(items, compare, start, end) {
+    if (compare === undefined) {
+        compare = compareValues;
+    }
+
+    if (start === undefined) {
+        start = 0;
+    }
+
+    if (end === undefined) {
+        end = items.length - 1;
+    }
+
+    if (start >= end) {
+        return items;
+    }
+
+    const stack = new Stack();
+    stack.push([start, end]);
+
+    while (!stack.isEmpty()) {
+        const range = stack.pop();
+        const low = range[0];
+        const high = range[1];
+
+        if (low >= high) {
+            continue;
+        }
+
+        const middle = low + ((high - low) >> 1);
+        const pivotIndex = medianOfThreeIndex(
+            items,
+            low,
+            middle,
+            high,
+            compare
+        );
+
+        const pivot = items[pivotIndex];
+
+        let less = low;
+        let current = low;
+        let greater = high;
+
+        while (current <= greater) {
+            const order = compare(items[current], pivot);
+
+            if (order < 0) {
+                const tmp = items[less];
+                items[less] = items[current];
+                items[current] = tmp;
+
+                less++;
+                current++;
+            } else if (order > 0) {
+                const tmp = items[current];
+                items[current] = items[greater];
+                items[greater] = tmp;
+
+                greater--;
+            } else {
+                current++;
+            }
+        }
+
+        const leftSize = less - low;
+        const rightSize = high - greater;
+
+        if (leftSize > rightSize) {
+            if (leftSize > 1) {
+                stack.push([low, less - 1]);
+            }
+
+            if (rightSize > 1) {
+                stack.push([greater + 1, high]);
+            }
+        } else {
+            if (rightSize > 1) {
+                stack.push([greater + 1, high]);
+            }
+
+            if (leftSize > 1) {
+                stack.push([low, less - 1]);
+            }
+        }
+    }
+
+    return items;
+}
 
 // let data = [1, 6, 3, 5, 7, 9, 0, 9, 6, 4, 2];
 // data = quick(data);

@@ -32,4 +32,4 @@ Applies to both `auth` and `pwd reset` pages.
 | Insertion sort           | T      |
 | Merge sort               | T      |
 | Quick sort               | T      |
-| *Recursion*              | F      |
+| *Recursion*              | T      |

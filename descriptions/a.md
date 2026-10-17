@@ -64,8 +64,7 @@ ref table below:
 
 
 ### 2.3 Data structs
- all can find from backend servers and frontend search page related files(`search.js`,`sort.js`,`book.js`);
-and algos according to syllabus requirements(`syl.mjs`);
+data structures below  are implemented in search, booking and ticket-generation modules. 
 | Structure | Concrete form | Where |
 | :---      | :---          | :--- |
 | 2-D array | Levenshtein DP matrix |  `levenshtein()` |
@@ -73,9 +72,9 @@ and algos according to syllabus requirements(`syl.mjs`);
 | Hash map | `operaMap` grouping rows by `opera_id` |  `/updateOperaData` |
 | Object / record | `details` object passed between pages | `pay.js` |
 | JSON serialisation | `localStorage.setItem('details', JSON.stringify(details))` | `book.js` |
-| Stack  | recursion call stack in quick sort | `sort.js` , `syl.js` |
-| Queue  | browser event queue via `setInterval` | `pay-mediator.js`, `syl.mjs` |
-| linked list | store data | `syl.mjs` |
+| Stack | explicit array-backed stack storing quicksort ranges | `front-end/search/sort.js` |
+| Queue | FIFO ticket generation during payment | `back-end/serv-utils/ticket-queue.mjs` |
+| Linked list | array-backed nodes connected by integer indices, used by Queue | `back-end/serv-utils/ticket-queue.mjs` |
 | Relational tables | Postgre tables  | `user.sql` |
 
  `localStorage` keys: `search_content`, `selected`, `selected_price_id`, `selected_time`, `details`, `user`, `isLoggedIn`, `orderId`, `tickets`. 
@@ -252,8 +251,10 @@ Complexity: **O(m·n) time and O(m·n) space**
 
 ### 4.2 Keyword detection and relevance ranking (exact-match-first)
 
-`AccordingToSearchBar()`  exact substring matches are forced to weight `-1`, so they outrank every fuzzy match; among fuzzies,**smaller edit distance = higher relevance** as a classic **sort-by-computed-key** problem.
+`AccordingToSearchBar()` assigns a score of −2 to an exact name match and −1 to partial name matches. Other candidates receive their Levenshtein distance as the score. Quicksort then orders the results by ascending score,
+with the original catalogue position used to break ties.
 
+This search ranks the full catalogue rather than removing non-matching entries.
 ```mermaid
 flowchart LR
     A[form submit] --> B[".trim().toLowerCase()"]
@@ -330,8 +331,13 @@ flowchart LR
 
 #### 4.3.3 Insertion
 
-Each element is inserted into the sorted prefix by shifting larger elements one position right. **Adaptive**: O(n) on nearly-sorted input, O(n²) worst case; **stable** and in-place. `insertion_time()` compares `show_time` fields; because the stored timestamps are ISO-8601 strings, lexicographic comparison equals chronological comparison — a neat, correct choice of representation that avoids `Date` parsing inside the loop.
+Insertion sort builds a sorted prefix by shifting later showtimes to the
+right and inserting each item into its correct position. The current
+`insertion_time()` implementation converts the selected timestamps into
+numeric time values using `Date.getTime()`.
 
+The algorithm is stable. Its best-case time complexity is O(n), while its
+average and worst-case time complexity is O(n²).
 ```mermaid
 flowchart LR
     A[Start] --> B[i = 1]
@@ -348,10 +354,15 @@ flowchart LR
 
 #### 4.3.4 Merge
 
-the project uses the **bottom-up** form:
-- merge adjacent runs of width `1, 2, 4, 8, …` until the whole array is one run. 
-- Guaranteed **O(n log n)** in all cases, **stable**,
-- but uses **O(n)** auxiliary space for the slices. 
+The project uses recursive merge sort for name sorting. `merge_name()`
+divides the array into two halves, recursively sorts each half, and combines
+them using `mergeHalves()`.
+
+When two names compare equally, the merge operation takes the item from the
+left half first, preserving stability. The merged items are copied back
+into the input array, so existing callers can continue using the same array.
+
+The time complexity is **O(n log n)**, with **O(n)** auxiliary space and an **O(log n)** recursion depth.
 
 ```mermaid
 flowchart LR
@@ -376,11 +387,19 @@ flowchart LR
 
 #### 4.3.5 Quick
 
-* **`quick()`** (`sort.js:158-177`) — out-of-place version that picks the pivot *by value* with a `median()` helper.
-* **`quick_v1()`** (`sort.js:179-207`) — the Levenshtein-weight ranker: sorts DOM elements **descending** by a numeric weight stored in `dataset.data`. The median value is computed arithmetically — *sum of the three values minus the maximum minus the minimum equals the middle value* — so no helper function is needed.
-* **`quick_v2()`** (`sort.js:209-247`) — the production-grade **in-place** variant: swap the pivot to the front, advance `i` from the left over elements `< p`, retreat `j` from the right over elements `≥ p`, swap inversions, and finally place the pivot at `j` before recursing on both sides.
+The application uses `quickSortInPlace()` for relevance ranking and for
+building the sorted search index.
 
-Complexity: **O(n log n)** average, **O(n²)** worst (median-of-three makes the bad case unlikely), **unstable**, **O(log n)** recursion stack in the in-place variant. The call stack is the implicit *stack* data structure of the syllabus list.
+The algorithm selects a median-of-three pivot and partitions each range
+into values smaller than, equal to, and greater than the pivot. An explicit
+array-backed Stack stores the remaining ranges, so this implementation
+does not use recursive quicksort calls.
+
+Its average time complexity is **O(n log n)**, while its worst-case time
+complexity is **O(n²)**. The underlying quicksort is not stable; relevance
+ranking uses the original catalogue position as a secondary comparison key
+to produce deterministic ordering.
+
 
 ```mermaid
 flowchart LR
@@ -455,8 +474,15 @@ The quantity steppers clamp at zero (`minus` only decrements while `currentVal >
 
 ### 6.1 The ACID payment transaction — `/PaymentOrder` (`serv-main.js:191-239`)
 
-A single order touches five tables, so the backend wraps everything in one SQL transaction (`BEGIN … COMMIT / ROLLBACK`), satisfying **Atomicity**: either all five writes happen, or none.
+The payment workflow writes to `orders`, `wallet`, `wallet_transaction`
+and `ticket`. These changes should belong to one database transaction so
+that a failure does not leave a partially completed purchase.
 
+The current implementation issues `BEGIN`, `COMMIT` and `ROLLBACK` through
+`pool.query()`. However, node-postgres requires all statements in a
+transaction to use the same checked-out client. Transaction atomicity
+therefore remains an implementation limitation until the queries are moved
+to one client and the failure paths are tested. 
 ```mermaid
 flowchart LR
     A[POST /PaymentOrder] --> B[BEGIN TRANSACTION]
@@ -480,7 +506,13 @@ flowchart LR
 
 ### 6.2 Pessimistic locking — `SELECT … FOR UPDATE`
 
-For the money-sensitive single-resource rows the project uses **row-level pessimistic locking**: a `FOR UPDATE` lock makes a concurrent transaction wait until the first one commits, eliminating lost-update races. The lock appears in the current code at three points:
+`SELECT ... FOR UPDATE` is intended to protect records while they are
+checked and updated. It appears in the refund, gift-code redemption and
+password-reset workflows.
+
+These locks must be held within correctly managed transactions. The
+presence of `FOR UPDATE` alone is not sufficient evidence that the current
+application is safe under concurrent requests. 
 
 * **Password reset consumption** — `pwd_reset` row locked while being consumed (`serv-auth.js:149`).
 * **Gift-code redemption** — the `gift_code` row is locked before the `current_status` check (`serv-main.js:117`), so two users cannot both redeem the same code (double-spend protection).
@@ -537,8 +569,13 @@ flowchart LR
 
 **Verification / reset tokens** (`serv-utils.js:17-30`) use the platform CSPRNG: `crypto.randomUUID()` (a v4 UUID, 122 random bits) with hyphens stripped — collision-safe and unguessable.
 
-**Ticket IDs** (`serv-utils.js:155-162`) combine a timestamp with two random base-36 blocks, with **recursive collision retry** — recursion used as a bounded loop (the two blocks are compared, so a retry is vanishingly rare):
+**Ticket IDs** currently combine the opera name, a timestamp and two random
+base-36 fragments. The function retries when the two newly generated
+fragments are identical.
 
+This comparison does not check whether the complete ID already exists in
+the database. It should therefore not be described as database collision
+detection. The retry also has no explicit upper limit.
 ```mermaid
 flowchart LR
     A["GENERATE_TICKET_ID opera"] --> B["id1 = 6 random base36 chars"]
@@ -580,7 +617,8 @@ The same slug function (`LOWER(REPLACE(opera_name,' ','-'))`) is re-applied in S
 
 ### 7.3 Micro-constructs
 
-* **Modulo cycling** for the “processing…” animation (`pay-mediator.js:14`): `index = (index + 1) % texts.length` — a ring buffer over three strings.
+Modulo-based cycling is used for the payment-processing animation:
+`index = (index + 1) % texts.length` repeats the three display messages.
 * **Order breakdown aggregation** in `settingsGetOrders`: SQL `GROUP BY` + `json_agg(json_build_object(...))` produces the per-class ticket counts without N+1 queries.
 * **Zero-padding** for timestamps: `String(n).padStart(2,'0')` (`serv-utils.js:141-146`).
 
@@ -588,6 +626,17 @@ The same slug function (`LOWER(REPLACE(opera_name,' ','-'))`) is re-applied in S
 ---
 
 ## 8. Testing and Evaluation (Guidelines Task 2)
+
+The read-only review checked JavaScript syntax, frontend module linkage,
+sorting behaviour, search-index operations, and Queue/LinkedList behaviour.
+
+These checks did not execute the complete booking workflow, database
+transactions or email delivery. Algorithm correctness should therefore be
+reported separately from end-to-end system correctness.
+
+The existing boundary-case table records expected behaviour. Actual
+results, evidence and retest outcomes should be added after the
+corresponding application tests are performed.
 
 ### 8.1 Debugging strategy
 
@@ -617,6 +666,6 @@ all errors can be tracked by `console.log` & infors printed in the terminal for 
 ***All file references are relative to the repository root `sba-proj/`.*
 **
 
-ref:
-    design:[https://urbtix.hk]
-    
+reference:
+
+[URBTIX. Official website. Interface and booking-flow inspiration.](https://urbtix.hk)

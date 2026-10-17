@@ -1,8 +1,8 @@
 import * as sort from './sort.js'
-import {OperaSearchIndex, quickSortInPlace} from '../../syl.mjs';
+import { OperaSearchIndex } from './search-index.js';
 //#region
 
-const isLocal = window.location.hostname === '127.0.0.1'|| window.location.hostname==='localhost';
+const isLocal = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost';
 const API_BASE_URL = isLocal ? 'http://127.0.0.1:3000' : 'https://backend-sba.vercel.app';
 const FRONTEND_URL = isLocal ? 'http://127.0.0.1:5500' : 'https://frontend-sba.vercel.app'
 
@@ -25,6 +25,7 @@ const FilterStatus_name = document.getElementById('FilterStatus_name')
 const FilterStatus_price = document.getElementById('FilterStatus_price')
 const FilterStatus_time = document.getElementById('FilterStatus_time')
 const FilterStatus_rate = document.getElementById('FilterStatus_rate')
+const FilterStatus_duration = document.getElementById('FilterStatus_duration');
 const algo_display = document.getElementById("algo-display");
 const time_display = document.getElementById('time-display')
 //
@@ -210,17 +211,17 @@ function AccordingToSearchBar() {
         let score;
 
         if (exact && opera.id === exact.id) {
-            score = -2; 
+            score = -2;
         } else if (partialIds.has(opera.id)) {
-            score = -1; 
+            score = -1;
         } else {
-            score = levenshtein(content, opera.id.toLowerCase());
+            score = levenshtein(content, opera.name.trim().toLowerCase());
         }
 
         return { opera, originalIndex, score };
     });
 
-    quickSortInPlace(
+    sort.quickSortInPlace(
         ranked,
         (a, b) => a.score - b.score || a.originalIndex - b.originalIndex
     );
@@ -242,13 +243,14 @@ function executeSearch() {
 
 //startup inialize
 const Final = await ReqOperaData();
-const operaIndex=new OperaSearchIndex(Final);
+const operaIndex = new OperaSearchIndex(Final, opera => opera.name);
 //inherit
 const hist = localStorage.getItem("search_content");
 if (hist) {
-    const a = hist;
-    bar.value = a;
+    bar.value = hist;
     executeSearch();
+} else {
+    renderPage(Final);
 }
 //preset All FilterStatus -> false
 const filterlist = document.querySelectorAll('input[name="sort"]');
@@ -283,7 +285,6 @@ btnNext.addEventListener('click', () => {
     }
 
 });
-renderPage(Final);
 ////////////////////////////////////////////////////////////////////////////////////////////////
 ////search-bar related working zone:
 main.addEventListener('submit', (event) => {
@@ -298,29 +299,30 @@ main.addEventListener('submit', (event) => {
 FilterStatusList.forEach((status) => {
     status.addEventListener('change', async () => {
         if (status.checked) {
+            const working=AccordingToSearchBar();
             const [prefix, section] = status.id.split('_');
             if (section === 'name') {
-                sort.merge_name(Final);
+                sort.merge_name(working);
                 algo_display.innerText = 'Current Algorithm implemented: merge sort';
             }
             if (section === 'time') {
-                sort.insertion_time(Final);
+                sort.insertion_time(working);
                 algo_display.innerText = 'Current Algorithm implemented: insertion sort';
             }
             if (section === 'price') {
-                sort.bubble_ascending_price(Final);
+                sort.bubble_ascending_price(working);
                 algo_display.innerText = 'Current Algorithm implemented: bubble sort';
             }
             if (section === 'rate') {
-                sort.bubble_ascending_rate(Final);
+                sort.bubble_ascending_rate(working);
                 algo_display.innerText = 'Current Algorithm implemented: bubble sort';
             }
-          if (section === 'duration') {
-                sort.selectionDuration(Final);
+            if (section === 'duration') {
+                sort.selectionDuration(working);
                 algo_display.innerText = 'Current Algorithm implemented: selection sort';
-          }
+            }
             currentPage = 1;
-            renderPage(Final);
+            renderPage(working);
         }
     })
 })

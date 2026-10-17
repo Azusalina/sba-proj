@@ -5,7 +5,7 @@ import pool from '../serv-config/serv-config.js';
 import * as utils from '../serv-utils/serv-utils.js';
 import { Recipient } from "mailersend";
 
-import { Queue } from '../../syl.mjs'
+import { Queue } from '../serv-utils/ticket-queue.mjs'
 
 
 const app = express();
@@ -174,17 +174,17 @@ app.post('/updateOperaData', async (req, res) => {
 });
 
 app.post('/operaName', async (req, res) => {
-  const {name:operaName,priceId}=req.body;
-    if(!operaName||!Number.isInteger(Number(priceId))){
-      return res.status(400).json({
-      status:false,
-      msg:'Invalid opera|| price plan'
-      });
-   }
-  const sqlQuery = `SELECT premium, std_high, std_low, budget FROM prices p LEFT JOIN opera o ON p.opera_id = o.opera_id WHERE LOWER(REPLACE(o.opera_name, ' ', '-')) = $1 AND p.price_id = $2`;
+    const { name: operaName, priceId } = req.body;
+    if (!operaName || !Number.isInteger(Number(priceId))) {
+        return res.status(400).json({
+            status: false,
+            msg: 'Invalid opera|| price plan'
+        });
+    }
+    const sqlQuery = `SELECT premium, std_high, std_low, budget FROM prices p LEFT JOIN opera o ON p.opera_id = o.opera_id WHERE LOWER(REPLACE(o.opera_name, ' ', '-')) = $1 AND p.price_id = $2`;
     try {
-      const {rows:prices}=await pool.query(sqlQuery,[operaName,Number(priceId)]); 
-      const { rows: multipliers } = await pool.query('select name,multiplier from lv');
+        const { rows: prices } = await pool.query(sqlQuery, [operaName, Number(priceId)]);
+        const { rows: multipliers } = await pool.query('select name,multiplier from lv');
         if (prices.length > 0) {
             return res.json({ status: true, prices: prices[0], multipliers: multipliers });
         } else {
@@ -199,21 +199,21 @@ app.post('/operaName', async (req, res) => {
 app.post('/PaymentOrder', async (req, res) => {
     const { user, opera, level, sum_price, adult, student, wheelchair } = req.body;
     const payAmount = parseFloat(sum_price);
-    
+
     const quantities = [adult, student, wheelchair].map(Number);
 
-  if (
-     quantities.some(value =>
-          !Number.isInteger(value) || value < 0
-     ) ||
-      quantities.every(value => value === 0)
-  ) {
-      return res.status(400).json({ msg: 'invalid_quantity' });
-  }
+    if (
+        quantities.some(value =>
+            !Number.isInteger(value) || value < 0
+        ) ||
+        quantities.every(value => value === 0)
+    ) {
+        return res.status(400).json({ msg: 'invalid_quantity' });
+    }
 
-  if (!Number.isFinite(payAmount) || payAmount <= 0) {
-      return res.status(400).json({ msg: 'invalid_amount' });
-  }
+    if (!Number.isFinite(payAmount) || payAmount <= 0) {
+        return res.status(400).json({ msg: 'invalid_amount' });
+    }
     try {
         await pool.query('BEGIN');
         const userRes = await pool.query('SELECT u.uid, w.balance FROM user_infor u JOIN wallet w ON u.uid = w.uid WHERE u.id = $1', [user]);
