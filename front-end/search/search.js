@@ -27,7 +27,7 @@ const FilterStatus_time = document.getElementById('FilterStatus_time')
 const FilterStatus_rate = document.getElementById('FilterStatus_rate')
 const FilterStatus_duration = document.getElementById('FilterStatus_duration');
 const algo_display = document.getElementById("algo-display");
-const time_display = document.getElementById('time-display')
+let time_display = document.getElementById('time-display')
 //
 //#endregion
 
@@ -123,7 +123,7 @@ function createOperaArticle(opera) {
     const article = document.createElement('article');
     article.id = opera.id;
 
-    const currentPlan = opera.plans[0];
+    const currentPlan = { ...opera.plans[0] };
 
     article.innerHTML = `
     <img src="placeholder.png">

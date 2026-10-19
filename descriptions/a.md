@@ -55,7 +55,7 @@ front-end:each page has its own `.js` script, and the sorting algos are in `fron
 * **primary / Foreign keys** with `ON DELETE CASCADE` — ensure referential integrity.
 * **check constraints** : `CHECK (balance >= 0)`, `CHECK (amount > 0)`, `CHECK (tx_type IN ('CREDIT','DEBIT'))`, `CHECK (rate <= 10.0)`.
 * **secondary index** `idx_wallet_tx_uid_date ON wallet_transaction(uid, created_at DESC)` to speed up ledger lookups.
-* **`SERIAL` surrogate keys** (`uid`, `order_id`, `ticket_id`…) so business columns remain free to change.
+* **`SERIAL` surrogate keys** (`uid`, `order_id` …) so business columns remain free to change.
 * and an index for transaction history table
 
 ref table below:
@@ -139,7 +139,7 @@ flowchart LR
     B --> C{row found?}
     C -- no --> Z[return account not found]
     C -- yes --> D{verified = true?}
-    D -- no --> Y[return please verify you<F2><F2><F2><F3><F3>r email first]
+    D -- no --> Y[return please verify your email first]
     D -- yes --> E["digest = hashed pwd + stored salt"]
     E --> F{"digest = stored pwd ?"}
     F -- yes --> G[return success]
@@ -242,34 +242,46 @@ Complexity: **O(m·n) time and O(m·n) space**
 | **c** | 1 | 0 | 1 | 2 | 3 | 4 | 5 |
 | **a** | 2 | 1 | 0 | 1 | 2 | 3 | 4 |
 | **r** | 3 | 2 | 1 | 0 | 1 | 2 | 3 |
-| **n** | 4 | 3 | 2 | 1 | 1 | 2 | 3 |
+| **n** | 4 | 3 | 2 | 1 | 1 | 2 | 2 |
 | **e** | 5 | 4 | 3 | 2 | 2 | 1 | 2 |
 | **n** | 6 | 5 | 4 | 3 | 3 | 2 | ***1*** |
 
-- the query is lower-cased and trimmed,
-- the candidate is the **slug** (`opera_name` lower-cased with spaces replaced by `-`, e.g. `la-traviata`), so a space in user's input costs one `substitue`
+Both the query and the candidate opera name are trimmed and converted
+to lowercase before the edit distance is calculated. Spaces are retained;
+the fuzzy comparison does not use the hyphenated opera slug.
+
 
 ### 4.2 Keyword detection and relevance ranking (exact-match-first)
 
 `AccordingToSearchBar()` assigns a score of −2 to an exact name match and −1 to partial name matches. Other candidates receive their Levenshtein distance as the score. Quicksort then orders the results by ascending score,
 with the original catalogue position used to break ties.
 
+`OperaSearchIndex` maintains a separate array sorted by normalised opera
+name. `findExact()` applies binary search to this array, while
+`findPartial()` uses linear search to collect names containing the query.
+
+The binary-search phase takes **O(log n)** comparisons. Collecting partial
+matches scans the catalogue in **O(n)** item visits, excluding the cost of
+string comparisons. The complete search also performs fuzzy scoring
+and relevance sorting, so its overall complexity is not **O(log n)**.
+
 This search ranks the full catalogue rather than removing non-matching entries.
+
 ```mermaid
-flowchart LR
-    A[form submit] --> B[".trim().toLowerCase()"]
-    B --> C{for each opera x in Final}
-    C --> D{x.id contains query?}
-    D -- yes --> E["weight = -1"]
-    D -- no --> F["weight = Levenshtein query, x.id"]
-    E --> G
-    F --> G[stable sort of a copy by weight ascending]
-    C -- all done --> G
-    G --> H[page = 1, render first 3 items]
-    H --> I["Algo:Levenshtein distance"]
+flowchart TD
+    A[Submit query] --> B[Trim and lowercase query]
+    B --> C{Query empty?}
+    C -- Yes --> D[Return catalogue copy in original order]
+    C -- No --> E[Binary search for an exact name match]
+    E --> F[Linear search for partial name matches]
+    F --> G[Score each opera]
+    G --> H[Exact result: -2; partial match: -1; otherwise edit distance]
+    H --> I[Quicksort by score, then original position]
+    I --> J[Reset to page 1 and render]
+    D --> J
 ```
 
-### 4.3 sorrt algos (`front-end/search/sort.js`)
+### 4.3 sort algos (`front-end/search/sort.js`)
 
 
 | Filter radio | Algorithm wired | Function | Order |
@@ -278,6 +290,7 @@ flowchart LR
 | time | insertion sort (adaptive) | `insertion_time()` | earliest→latest |
 | price | bubble sort (early-exit) | `bubble_ascending_price()` | cheapest→dearest |
 | rate | bubble sort (early-exit) | `bubble_ascending_rate()` | highest rating first |
+| duration | selection sort | `selectionDuration()` | shortest→longest |
 
 #### 4.3.1 Bubble
 
@@ -310,6 +323,9 @@ flowchart LR
 Each pass finds the minimum of the unsorted suffix and swaps it into place.
 - Always **O(n²)** comparisons,
 - **O(n)** swaps, **unstable**, in-place. 
+
+The duration option calls `selectionDuration()`. Each pass locates the
+shortest remaining opera and swaps it into the next output position.
 
 ```mermaid
 flowchart LR
@@ -365,24 +381,15 @@ into the input array, so existing callers can continue using the same array.
 The time complexity is **O(n log n)**, with **O(n)** auxiliary space and an **O(log n)** recursion depth.
 
 ```mermaid
-flowchart LR
-    A[width = 1] --> B{width < n ?}
-    B -- no --> Z[return A]
-    B -- yes --> C[i = 0]
-    C --> D{i < n ?}
-    D -- no --> E["width = 2 * width"]
-    E --> B
-    D -- yes --> F["mid = min(i+width, n) , end = min(i+2width, n)"]
-    F --> G["L = A[i..mid-1] ; R = A[mid..end-1]"]
-    G --> H{"merge with pointers p,q: L[p] <= R[q] ?"}
-    H -- yes --> I["A[k] = L[p] ; p++, k++"]
-    H -- no --> J["A[k] = R[q] ; q++, k++"]
-    I --> K{run exhausted?}
-    J --> K
-    K -- no --> H
-    K -- yes --> L[copy leftovers]
-    L --> M["i = i + 2*width"]
-    M --> D
+flowchart TD
+    A["merge_name(data)"] --> B{Length <= 1?}
+    B -- Yes --> Z[Return data]
+    B -- No --> C[Split into left and right halves]
+    C --> D[Recursively sort left half]
+    D --> E[Recursively sort right half]
+    E --> F[Combine using mergeHalves]
+    F --> G[Copy merged items into data]
+    G --> Z
 ```
 
 #### 4.3.5 Quick
@@ -402,21 +409,17 @@ to produce deterministic ordering.
 
 
 ```mermaid
-flowchart LR
-    A{start < end ?} -- no --> Z[return]
-    A -- yes --> B["pick median-of-three pivot, swap to start"]
-    B --> C["i = start+1 ; j = end"]
-    C --> D{i <= j ?}
-    D -- no --> E["swap A[start], A[j]  - pivot in place"]
-    E --> F["QUICK_V2 start, j-1"]
-    F --> G["QUICK_V2 j+1, end"]
-    G --> Z
-    D -- yes --> H["while A[i] < p : i++"]
-    H --> I["while A[j] >= p : j--"]
-    I --> J{i < j ?}
-    J -- yes --> K["swap A[i], A[j]"]
-    J -- no --> D
-    K --> D
+flowchart TD
+    A[Start] --> B[Push initial range onto Stack]
+    B --> C{Stack empty?}
+    C -- Yes --> Z[Return array]
+    C -- No --> D[Pop a range]
+    D --> E{Fewer than two items?}
+    E -- Yes --> C
+    E -- No --> F[Choose median-of-three pivot]
+    F --> G[Partition into smaller, equal and greater regions]
+    G --> H[Push non-trivial outer ranges, larger first]
+    H --> C
 ```
 
 ### 4.4 Pagination (windowed rendering)
@@ -447,9 +450,16 @@ The ← / → arrow keys trigger the same handlers (`search.js:248-256`), so the
 
 ## 5. Dynamic Pricing and Ticket Arithmetic
 
-### 5.1 Time-based price plan — `getPricePlan()` (`serv-utils.js:122-136`)
+### 5.1 User-selected showtime and price plan
 
-Each opera has two price plans *(or time plans also)*; the plan is chosen  by user from the opera’s schedule
+The search page displays the available showtimes and their associated
+price plans. Selecting a showtime updates the current selection.
+Clicking the opera title then stores the selected price ID and time
+in localStorage before opening the booking page.
+
+The current payment endpoint does not persist the selected price ID or
+showtime. Preserving this association in the completed order remains
+an implementation improvement.
 
 ### 5.2 Seat-class multipliers and the total-price formula (`book.js`)
 
@@ -470,9 +480,9 @@ The quantity steppers clamp at zero (`minus` only decrements while `currentVal >
 ---
 ---
 
-## 6. Payment, Wallet and Concurrency Constructs
+## 6. Payment, Wallet and Concurrency Constructs and limitations
 
-### 6.1 The ACID payment transaction — `/PaymentOrder` (`serv-main.js:191-239`)
+### 6.1 payment workflow — `/PaymentOrder` (`serv-main.js:191-239`)
 
 The payment workflow writes to `orders`, `wallet`, `wallet_transaction`
 and `ticket`. These changes should belong to one database transaction so
@@ -506,9 +516,14 @@ flowchart LR
 
 ### 6.2 Pessimistic locking — `SELECT … FOR UPDATE`
 
-`SELECT ... FOR UPDATE` is intended to protect records while they are
-checked and updated. It appears in the refund, gift-code redemption and
-password-reset workflows.
+* Password reset locks the token row before checking and consuming it.
+* Gift-code redemption locks the code row before checking its status.
+* Refund processing locks the order row before checking whether it is
+  still eligible for a refund.
+
+These checks are intended to prevent repeated processing. Their
+concurrency guarantees require the transaction-client correction
+described in §6.1 and subsequent concurrent-request testing.
 
 These locks must be held within correctly managed transactions. The
 presence of `FOR UPDATE` alone is not sufficient evidence that the current
