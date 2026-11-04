@@ -4,6 +4,9 @@ import crypto from 'crypto';
 import pool from '../serv-config/serv-config.js'
 import * as utils from '../serv-utils/serv-utils.js'
 import { Recipient } from "mailersend";
+
+import { authsql } from '../queries.js';
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -21,55 +24,52 @@ app.post('/auth/signup', async (req, res) => {
     const pwd = req.body.pwd;
     //repetitive check
     try {
-        const rep_query = 'select id from user_infor where id=$1'
-        const rep_resp = await pool.query(rep_query, [userid])
+        const rep_resp = await pool.query(authsql.signup_FetchUserID, [userid])
         if (rep_resp.rowCount != 0) {
             return res.json({ success: false, msg: "account already exists" })
         }
     } catch (error) {
         console.error("Database check error:", error);
         return res.status(500).json({ success: false, msg: "database error" })
-        
+
     }
     try {
         await pool.query("BEGIN");
         const salt = crypto.randomBytes(16).toString('hex');
         const pwd2 = await utils.hash(pwd, salt);
-        const sql_command = "insert into user_infor(id,email,pwd,salt) values($1,$2,$3,$4)";
-        const db_result = await pool.query(sql_command, [userid, email, pwd2, salt]);
+        const db_result = await pool.query(authsql.signup_CreateNew_Account, [userid, email, pwd2, salt]);
         if (db_result.rowCount > 0) {
-            //signup verify email here 
             const { token, url } = utils.random_generate_web();
             const v_receiver = [new Recipient(email, "Receiver alpha")];
-            await pool.query(`INSERT INTO email_verification(token, userid, expire_time) VALUES($1, $2, NOW() + INTERVAL '1 day')`, [token, userid]);
+            await pool.query(authsql.signup_CreateNew_ev, [token, userid]);
             await pool.query("COMMIT");
-        
-       try {
-    const mailResponse =
-        await utils.send_ver_mail(v_receiver, token, url, userid);
 
-    console.log('MailerSend accepted verification email:', {
-        statusCode: mailResponse.statusCode,
-        messageId: mailResponse.headers?.['x-message-id']
-    });
+            try {
+                const mailResponse =
+                    await utils.send_ver_mail(v_receiver, token, url, userid);
 
-    return res.json({
-        success: true,
-        msg: 'Verification email has been accepted for delivery.'
-    });
-} catch (error) {
-    console.error('MailerSend rejected verification email:', {
-        statusCode: error?.statusCode,
-        body: error?.body,
-        message: error?.message
-    });
+                console.log('MailerSend accepted verification email:', {
+                    statusCode: mailResponse.statusCode,
+                    messageId: mailResponse.headers?.['x-message-id']
+                });
 
-    return res.status(502).json({
-        success: false,
-        accountCreated: true,
-        msg: 'Account created, but verification email delivery failed.'
-    });
-}
+                return res.json({
+                    success: true,
+                    msg: 'Verification email has been accepted for delivery.'
+                });
+            } catch (error) {
+                console.error('MailerSend rejected verification email:', {
+                    statusCode: error?.statusCode,
+                    body: error?.body,
+                    message: error?.message
+                });
+
+                return res.status(502).json({
+                    success: false,
+                    accountCreated: true,
+                    msg: 'Account created, but verification email delivery failed.'
+                });
+            }
         } else {
             res.json({ success: false, msg: "Invalid username or password" });
         }
@@ -79,14 +79,15 @@ app.post('/auth/signup', async (req, res) => {
         res.status(500).json({ success: false, msg: "something error" });
     }
 });
+
+
 app.get("/auth/:token", async (req, res) => {
     console.log('route entered ')
     const token = req.params.token;
     console.log("token:", token);
 
-    const result = await pool.query(`SELECT userid FROM email_verification WHERE token = $1 AND expire_time > NOW() AND used = FALSE`, [token]);
+    const result = await pool.query(authsql.token_fetch, [token]);
     console.log(result.rows);
-
 
     if (result.rowCount === 0) {
         console.log('invalid token')
@@ -95,11 +96,11 @@ app.get("/auth/:token", async (req, res) => {
 
     const userid = result.rows[0].userid;
 
-    await pool.query("UPDATE user_infor SET verified=TRUE WHERE id=$1", [userid]);
-    await pool.query("UPDATE email_verification SET used=TRUE WHERE token=$1 and used=FALSE", [token]);
+    await pool.query(authsql.token_update_user, [userid]);
+    await pool.query(authsql.token_update_ev, [token]);
     console.log('successfully signup ')
     const usernameId = result.rows[0].userid;
-    await pool.query(`INSERT INTO wallet(uid, balance) SELECT uid, 0.00 FROM user_infor WHERE id = $1 ON CONFLICT(uid) DO NOTHING`, [usernameId]);
+    await pool.query(authsql.signup_CreateNew_Wallet, [usernameId]);
     console.log('wallet successfully generated')
     console.log("before redirect");
     res.redirect(`${FRONTEND_URL}/auth/confirm.html`);
@@ -109,8 +110,7 @@ app.post('/auth/login', async (req, res) => {
     const userid = req.body.user_name;
     const pwd = req.body.passwd;
     try {
-        const salt_sql = 'select pwd,salt,verified from user_infor where id=$1';
-        const salt_result = await pool.query(salt_sql, [userid]);
+        const salt_result = await pool.query(authsql.signin_fetchpwd, [userid]);
         if (salt_result.rows.length === 0) {
             return res.json({ success: false, msg: "account not found" })
         }
@@ -126,14 +126,14 @@ app.post('/auth/login', async (req, res) => {
                 const stored = Buffer.from(saved_pwd, 'hex');
 
                 const matches =
-                  calculated.length === stored.length &&
-                  crypto.timingSafeEqual(calculated, stored);
+                    calculated.length === stored.length &&
+                    crypto.timingSafeEqual(calculated, stored);
 
-                  if (matches) {
-    return res.json({ success: true, msg: 'success' });
-}
+                if (matches) {
+                    return res.json({ success: true, msg: 'success' });
+                }
 
-return res.json({ success: false, msg: 'error' });
+                return res.json({ success: false, msg: 'error' });
                 if (enc_pwd === saved_pwd) {
                     res.json({ success: true, msg: "success" });
                 } else {
@@ -155,7 +155,7 @@ app.post('/reset', async (req, res) => {
     const email = req.body.email;
     try {
         //existence check
-        const { rows } = await pool.query('SELECT EXISTS(SELECT 1 FROM user_infor WHERE email=$1)', [email]);
+        const { rows } = await pool.query(authsql.reset_check_exists, [email]);
         if (rows[0].exists) {
             await utils.send_reset_email(email);
             console.log('reset email sent');
@@ -179,26 +179,26 @@ app.post('/reset/updatepwd', async (req, res) => {
     try {
         await pool.query("BEGIN");
         //verify token still can be use
-        const tokenCheck = await pool.query(`SELECT email FROM pwd_reset WHERE token = $1 AND expire_time > NOW() AND used = FALSE FOR UPDATE`, [token]);
+        const tokenCheck = await pool.query(authsql.reset_select_email, [token]);
         if (tokenCheck.rowCount === 0) {
             await pool.query("ROLLBACK");
             return res.json({ success: false, msg: "Invalid or expired token" });
         }
         const passwordErrors = utils.validatePassword(newPwd);
 
-if (passwordErrors.length > 0) {
-    await pool.query('ROLLBACK');
-    return res.status(400).json({
-        success: false,
-        msg: passwordErrors.join(' ')
-    });
-}
+        if (passwordErrors.length > 0) {
+            await pool.query('ROLLBACK');
+            return res.status(400).json({
+                success: false,
+                msg: passwordErrors.join(' ')
+            });
+        }
 
         const userEmail = tokenCheck.rows[0].email;
         const newSalt = crypto.randomBytes(16).toString('hex');
         const newHashedPwd = await utils.hash(newPwd, newSalt);
-        await pool.query(`UPDATE user_infor SET pwd = $1, salt = $2 WHERE email = $3`, [newHashedPwd, newSalt, userEmail]);
-        await pool.query(`UPDATE pwd_reset SET used = TRUE WHERE token = $1`, [token]);
+        await pool.query(authsql.reset_pwd, [newHashedPwd, newSalt, userEmail]);
+        await pool.query(authsql.reset_status, [token]);
         await pool.query("COMMIT");
         return res.json({ success: true, msg: "Password updated successfully" });
     } catch (error) {
@@ -210,6 +210,6 @@ if (passwordErrors.length > 0) {
 
 
 
-export default app
+export default app;
 
 

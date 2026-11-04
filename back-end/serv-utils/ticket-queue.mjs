@@ -1,7 +1,4 @@
-//util
-
-
-
+//util---
 export class LinkedListNode {
     constructor(value) {
         this.value = value;
