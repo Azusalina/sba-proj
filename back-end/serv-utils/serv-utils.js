@@ -2,6 +2,7 @@ import 'dotenv/config';
 import crypto from 'crypto';
 import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
 import pool from '../serv-config/serv-config.js';
+import {utilsql} from '../queries.js'
 
 const isLocal = !process.env.VERCEL;
 const BACKEND_URL = isLocal ? 'http://127.0.0.1:3000' : process.env.BACKEND_URL;
@@ -9,7 +10,6 @@ const BACKEND_URL = isLocal ? 'http://127.0.0.1:3000' : process.env.BACKEND_URL;
 const EmailSender = new MailerSend({ apiKey: process.env.MAILERSEND_API_KEY });
 const NoreplySentFrom = new Sender("noreply@test-z0vklo6xwxpl7qrx.mlsender.net", "noreply verification");
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 
 export function hash(pwd, salt) {
     return new Promise((resolve, reject) => {
@@ -28,9 +28,6 @@ export function hash(pwd, salt) {
         });
     });
 }
-
-
-
 export function random_generate_web() {
     const result = crypto.randomUUID().replace(/-/g, '');
     return {
@@ -108,11 +105,12 @@ export async function send_refund_email(targetEmail, orderId, opera, refundAmoun
         throw err;
     }
 }
+//in queries.js abbr sre=esnd_reset_email
 export async function send_reset_email(targetEmail) {
     const recipient = [new Recipient(targetEmail, 'request user')];
     const { token, url } = random_generate_ResetWeb();
 
-    await pool.query(`INSERT INTO pwd_reset(email, token, expire_time, used) VALUES($1, $2, NOW() + INTERVAL '15 minutes', false)`, [targetEmail, token]);
+    await pool.query(utilsql.sre_record, [targetEmail, token]);
 
     const htmlContent = `
         <h1>Reset your password</h1>
@@ -132,6 +130,7 @@ export async function send_reset_email(targetEmail) {
     }
 }
 ///////////////////////////////////////////////////////////////
+
 export function TimeToSeconds(timestr) {
     const [hr, min, sec] = timestr.split(':').map(Number);
     return hr * 3600 + min * 60 + sec;
@@ -173,7 +172,6 @@ export function generate_ticketID(operaName) {
     if (ID1 == ID2) { return generate_ticketID(operaName) };
     return `${prefix}${time}${ID1}${ID2} `
 }
-
 export function validatePassword(value) {
     const errors = [];
 
@@ -181,7 +179,7 @@ export function validatePassword(value) {
         return ['Password cannot be empty.'];
     }
     if (value.length < 8 || value.length > 64) {
-        errors.push('Password must contain 8–64 characters.');
+        errors.push(`Password must contain 8-64 characters.`);
     }
     if (!/[A-Z]/.test(value)) errors.push('Uppercase letter required.');
     if (!/[a-z]/.test(value)) errors.push('Lowercase letter required.');

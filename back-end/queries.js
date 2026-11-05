@@ -103,3 +103,11 @@ export const mainsql = {
     pay_fetchEmail,
     admin_generateCode
 }
+
+
+
+//serv-util.js
+
+const sre_record=`INSERT INTO pwd_reset(email, token, expire_time, used) VALUES($1, $2, NOW() + INTERVAL '15 minutes', false)`
+
+export const utilsql={sre_record}
