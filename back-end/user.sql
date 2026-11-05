@@ -1,5 +1,3 @@
-
-
 create table if not EXISTS user_infor (
     uid serial primary key,
     id varchar(20) unique,
@@ -47,7 +45,6 @@ CREATE TABLE if not exists email_verification (
     expire_time TIMESTAMP not null,
     used BOOLEAN DEFAULT FALSE
 );
-
 create table if not exists pwd_reset(
     email varchar(255) not null,
     token text primary key,
@@ -145,6 +142,4 @@ SELECT * from wallet_transaction order by uid;
 select * from orders order by order_id;
 select * from ticket order by ticket_id;
 -----
-
-
 
