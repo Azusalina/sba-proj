@@ -7,7 +7,7 @@ import * as utils from '../serv-utils/serv-utils.js';
 import { Recipient } from "mailersend";
 
 import { Queue } from '../serv-utils/ticket-queue.mjs'
-
+import { mainsql } from '../queries.js'
 
 const app = express();
 app.use(cors());
@@ -16,8 +16,7 @@ app.use(express.json());
 app.post('/settingGetData', async (req, res) => {
     const username = req.body.username;
     try {
-        const command = 'select u.uid,u.id,u.create_at,u.email,u.birth,w.balance from user_infor u left join wallet w on u.uid=w.uid where u.id=$1';
-        const { rows } = await pool.query(command, [username]);
+        const { rows } = await pool.query(mainsql.GetData, [username]);
         if (rows.length > 0) {
             res.json(rows[0]);
         } else {
@@ -28,25 +27,13 @@ app.post('/settingGetData', async (req, res) => {
         res.json({ msg: 'unknown or fatal error' });
     }
 });
+
+
 //auth-main collaborated port added 08.08.2026,refund
 app.post('/settingsGetOrders', async (req, res) => {
     const username = req.body.username;
     try {
-        const query = `
-            SELECT o.order_id, o.book_time, o.transac_time, o.transac_method, o.sum_fee, o.transac_status,
-                   (SELECT op.opera_name FROM ticket t JOIN opera op ON op.opera_id = t.opera_id WHERE t.order_id = o.order_id LIMIT 1) AS opera_name,
-                   (SELECT json_agg(json_build_object('seat_class', grp.seat_class, 'seat_class2', grp.seat_class2, 'count', grp.cnt))
-                    FROM (SELECT seat_class, seat_class2, COUNT(*) AS cnt
-                          FROM ticket
-                          WHERE order_id = o.order_id
-                          GROUP BY seat_class, seat_class2) grp
-                   ) AS ticket_breakdown
-            FROM orders o
-            JOIN user_infor u ON o.uid = u.uid
-            WHERE u.id = $1
-            ORDER BY o.book_time DESC
-        `;
-        const { rows } = await pool.query(query, [username]);
+        const { rows } = await pool.query(mainsql.GetUserOrder, [username]);
         return res.json({ status: true, orders: rows });
     } catch (error) {
         console.error(error);
@@ -57,13 +44,7 @@ app.post('/refundOrder', async (req, res) => {
     const { user, order_id } = req.body;
     try {
         await pool.query('BEGIN');
-        const orderRes = await pool.query(
-            `SELECT o.order_id, o.uid, o.sum_fee, o.transac_status
-             FROM orders o
-             JOIN user_infor u ON o.uid = u.uid
-             WHERE o.order_id = $1 AND u.id = $2
-             FOR UPDATE`,
-            [order_id, user]
+        const orderRes = await pool.query(mainsql.refund_selectOrder, [order_id, user]
         );
         if (orderRes.rows.length === 0) {
             await pool.query('ROLLBACK');
@@ -75,29 +56,12 @@ app.post('/refundOrder', async (req, res) => {
             return res.json({ msg: 'not_refundable' });
         }
         const refundAmount = parseFloat(order.sum_fee);
-        const walletRes = await pool.query(
-            'UPDATE wallet SET balance = balance + $1, updated_at = NOW() WHERE uid = $2 RETURNING balance',
-            [refundAmount, order.uid]
-        );
+        const walletRes = await pool.query(mainsql.refund_updateWallet, [refundAmount, order.uid]);
         const newBalance = parseFloat(walletRes.rows[0].balance);
         const txId = utils.generate_TransacID();
-        await pool.query(
-            `INSERT INTO wallet_transaction (tx_id, uid, order_id, tx_type, amount, running_balance, source_destination, description)
-             VALUES ($1, $2, $3, 'CREDIT', $4, $5, 'ORDER_REFUND', $6)`,
-            [txId, order.uid, order_id, refundAmount, newBalance, `Refund for order #${order_id}`]
-        );
-        await pool.query(
-            `UPDATE orders SET transac_status = 'REFUNDED' WHERE order_id = $1`,
-            [order_id]
-        );
-        const infoRes = await pool.query(
-            `SELECT u.email, op.opera_name
-             FROM user_infor u, ticket t
-             JOIN opera op ON op.opera_id = t.opera_id
-             WHERE u.id = $1 AND t.order_id = $2
-             LIMIT 1`,
-            [user, order_id]
-        );
+        await pool.query(mainsql.refund_RecordRefund, [txId, order.uid, order_id, refundAmount, newBalance, `Refund for order #${order_id}`]);
+        await pool.query(mainsql.refund_updateStatus, [order_id]);
+        const infoRes = await pool.query(mainsql.refund_getEmailContent, [user, order_id]);
         await pool.query('COMMIT');
         if (infoRes.rows.length > 0 && infoRes.rows[0].email) {
             try {
@@ -118,8 +82,7 @@ app.post('/redeem', async (req, res) => {
     const code = req.body.code;
     try {
         await pool.query('BEGIN');
-        const command = 'select * from gift_code where code=$1 for update';
-        const { rows } = await pool.query(command, [code]);
+        const { rows } = await pool.query(mainsql.redeem_fetchCode, [code]);
 
         if (rows.length === 0) {
             await pool.query('ROLLBACK');
@@ -130,12 +93,12 @@ app.post('/redeem', async (req, res) => {
             return res.json({ msg: 'already redeemed' });
         }
         const amount = rows[0].amount;
-        const walletResult = await pool.query('UPDATE wallet SET balance = balance + $1 WHERE uid = (SELECT uid FROM user_infor WHERE id = $2) returning balance ', [amount, user]);
+        const walletResult = await pool.query(mainsql.redeem_updateWallet, [amount, user]);
         if (walletResult.rowCount === 0) {
             await pool.query('ROLLBACK');
             return res.json({ msg: 'unknown fatal error' });
         }
-        await pool.query('update gift_code set current_status=true,claim_by=$1,claim_time=now() where code=$2', [user, code]);
+        await pool.query(mainsql.redeem_updateStatus, [user, code]);
         await pool.query('COMMIT');
         const balance = walletResult.rows[0].balance;
         return res.json({ msg: 'redeemed', balance: balance });
@@ -145,11 +108,9 @@ app.post('/redeem', async (req, res) => {
         return res.json({ msg: 'unknown fatal error' });
     }
 });
-
 app.post('/updateOperaData', async (req, res) => {
     try {
-        const query = `SELECT o.opera_id, o.opera_name, o.duration, o.rate, p.price_id, p.budget, p.time AS showtime FROM opera o LEFT JOIN prices p ON o.opera_id = p.opera_id ORDER BY o.opera_id, p.price_id;`;
-        const { rows } = await pool.query(query);
+        const { rows } = await pool.query(mainsql.update_fetch);
         const operaMap = {};
         rows.forEach(row => {
             if (!operaMap[row.opera_id]) {
@@ -173,7 +134,6 @@ app.post('/updateOperaData', async (req, res) => {
         res.json({ status: false, data: [] });
     }
 });
-
 app.post('/operaName', async (req, res) => {
     const { name: operaName, priceId } = req.body;
     if (!operaName || !Number.isInteger(Number(priceId))) {
@@ -182,9 +142,8 @@ app.post('/operaName', async (req, res) => {
             msg: 'Invalid opera|| price plan'
         });
     }
-    const sqlQuery = `SELECT premium, std_high, std_low, budget FROM prices p LEFT JOIN opera o ON p.opera_id = o.opera_id WHERE LOWER(REPLACE(o.opera_name, ' ', '-')) = $1 AND p.price_id = $2`;
     try {
-        const { rows: prices } = await pool.query(sqlQuery, [operaName, Number(priceId)]);
+        const { rows: prices } = await pool.query(mainsql.Getprices, [operaName, Number(priceId)]);
         const { rows: multipliers } = await pool.query('select name,multiplier from lv');
         if (prices.length > 0) {
             return res.json({ status: true, prices: prices[0], multipliers: multipliers });
@@ -196,7 +155,6 @@ app.post('/operaName', async (req, res) => {
         return res.json({ status: false, msg: 'unknown fatal error' });
     }
 });
-
 app.post('/PaymentOrder', async (req, res) => {
     const { user, opera, level, sum_price, adult, student, wheelchair } = req.body;
     const payAmount = parseFloat(sum_price);
@@ -217,7 +175,7 @@ app.post('/PaymentOrder', async (req, res) => {
     }
     try {
         await pool.query('BEGIN');
-        const userRes = await pool.query('SELECT u.uid, w.balance FROM user_infor u JOIN wallet w ON u.uid = w.uid WHERE u.id = $1', [user]);
+        const userRes = await pool.query(mainsql.pay_fetchUser, [user]);
         if (userRes.rows.length === 0) throw new Error('User or wallet not found');
 
         const { uid, balance } = userRes.rows[0];
@@ -227,16 +185,16 @@ app.post('/PaymentOrder', async (req, res) => {
             return res.json({ msg: 'insufficientBalance' });
         }
 
-        const orderRes = await pool.query("INSERT INTO orders (uid, book_time, transac_time, transac_method, sum_fee, transac_status) VALUES ($1, NOW(), NOW(), 'WALLET_BALANCE', $2, 'COMPLETED') RETURNING order_id", [uid, payAmount]);
+        const orderRes = await pool.query(mainsql.pay_record_order, [uid, payAmount]);
         const newOrderId = orderRes.rows[0].order_id;
 
-        const walletRes = await pool.query('UPDATE wallet SET balance = balance - $1, updated_at = NOW() WHERE uid = $2 RETURNING balance', [payAmount, uid]);
+        const walletRes = await pool.query(mainsql.pay_updateWallet, [payAmount, uid]);
         const newWalletBal = parseFloat(walletRes.rows[0].balance);
 
         const txId = utils.generate_TransacID();
-        await pool.query("INSERT INTO wallet_transaction (tx_id, uid, order_id, tx_type, amount, running_balance, source_destination, description) VALUES ($1, $2, $3, 'DEBIT', $4, $5, 'OPERA_TICKET_PURCHASE', $6)", [txId, uid, newOrderId, payAmount, newWalletBal, `Purchased ticket for ${opera}`]);
+        await pool.query(mainsql.pay_record_tx, [txId, uid, newOrderId, payAmount, newWalletBal, `Purchased ticket for ${opera}`]);
 
-        const operaRes = await pool.query("SELECT opera_id FROM opera WHERE LOWER(REPLACE(opera_name, ' ', '-')) = $1", [opera]);
+        const operaRes = await pool.query(mainsql.pay_fetchOpera, [opera]);
         if (operaRes.rows.length === 0) throw new Error('Opera not found');
         const operaId = operaRes.rows[0].opera_id;
 
@@ -258,10 +216,7 @@ app.post('/PaymentOrder', async (req, res) => {
             const ticketId = utils.generate_ticketID(opera);
 
             generatedTicketIDs.push({ ticketId, level, seatClass2 });
-            await pool.query(
-                'INSERT INTO ticket (ticket_id, opera_id, order_id, seat_class, seat_class2, seat_num) VALUES ($1, $2, $3, $4, $5, $6)',
-                [ticketId, operaId, newOrderId, level, seatClass2, generatedTicketIDs.length]
-            );
+            await pool.query(mainsql.pay_record_ticket, [ticketId, operaId, newOrderId, level, seatClass2, generatedTicketIDs.length]);
         }
         await pool.query('COMMIT');
         return res.json({ msg: 'success', orderId: newOrderId, tickets: generatedTicketIDs });
@@ -271,11 +226,10 @@ app.post('/PaymentOrder', async (req, res) => {
         return res.json({ msg: 'error', details: 'service in maintainance' });
     }
 });
-
 app.post('/SendConfirmationEmail', async (req, res) => {
     const { user, orderId, opera, showtime, level, sum_price, tickets } = req.body;
     try {
-        const { rows } = await pool.query('select email from user_infor where id=$1', [user]);
+        const { rows } = await pool.query(mainsql.pay_fetchEmail, [user]);
         if (rows.length > 0 && rows[0].email) {
             const email = rows[0].email;
             await utils.send_confirmation_email(email, orderId, opera, showtime, level, sum_price, tickets);
@@ -288,12 +242,11 @@ app.post('/SendConfirmationEmail', async (req, res) => {
         return res.json({ msg: 'error' });
     }
 });
-
 app.post('/toolkit/gen_redeem_code', async (req, res) => {
     const code = req.body.code;
     const value = req.body.value;
     try {
-        await pool.query('insert into gift_code(code,amount) values($1,$2)', [code, value]);
+        await pool.query(mainsql.admin_generateCode, [code, value]);
         return res.json({ msg: 'success' });
     } catch (error) {
         console.log(error);

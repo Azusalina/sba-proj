@@ -239,3 +239,11 @@ all errors can be tracked by `console.log` & infors printed in the terminal for 
 reference:
 
 [URBTIX. Official website. Interface and booking-flow inspiration.](https://urbtix.hk)
+
+
+
+
+
+---
+design( (flowchart only , no code))
+implementation(real code)
