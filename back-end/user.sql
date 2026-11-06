@@ -127,17 +127,18 @@ SELECT pid,budget,note,time from prices ORDER BY budget
 
 
 
-delete from email_verification;delete from user_infor;
+delete from wallet where uid=8;delete from email_verification where userid='test';delete from user_infor where uid=8;
 
 ------
 select * from user_infor order by uid;  
 select * from email_verification;
+select * from wallet
 select * from pwd_reset;
 select * from gift_code;
 select * from opera ORDER BY opera_id;
 select * from prices order by opera_id;
 select * from lv order by id;
-SELECT * FROM wallet;
+
 SELECT * from wallet_transaction order by uid;
 select * from orders order by order_id;
 select * from ticket order by ticket_id;

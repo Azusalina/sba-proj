@@ -8,7 +8,7 @@ const isLocal = !process.env.VERCEL;
 const BACKEND_URL = isLocal ? 'http://127.0.0.1:3000' : process.env.BACKEND_URL;
 
 const EmailSender = new MailerSend({ apiKey: process.env.MAILERSEND_API_KEY });
-const NoreplySentFrom = new Sender("noreply@test-z0vklo6xwxpl7qrx.mlsender.net", "noreply verification");
+const NoreplySentFrom = new Sender("noreply@test-vz9dlemp1z64kj50.mlsender.net", "noreply verification");
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 export function hash(pwd, salt) {
