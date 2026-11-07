@@ -3,9 +3,10 @@ import cors from 'cors';
 import crypto from 'crypto';
 import pool from '../serv-config/serv-config.js'
 import * as utils from '../serv-utils/serv-utils.js'
-import { Recipient } from "mailersend";
+import { EmailVerificationResultType, Recipient } from "mailersend";
 
 import { authsql } from '../queries.js';
+import { STATUS_CODES } from 'http';
 
 const app = express();
 app.use(cors());
@@ -15,71 +16,59 @@ const isLocal = !process.env.VERCEL;
 const FRONTEND_URL = isLocal ? 'http://127.0.0.1:5500/front-end' : process.env.FRONTEND_URL;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-
 app.post('/auth/signup', async (req, res) => {
     const userid = req.body.username;
     const email = req.body.email;
     const pwd = req.body.pwd;
     //repetitive check
     try {
-        const rep_resp = await pool.query(authsql.signup_FetchUserID, [userid])
+        const rep_resp = await pool.query(authsql.signup_FetchUserID, [userid]);
         if (rep_resp.rowCount != 0) {
             return res.json({ success: false, msg: "account already exists" })
         }
     } catch (error) {
-        console.error("Database check error:", error);
+        console.error("database check error", error);
         return res.status(500).json({ success: false, msg: "database error" })
-
     }
     const client = await pool.connect();
     try {
         try {
-            await client.query("BEGIN");
+            await client.query('begin');
             const salt = crypto.randomBytes(16).toString('hex');
             const pwd2 = await utils.hash(pwd, salt);
             const db_result = await client.query(authsql.signup_CreateNew_Account, [userid, email, pwd2, salt]);
             if (db_result.rowCount > 0) {
                 const { token, url } = utils.random_generate_web();
-                const v_receiver = [new Recipient(email, "Receiver alpha")];
+                const v_receiver = [new Recipient(email, "receiver Alpha")];
                 await client.query(authsql.signup_CreateNew_ev, [token, userid]);
-                await client.query("COMMIT");
+                await client.query('commit');
                 try {
-                    const mailResponse =
-                        await utils.send_ver_mail(v_receiver, token, url, userid);
-
-                    console.log('MailerSend accepted verification email:', {
+                    const mailResponse = await utils.send_ver_mail(v_receiver, token, url, userid);
+                    console.log('mailersend accepted verification email', {
                         statusCode: mailResponse.statusCode,
                         messageId: mailResponse.headers?.['x-message-id']
                     });
-
-                    return res.json({
-                        success: true,
-                        msg: 'Verification email has been accepted for delivery.'
-                    });
+                    return res.json({ success: true, msg: "verification email has been accepted for delivery." });
                 } catch (error) {
-                    console.error('MailerSend rejected verification email:', {
+                    console.error('mailsend rejected request on sending v.mails,', {
                         statusCode: error?.statusCode,
                         body: error?.body,
                         message: error?.message
                     });
-
                     return res.status(502).json({
                         success: false,
                         accountCreated: true,
-                        msg: 'Account created, but verification email delivery failed.'
-                    });
+                        msg: 'account created but failed to send v.email'
+                    })
                 }
             } else {
-                await client.query("rollback")
-                return res.json({ success: false, msg: "Invalid username or password" });
-
+                await client.query('rollback')
+                return res.json({ success: false, msg: "invalid username or pwd" })
             }
         } catch (error) {
-            console.error("Signup process error:", error);
-            try { await client.query("ROLLBACK"); } catch (_) { }
-            res.status(500).json({ success: false, msg: "something error" });
+            console.error('signup error', error);
+            try { await client.query('rollback'); } catch (_) { }
+            res.status(500).json({ success: false, msg: "sth error?" })
         }
     } finally {
         client.release();
@@ -183,17 +172,16 @@ app.post('/reset/updatepwd', async (req, res) => {
     const { token, newPwd } = req.body;
     const client = await pool.connect();
     try {
-        await client.query("BEGIN");
-        //verify token still can be use
+        await client.query('begin');
         const tokenCheck = await client.query(authsql.reset_select_email, [token]);
         if (tokenCheck.rowCount === 0) {
-            await client.query("ROLLBACK");
-            return res.json({ success: false, msg: "Invalid or expired token" });
+            await client.query('rollback');
+            return res.json({ success: false, msg: 'invalid or expired token' });
         }
         const passwordErrors = utils.validatePassword(newPwd);
 
         if (passwordErrors.length > 0) {
-            await client.query('ROLLBACK');
+            await client.query('rollback');
             return res.status(400).json({
                 success: false,
                 msg: passwordErrors.join(' ')
@@ -205,14 +193,12 @@ app.post('/reset/updatepwd', async (req, res) => {
         const newHashedPwd = await utils.hash(newPwd, newSalt);
         await client.query(authsql.reset_pwd, [newHashedPwd, newSalt, userEmail]);
         await client.query(authsql.reset_status, [token]);
-        await client.query("COMMIT");
-        return res.json({ success: true, msg: "Password updated successfully" });
-
+        await client.query('commit');
+        return res.json({ success: true, msg: "pwd updated successfully" });
     } catch (error) {
         try { await client.query('rollback') } catch (_) { }
-        console.error(`reset err:${error}`)
-        return res.status(500).json({ success: false, msg: "server error" })
-
+        console.error(`reset error:${error}`);
+        return res.status(500).json({ success: false, msg: 'server error' })
     } finally {
         client.release();
     }

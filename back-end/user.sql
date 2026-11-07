@@ -119,19 +119,10 @@ delete from pwd_reset;
 
 
 
-
-
-SELECT pid,budget,note,time from prices ORDER BY budget
-
-
-
-
-delete from wallet where uid=8;delete from email_verification where userid='test';delete from user_infor where uid=8;
-
 ------
 select * from user_infor order by uid;  
 select * from email_verification;
-select * from wallet
+select * from wallet;
 select * from pwd_reset;
 select * from gift_code;
 select * from opera ORDER BY opera_id;

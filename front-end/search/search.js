@@ -314,7 +314,7 @@ FilterStatusList.forEach((status) => {
                 algo_display.innerText = 'Current Algorithm implemented: bubble sort';
             }
             if (section === 'rate') {
-                sort.bubble_ascending_rate(working);
+                sort.bubble_descending_rate(working);
                 algo_display.innerText = 'Current Algorithm implemented: bubble sort';
             }
             if (section === 'duration') {
