@@ -310,7 +310,7 @@ FilterStatusList.forEach((status) => {
                 algo_display.innerText = 'Current Algorithm implemented: insertion sort';
             }
             if (section === 'price') {
-                sort.bubble_ascending_price(working);
+                sort.bubble_descending_price(working);
                 algo_display.innerText = 'Current Algorithm implemented: bubble sort';
             }
             if (section === 'rate') {

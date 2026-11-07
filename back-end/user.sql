@@ -5,8 +5,8 @@ create table if not EXISTS user_infor (
     create_at timestamp default now(),
     email varchar(50),
     birth date, 
-    verified BOOLEAN default FALSE
-    salt varchar(64);
+    verified BOOLEAN default FALSE,
+    salt varchar(64)
 );
 CREATE TABLE IF NOT EXISTS wallet (
     uid INT PRIMARY KEY REFERENCES user_infor(uid) ON DELETE CASCADE,
@@ -14,23 +14,6 @@ CREATE TABLE IF NOT EXISTS wallet (
     updated_at TIMESTAMP DEFAULT NOW(),
     CONSTRAINT check_positive_balance CHECK (balance >= 0)
 );
-CREATE TABLE IF NOT EXISTS wallet_transaction (
-    tx_id varchar(40) PRIMARY KEY,
-    uid INT NOT NULL REFERENCES user_infor(uid) ON DELETE CASCADE,
-    order_id INT REFERENCES orders(order_id) ON DELETE SET NULL, 
-    tx_type VARCHAR(10) NOT NULL, 
-    amount NUMERIC(12, 2) NOT NULL,
-    running_balance NUMERIC(12, 2) NOT NULL, 
-    source_destination VARCHAR(50) NOT NULL, 
-    description VARCHAR(255),
-    created_at TIMESTAMP DEFAULT NOW(),
-    
-    CONSTRAINT check_positive_amount CHECK (amount > 0),
-    CONSTRAINT check_tx_type CHECK (tx_type IN ('CREDIT', 'DEBIT'))
-);
-
-CREATE INDEX idx_wallet_tx_uid_date ON wallet_transaction(uid, created_at DESC);
-
 CREATE table if not exists gift_code(
     code varchar(15)  primary key,--4+1+4+1+4=14, where 4 is 4 digit code and 1 is hyphen
     current_status BOOLEAN default FALSE,
@@ -50,7 +33,7 @@ create table if not exists pwd_reset(
     token text primary key,
     expire_time timestamp not null,
     used boolean default FALSE
-)
+);
 create table if not EXISTS opera(
     opera_id  int primary key,
     opera_name varchar(30),
@@ -92,6 +75,22 @@ create table if not exists ticket(
     seat_class2 VARCHAR(20),
     seat_num INT
 );
+
+CREATE TABLE IF NOT EXISTS wallet_transaction (
+    tx_id varchar(40) PRIMARY KEY,
+    uid INT NOT NULL REFERENCES user_infor(uid) ON DELETE CASCADE,
+    order_id INT REFERENCES orders(order_id) ON DELETE SET NULL, 
+    tx_type VARCHAR(10) NOT NULL, 
+    amount NUMERIC(12, 2) NOT NULL,
+    running_balance NUMERIC(12, 2) NOT NULL, 
+    source_destination VARCHAR(50) NOT NULL, 
+    description VARCHAR(255),
+    created_at TIMESTAMP DEFAULT NOW(),
+    
+    CONSTRAINT check_positive_amount CHECK (amount > 0),
+    CONSTRAINT check_tx_type CHECK (tx_type IN ('CREDIT', 'DEBIT'))
+);
+CREATE INDEX idx_wallet_tx_uid_date ON wallet_transaction(uid, created_at DESC);
 
 --user-related
 select * from user_infor order by uid;  

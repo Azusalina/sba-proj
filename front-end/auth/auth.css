@@ -266,3 +266,51 @@ body {
     font-size: 20px;
     font-style: oblique;
 }
+
+
+
+@media (max-width:900px) {
+
+    .singin_overall,
+    .signup_overall {
+        padding: 0 6vw;
+    }
+
+    .inputs {
+        width: 100%;
+        padding-left: 0;
+    }
+
+    .signin_pair {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .input_boxes {
+        width: 100%;
+    }
+
+    .signup_pair {
+        padding-left: 0;
+        flex-wrap: wrap;
+    }
+
+    .signup_pair input {
+        width: 100%;
+    }
+
+    .signup_btn {
+        width: auto;
+        height: auto;
+        margin-left: 0;
+        padding: 6px 14px;
+    }
+
+    .signup_status {
+        padding-left: 0;
+    }
+
+    .title {
+        font-size: 2rem;
+    }
+}

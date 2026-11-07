@@ -16,7 +16,7 @@ export function bubble_ascending_price(data = []) {
     }
     return data;
 };
-export function bubble_ascending_rate(data = []) {
+export function bubble_descending_rate(data = []) {
     for (let i = 0; i < data.length - 1; i++) {
         let status = false;
         for (let j = 0; j < data.length - i - 1; j++) {
