@@ -7,6 +7,11 @@ import { Recipient } from "mailersend";
 
 import { Queue } from '../serv-utils/ticket-queue.mjs'
 import { mainsql } from '../queries.js'
+import { session } from 'electron';
+
+const MAX_SEATS = 8;
+const AUDIENCES = ['adult', 'student', 'wheelchair']
+const round2 = (n) => Math.round(n * 100) / 100;
 
 const app = express();
 app.use(cors());
@@ -249,12 +254,6 @@ app.post('/PaymentOrder', async (req, res) => {
         if (client) client.release();
     }
 });
-
-
-
-
-
-
 app.post('/SendConfirmationEmail', async (req, res) => {
     const { user, orderId, opera, showtime, level, sum_price, tickets } = req.body;
     try {
@@ -282,6 +281,54 @@ app.post('/toolkit/gen_redeem_code', async (req, res) => {
         return res.json({ msg: 'fail' });
     }
 });
+app.post('/seatMap', async (req, res) => {
+    const { name, priceId } = req.body;
+    if (!name || !Number.isInteger(Number(priceId))) {
+        return res.status(400).json({ status: false, msg: 'invalid request' })
+    }
+    try {
+        const { rows: sessions } = await pool.query(mainsql.seat_session, [name, Number(priceId)]);
+        if (sessions.length === 0) {
+            return res.json({ status: false, msg: 'show not found' });
+        }
+        const show = sessions[0];
+        const { rows: seats } = await pool.query(mainsql.seat_all);
+        const taken = new Set((await pool.query(mainsql.seat_takenList, [show.pid])).rows.map(r => r.seat_id));
+        const blocked = new Set((await pool.query(mainsql.seat_blockedList, [show.pid])).rows.map(r => r.seat_id));
+        const { rows: multipliers } = await pool.query(mainsql.lv_multipliers);
+
+        return res.json({
+            status: true,
+            pid: show.pid,
+            time: show.time,
+            prices: {
+                premium: show.premium,
+                std_high: show.std_high,
+                std_low: show.std_low,
+                budget: show.budget
+            },
+            multipliers: multipliers,
+            seats: seats.map(seat => ({
+                seat_id: seat.seat_id,
+                row: seat.row_label,
+                col: seat.col_no,
+                zone: seat.zone,
+                accessible: seat.accessible,
+                state: taken.has(seat_id) ? 'booked' : blocked.has(seat_id) ? 'blocked' : 'idle'
+            }))
+        });
+    } catch (error) {
+        console.error(error);
+        return res.json({ status: false, msg: 'unknown fatal error' })
+    }
+})
+
+
+
+
+
+
+
 
 
 
