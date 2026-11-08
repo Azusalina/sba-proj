@@ -66,6 +66,19 @@ const pay_fetchEmail = `select email from user_infor where id=$1`
 const admin_generateCode = `insert into gift_code(code,amount) values($1,$2)`
 
 
+//newly added seat part
+
+const seat_session = `select p.pid, p.time, o.opera_id, o.opera_name, p.premium, p.std_high, p.std_low, p.budget from prices p join opera o on o.opera_id = p.opera_id where lower(replace(o.opera_name, ' ', '-')) = $1 and p.price_id = $2`
+const seat_all = `select seat_id, row_label, col_no, zone, is accessible from seat order by row_label, col_no`
+const seat_takenList = `select seat_id from ticket where pid = $1 and voided_at is null`
+const seat_blockedList = `select seat_id from seat_block where pid = $1`
+const seat_lock = `select seat_id, row_label, col_no, zone, is_accessible from seat where seat_id = any($1::int[]) order by seat_id for update`
+const seat_checkTaken = `select seat_id from ticket where pid = $1 and seat_id = any($2::int[]) and voided_at is null`
+const seat_checkBlocked = `select seat_id from seat_block where pid = $1 and seat_id = any($2::int[])`
+const pay_record_seatTicket = `insert into ticket (ticket_id, opera_id, order_id, pid, seat_id, seat_class, seat_class2, seat_num, unit_price) values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+const refund_voidTickets = `update ticket set voided_at = now() where order_id = $1 and voided_at is null`
+
+
 export const mainsql = {
     GetData,
     GetUserOrder,
@@ -86,7 +99,16 @@ export const mainsql = {
     pay_fetchOpera,
     pay_record_ticket,
     pay_fetchEmail,
-    admin_generateCode
+    admin_generateCode,
+    seat_session,
+    seat_all,
+    seat_takenList,
+    seat_blockedList,
+    seat_lock,
+    seat_checkTaken,
+    seat_checkBlocked,
+    pay_record_seatTicket,
+    refund_voidTickets
 }
 
 
@@ -94,7 +116,7 @@ export const mainsql = {
 //serv-util.js
 //abbr sre=send_reset_email
 
-const sre_record=`INSERT INTO pwd_reset(email, token, expire_time, used) VALUES($1, $2, NOW() + INTERVAL '15 minutes', false)`
+const sre_record = `INSERT INTO pwd_reset(email, token, expire_time, used) VALUES($1, $2, NOW() + INTERVAL '15 minutes', false)`
 
 
-export const utilsql={sre_record}
+export const utilsql = { sre_record }
