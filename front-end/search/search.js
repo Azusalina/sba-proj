@@ -123,30 +123,33 @@ function createOperaArticle(opera) {
     const article = document.createElement('article');
     article.id = opera.id;
 
-    const currentPlan = { ...opera.plans[0] };
+    const plans = opera.plans.filter(plan => plan.price_id !== null);
+    if (plans.length === 0) {
+        article.textContent = `${opera.name}: no show time available`;
+        return article;
+    }
+    const currentPlan = { ...plans[0] };
+    const caseLabels = ['I', 'II', 'III', 'IV', 'V', 'VI'];
+    const planItems = plans.map((plan, index) => `
+        <li data-priceid="${plan.price_id}" data-time="${plan.time}" data-budget=${plan.budget}">
+        Case ${caseLabels[index] || index + 1}:${formatShowtime(plan.time)} (Plan ${plan.price_id})
+        </li>`).join('');
 
     article.innerHTML = `
-    <img src="placeholder.png">
-    <div class="info_container">
-        <h1 data-id="${opera.id}">${opera.name}</h1>
-        <label class="price">Budget Price: $${currentPlan.budget}</label>
-        <label class="rate">Rate: ${opera.rate}/10</label>
-        
-        <div class="time-hover-container">
-            <label class="time">Show Time: <span class="time-text">${formatShowtime(currentPlan.time)}</span></label>
-            <ul class="time-dropdown">
-                <li data-priceid="${opera.plans[0].price_id}" data-time="${opera.plans[0].time}" data-budget="${opera.plans[0].budget}">
-                    Case I: ${formatShowtime(opera.plans[0].time)} (Plan ${opera.plans[0].price_id})
-                </li>
-                <li data-priceid="${opera.plans[1].price_id}" data-time="${opera.plans[1].time}" data-budget="${opera.plans[1].budget}">
-                    Case II: ${formatShowtime(opera.plans[1].time)} (Plan ${opera.plans[1].price_id})
-                </li>
-            </ul>
-        </div>
-        
-        <label class="duration">Duration: ${opera.duration} min</label>
-    </div>
-`;
+        < img src = "placeholder.png" >
+            <div class="info_container">
+                <h1 data-id="${opera.id}">${opera.name}</h1>
+                <label class="price">Budget Price: $${currentPlan.budget}</label>
+                <label class="rate">Rate: ${opera.rate}/10</label>
+
+                <div class="time-hover-container">
+                    <label class="time">Show Time: <span class="time-text">${formatShowtime(currentPlan.time)}</span></label>
+                    <ul class="time-dropdown">${planItems}</ul>
+                </div>
+
+                <label class="duration">Duration: ${opera.duration} min</label>
+            </div>
+    `;
 
     const titleTag = article.querySelector('h1');
     titleTag.style.cursor = 'pointer';
@@ -164,7 +167,7 @@ function createOperaArticle(opera) {
             const selectedPriceId = e.target.getAttribute('data-priceid');
             const selectedTime = e.target.getAttribute('data-time');
             const selectedBudget = e.target.getAttribute('data-budget');
-            article.querySelector('.price').innerText = `Budget Price: $${selectedBudget}`;
+            article.querySelector('.price').innerText = `Budget Price: $${selectedBudget} `;
             article.querySelector('.time-text').innerText = formatShowtime(selectedTime);
             currentPlan.price_id = selectedPriceId;
             currentPlan.time = selectedTime;
@@ -258,7 +261,7 @@ filterlist.forEach((status) => {
     if (status) status.checked = false;
 });
 
-const redir_link = `${FRONTEND_URL}/front-end/book/book.html`
+const redir_link = `${FRONTEND_URL} /front-end/book / book.html`
 window.addEventListener('keydown', (event) => {
     if (event.key === 'ArrowLeft') {
         event.preventDefault();
@@ -273,7 +276,7 @@ btnPrev.addEventListener('click', () => {
     if (currentPage > 1) {
         currentPage--;
         renderPage(currentDataset);
-        page_num.innerText = `Current Page:${currentPage}`;
+        page_num.innerText = `Current Page:${currentPage} `;
     }
 });
 btnNext.addEventListener('click', () => {
@@ -281,7 +284,7 @@ btnNext.addEventListener('click', () => {
     if (currentPage < totalPages) {
         currentPage++;
         renderPage(currentDataset);
-        page_num.innerText = `Current Page:${currentPage}`;
+        page_num.innerText = `Current Page:${currentPage} `;
     }
 
 });
@@ -299,7 +302,7 @@ main.addEventListener('submit', (event) => {
 FilterStatusList.forEach((status) => {
     status.addEventListener('change', async () => {
         if (status.checked) {
-            const working=AccordingToSearchBar();
+            const working = AccordingToSearchBar();
             const [prefix, section] = status.id.split('_');
             if (section === 'name') {
                 sort.merge_name(working);

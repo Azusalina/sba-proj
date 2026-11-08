@@ -4,18 +4,18 @@
 <style>
     body {
         margin: 0;
-        height: 100vh;         
+        height: 100vh;
         display: flex;
-        justify-content: center; 
+        justify-content: center;
         align-items: center;
         background-color: black;
     }
 
 
     .notification {
-        color:whitesmoke;
-        font-size:30px; 
-        font-style:italic;
+        color: whitesmoke;
+        font-size: 30px;
+        font-style: italic;
         display: flex;
         flex-direction: row;
         white-space: nowrap;
@@ -23,6 +23,21 @@
 </style>
 
 <body>
-    <p class="notification">you account is fully prepared now, <a href="auth.html">click here to return to the login
-            page</a></p>
+    <p class="notification" id="notice">
+        <span id="notice-text">your account is fully prepared now</span>
+        <a href="auth.html">click here to return to the login page</a>
+    </p>
+
+    <script>
+        const status = new URLSearchParams(window.location.search).get('status');
+        if (status === 'invalid') {
+            document.getElementById('notice-text').textContent = 'this verification link is invalid/expired/used, \u00a0'
+            //well u000a0 is used to create a space between sentences
+        } else if (status === 'error') {
+            document.getElementById('notice-text').textContent = 'sth went wrong on our server, try again later.\u0010'
+        }
+    </script>
+
+
+
 </body>

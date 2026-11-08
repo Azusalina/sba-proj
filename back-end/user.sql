@@ -90,7 +90,7 @@ CREATE TABLE IF NOT EXISTS wallet_transaction (
     CONSTRAINT check_positive_amount CHECK (amount > 0),
     CONSTRAINT check_tx_type CHECK (tx_type IN ('CREDIT', 'DEBIT'))
 );
-CREATE INDEX idx_wallet_tx_uid_date ON wallet_transaction(uid, created_at DESC);
+CREATE INDEX  if not exists idx_wallet_tx_uid_date ON wallet_transaction(uid, created_at DESC);
 
 --user-related
 select * from user_infor order by uid;  
@@ -109,15 +109,6 @@ SELECT * FROM wallet;
 SELECT * from wallet_transaction order by uid;
 select * from orders order by order_id;
 select * from ticket order by ticket_id;
-
---reset all data
-update wallet set balance=0 where uid=1;
-delete from wallet_transaction;delete from orders;delete from ticket;delete from gift_code;
-delete from pwd_reset;
-
-
-
-
 
 ------
 select * from user_infor order by uid;  

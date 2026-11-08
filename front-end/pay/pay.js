@@ -39,9 +39,9 @@ window.addEventListener('DOMContentLoaded', () => {
     seatClass.innerText = BookData.level;
     Pa.innerText = `Adult($${BookData.price_adult}/per):`
     Aa.innerText = BookData.adult;
-    Ps.innerText = `Adult($${BookData.price_student}/per):`
+    Ps.innerText = `Student($${BookData.price_student}/per):`
     As.innerText = BookData.student;
-    Pw.innerText = `Adult($${BookData.price_wheelchair}/per):`
+    Pw.innerText = `Wheelchair($${BookData.price_wheelchair}/per):`
     Aw.innerText = BookData.wheelchair;
     pSum.innerText = BookData.sum_price;
 

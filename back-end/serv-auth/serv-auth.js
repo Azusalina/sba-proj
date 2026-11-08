@@ -7,6 +7,7 @@ import { EmailVerificationResultType, Recipient } from "mailersend";
 
 import { authsql } from '../queries.js';
 import { STATUS_CODES } from 'http';
+import { match } from 'assert';
 
 const app = express();
 app.use(cors());
@@ -20,6 +21,14 @@ app.post('/auth/signup', async (req, res) => {
     const userid = req.body.username;
     const email = req.body.email;
     const pwd = req.body.pwd;
+
+    const pwdErrors = utils.validatePassword(pwd);
+    if (!userid || !email || pwdErrors.length > 0) {
+        return res.status(400).json({
+            success: false,
+            msg: pwdErrors.length > 0 ? pwdErrors.join(' ') : 'username and email are required'
+        });
+    }
     //repetitive check
     try {
         const rep_resp = await pool.query(authsql.signup_FetchUserID, [userid]);
@@ -74,78 +83,61 @@ app.post('/auth/signup', async (req, res) => {
         client.release();
     }
 });
-
-
-app.get("/auth/:token", async (req, res) => {
-    console.log('route entered ')
+app.post('/auth/token', async (req, res) => {
     const token = req.params.token;
-    console.log("token:", token);
-
-    const result = await pool.query(authsql.token_fetch, [token]);
-    console.log(result.rows);
-
-    if (result.rowCount === 0) {
-        console.log('invalid token')
-        return res.redirect(`${FRONTEND_URL}/auth/confirm.html?status=invalid`);
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query('begin');
+        const result = await client.query(authsql.token_fetch, [token]);
+        if (result.rowCount === 0) {
+            await client.query('rollback');
+            return res.redirect(`${FRONTEND_URL}/auth/confirm.html?status=invalid`);
+        }
+        const userid = result.rows[0].userid;
+        await client.query(authsql.token_update_user, [userid]);
+        await client.query(authsql.token_update_ev, [token]);
+        await client.query(authsql.signup_CreateNew_Wallet, [userid]);
+        await client.query('commit');
+        return res.json(`${FRONTEND_URL}/auth/confirm.html`);
+    } catch (error) {
+        if (client) { try { await client.query('rollback'); } catch (_) { } }
+        console.error('verify error', error);
+        return res.redirect(`${FRONTEND_URL}/auth/confirm.html?status=error`);
+    } finally {
+        if (client) client.release();
     }
-
-    const userid = result.rows[0].userid;
-
-    await pool.query(authsql.token_update_user, [userid]);
-    await pool.query(authsql.token_update_ev, [token]);
-    console.log('successfully signup ')
-    const usernameId = result.rows[0].userid;
-    await pool.query(authsql.signup_CreateNew_Wallet, [usernameId]);
-    console.log('wallet successfully generated')
-    console.log("before redirect");
-    res.redirect(`${FRONTEND_URL}/auth/confirm.html`);
-    console.log('redirected!')
-});
+})
 app.post('/auth/login', async (req, res) => {
     const userid = req.body.user_name;
     const pwd = req.body.passwd;
     try {
         const salt_result = await pool.query(authsql.signin_fetchpwd, [userid]);
         if (salt_result.rows.length === 0) {
-            return res.json({ success: false, msg: "account not found" })
+            return res.json({ success: false, msg: "account not found" });
         }
         if (!salt_result.rows[0].verified) {
-            return res.json({ success: false, msg: "Please verify your email first" })
+            return res.json({ success: false, msg: 'please verify your email first' })
         }
-        if (salt_result.rows.length > 0) {
-            const salt = salt_result.rows[0].salt;
-            const saved_pwd = salt_result.rows[0].pwd;
-            try {
-                const enc_pwd = await utils.hash(pwd, salt);
-                const calculated = Buffer.from(enc_pwd, 'hex');
-                const stored = Buffer.from(saved_pwd, 'hex');
+        const salt = salt_result.rows[0].salt;
+        const saved_pwd = salt_result.rows[0].pwd;
+        try {
+            const enc_pwd = await utils.hash(pwd, salt);
+            const calculated = Buffer.from(enc_pwd, 'hex');
+            const stored = Buffer.from(saved_pwd, 'hex');
 
-                const matches =
-                    calculated.length === stored.length &&
-                    crypto.timingSafeEqual(calculated, stored);
-
-                if (matches) {
-                    return res.json({ success: true, msg: 'success' });
-                }
-
-                return res.json({ success: false, msg: 'error' });
-                if (enc_pwd === saved_pwd) {
-                    res.json({ success: true, msg: "success" });
-                } else {
-                    res.json({ success: false, msg: "error" });
-                }
-            } catch (error) {
-                res.status(500).json({ success: false, msg: "error" });
+            const matches = calculated.length === stored.length && crypto.timingSafeEqual(calculated, stored);
+            if (matches) {
+                return res.json({ success: true, msg: 'success' });
             }
-        } else {
-            res.json({ success: false, msg: "account not found" })
+            return res.json({ success: false, msg: "error" })
+        } catch (error) {
+            res.status(500).json({ success: false, msg: 'error' });
         }
     } catch (error) {
-        res.json({ success: false, msg: "unknown error" })
+        res.json({ success: false, msg: 'unknown error' })
     }
-
 });
-//reset zone
 app.post('/reset', async (req, res) => {
     const email = req.body.email;
     try {
@@ -165,7 +157,6 @@ app.post('/reset', async (req, res) => {
 });
 app.get("/reset/:token", async (req, res) => {
     const token = req.params.token;
-    console.log("token:", token);
     res.redirect(`${FRONTEND_URL}/reset/resetTrue/resetTrue.html?token=${token}`);
 });
 app.post('/reset/updatepwd', async (req, res) => {
