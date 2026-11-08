@@ -73,8 +73,28 @@ create table if not exists ticket(
     order_id INT REFERENCES orders(order_id) ON DELETE CASCADE,
     seat_class VARCHAR(20),
     seat_class2 VARCHAR(20),
-    seat_num INT
+    seat_num INT,
+    pid int references prices(pid),
+    seat_id int references seat(seat_id),
+    unit_price numeric(10,2),
+    voided_at timestamp;
 );
+create unique index if not exists ux_ticket_live_seat on ticket(pid,seat_id) where voided_at is null;
+create table if not exists seat(
+    seat_id serial primary key,
+    row_label char(1) not null,
+    col_no int not null,
+    zone varchar(20) not null check (zone in ('premium','std_high','std_low','budget')),
+    is_accessible boolean not null default false,
+    unique(row_label,col_no)
+);
+create table if not exists seat_block(
+    pid int not null references prices(pid) on delete CASCADE,
+    seat_id int not null references seat(seat_id),
+    reason varchar(100),
+    blocked_at timestamp default now(),
+    primary key (pid,seat_id)
+)
 
 CREATE TABLE IF NOT EXISTS wallet_transaction (
     tx_id varchar(40) PRIMARY KEY,
@@ -124,4 +144,3 @@ SELECT * from wallet_transaction order by uid;
 select * from orders order by order_id;
 select * from ticket order by ticket_id;
 -----
-
