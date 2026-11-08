@@ -179,7 +179,6 @@ app.post('/PaymentOrder', async (req, res) => {
     try {
         client = await pool.connect();
 
-        // price is read from the database, never from the browser
         const { rows: pr } = await client.query(mainsql.Getprices, [opera, Number(priceId)]);
         if (pr.length === 0) {
             return res.status(400).json({ msg: 'price_not_found' });
