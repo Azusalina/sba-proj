@@ -2,7 +2,7 @@ import 'dotenv/config';
 import crypto from 'crypto';
 import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
 import pool from '../serv-config/serv-config.js';
-import {utilsql} from '../queries.js'
+import { utilsql } from '../queries.js'
 
 const isLocal = !process.env.VERCEL;
 const BACKEND_URL = isLocal ? 'http://127.0.0.1:3000' : process.env.BACKEND_URL;
@@ -48,7 +48,7 @@ export async function send_ver_mail(target, token, url, userid) {
         .setTo(target)
         .setSubject("Signup Verification")
         .setHtml(`<p>Click here to verify your email: <a href="${url}">Verify Email</a></p>`);
-   return EmailSender.email.send(verification_mail);
+    return EmailSender.email.send(verification_mail);
 }
 export async function send_confirmation_email(targetEmail, orderId, opera, showtime, level, sum_price, tickets) {
     const recipient = [new Recipient(targetEmail, "Opera Customer")];
@@ -164,13 +164,10 @@ export function generate_TransacID() {
     const ID = Math.random().toString(36).substring(2, 8).toUpperCase();
     return `${prefix}${time}${ID} `
 }
-export function generate_ticketID(operaName) {
-    const prefix = `${operaName} -`
-    const time = `${sub_ID_time()} -`;
-    const ID1 = Math.random().toString(36).substring(2, 8).toUpperCase();
-    const ID2 = Math.random().toString(36).substring(2, 8).toUpperCase();
-    if (ID1 == ID2) { return generate_ticketID(operaName) };
-    return `${prefix}${time}${ID1}${ID2} `
+export function generate_ticketID() {
+    const time = Date.now().toString(36).toUpperCase();
+    const random = crypto.randomBytes(4).toString('hex').toUpperCase();
+    return `TK-${time}-${random}`
 }
 export function validatePassword(value) {
     const errors = [];

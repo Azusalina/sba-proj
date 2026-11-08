@@ -47,13 +47,13 @@ app.post('/refundOrder', async (req, res) => {
         const orderRes = await client.query(mainsql.refund_selectOrder, [order_id, user]);
         if (orderRes.rows.length === 0) {
             await client.query('rollback');
-            console.error(`refundOrder:not found`);
+            console.error(`refundOrder: not found`);
             return res.json({ msg: 'not_found' });
         }
         const order = orderRes.rows[0];
         if (order.transac_status !== 'COMPLETED') {
             await client.query('rollback');
-            console.error("refundOrder:not refundable");
+            console.error("refundOrder: not refundable");
             return res.json({ msg: not_refundable });
         }
         const refundAmount = parseFloat(order.sum_fee);
@@ -74,7 +74,7 @@ app.post('/refundOrder', async (req, res) => {
         return res.json({ msg: 'success', balance: newBalance });
     } catch (error) {
         try { await client.query('rollback'); } catch (_) { }
-        console.error("refund:error", error);
+        console.error("refund: error", error);
         return res.json({ msg: 'error' })
     } finally {
         client.release();
@@ -83,31 +83,32 @@ app.post('/refundOrder', async (req, res) => {
 app.post('/redeem', async (req, res) => {
     const user = req.body.user;
     const code = req.body.code;
-    const client = await pool.connect();
+    let client;
     try {
-        await pool.query('BEGIN');
-        const { rows } = await pool.query(mainsql.redeem_fetchCode, [code]);
+        client = await pool.connect();
+        await client.query('BEGIN');
+        const { rows } = await client.query(mainsql.redeem_fetchCode, [code]);
 
         if (rows.length === 0) {
-            await pool.query('ROLLBACK');
+            await client.query('ROLLBACK');
             return res.json({ msg: 'invalid' });
         }
         if (rows[0].current_status === true) {
-            await pool.query('ROLLBACK');
+            await client.query('ROLLBACK');
             return res.json({ msg: 'already redeemed' });
         }
         const amount = rows[0].amount;
-        const walletResult = await pool.query(mainsql.redeem_updateWallet, [amount, user]);
+        const walletResult = await client.query(mainsql.redeem_updateWallet, [amount, user]);
         if (walletResult.rowCount === 0) {
-            await pool.query('ROLLBACK');
+            await client.query('ROLLBACK');
             return res.json({ msg: 'unknown fatal error' });
         }
-        await pool.query(mainsql.redeem_updateStatus, [user, code]);
-        await pool.query('COMMIT');
+        await client.query(mainsql.redeem_updateStatus, [user, code]);
+        await client.query('COMMIT');
         const balance = walletResult.rows[0].balance;
         return res.json({ msg: 'redeemed', balance: balance });
     } catch (error) {
-        await pool.query('ROLLBACK');
+        await client.query('ROLLBACK');
         console.log(error);
         return res.json({ msg: 'unknown fatal error' });
     } finally {
@@ -162,72 +163,93 @@ app.post('/operaName', async (req, res) => {
     }
 });
 app.post('/PaymentOrder', async (req, res) => {
-    const { user, opera, level, sum_price, adult, student, wheelchair } = req.body;
-    const { rows: pr } = await pool.query(mainsql.Getprices, [opera, Number(priceId)]);
+    const { user, opera, priceId, level, adult, student, wheelchair } = req.body;
 
     const quantities = [adult, student, wheelchair].map(Number);
-
     if (quantities.some(value => !Number.isInteger(value) || value < 0) || quantities.every(value => value === 0)) {
         console.error("paymentOrder:invalid_quantity");
         return res.status(400).json({ msg: 'invalid_quantity' });
     }
-
-    if (!Number.isFinite(payAmount) || payAmount <= 0) {
-        console.error("paymentOrder:invalid payment amounnt");
-        return res.status(400).json({ msg: 'invalid_amount' });
+    if (!['premium', 'std_high', 'std_low', 'budget'].includes(level) || !Number.isInteger(Number(priceId))) {
+        console.error("paymentOrder:invalid_level_or_plan");
+        return res.status(400).json({ msg: 'invalid_request' });
     }
+
+    let client;
     try {
-        await pool.query('begin');
-        const userRes = await pool.query(mainsql.pay_fetchUser, [user]);
+        client = await pool.connect();
+
+        // price is read from the database, never from the browser
+        const { rows: pr } = await client.query(mainsql.Getprices, [opera, Number(priceId)]);
+        if (pr.length === 0) {
+            return res.status(400).json({ msg: 'price_not_found' });
+        }
+        const { rows: lvRows } = await client.query(mainsql.lv_multipliers);
+        const multiplier = {};
+        lvRows.forEach(row => { multiplier[row.name] = Number(row.multiplier); });
+        const base = Number(pr[0][level]);
+        const unit = {
+            ADULT: base * (multiplier.adult ?? 1),
+            STUDENT: base * (multiplier.student ?? 1),
+            WHEELCHAIR: base * (multiplier.wheelchair ?? 1)
+        };
+        const payAmount = Math.round((quantities[0] * unit.ADULT + quantities[1] * unit.STUDENT + quantities[2] * unit.WHEELCHAIR) * 100) / 100;
+        if (!Number.isFinite(payAmount) || payAmount <= 0) {
+            console.error("paymentOrder:invalid payment amount");
+            return res.status(400).json({ msg: 'invalid_amount' });
+        }
+
+        await client.query('begin');
+        const userRes = await client.query(mainsql.pay_fetchUser, [user]);
         if (userRes.rows.length === 0) throw new Error('user or wallet not found');
 
         const { uid, balance } = userRes.rows[0];
-        const currentBalance = parseFloat(balance);
-        if (currentBalance < payAmount) {
-            await pool.query('rollback');
-            console.error("paymentOrder:insufficient wallet balance")
+        if (parseFloat(balance) < payAmount) {
+            await client.query('rollback');
+            console.error("paymentOrder:insufficient wallet balance");
             return res.json({ msg: 'insufficientBalance' });
         }
-        const orderRes = await pool.query(mainsql.pay_record_order, [uid, payAmount]);
+        const orderRes = await client.query(mainsql.pay_record_order, [uid, payAmount]);
         const newOrderId = orderRes.rows[0].order_id;
-        const walletRes = await pool.query(mainsql.pay_updateWallet, [payAmount, uid]);
+        const walletRes = await client.query(mainsql.pay_updateWallet, [payAmount, uid]);
         const newWalletBal = parseFloat(walletRes.rows[0].balance);
 
         const txId = utils.generate_TransacID();
-        await pool.query(mainsql.pay_record_tx, [txId, uid, newOrderId, payAmount, newWalletBal], `Purchased ticket for ${opera}`);
-        const operaRes = await pool.query(mainsql.pay_fetchOpera, [opera]);
+        await client.query(mainsql.pay_record_tx, [txId, uid, newOrderId, payAmount, newWalletBal, `Purchased ticket for ${opera}`]);
+        const operaRes = await client.query(mainsql.pay_fetchOpera, [opera]);
         if (operaRes.rows.length === 0) throw new Error('opera not found');
-        const opreaId = operaRes.rows[0].opera_id;
+        const operaId = operaRes.rows[0].opera_id;
 
         const generatedTicketIDs = [];
         const ticketQueue = new Queue();
 
         const enqueueTickets = (seatClass2, quantity) => {
-            for (leti = 0; i < quantity; i++) {
+            for (let i = 0; i < quantity; i++) {
                 ticketQueue.enqueue(seatClass2);
             }
         };
 
-        enqueueTickets('ADULT', adult);
-        enqueueTickets('STUDENT', student);
-        enqueueTickets('WHEELCHAIR', wheelchair);
+        enqueueTickets('ADULT', quantities[0]);
+        enqueueTickets('STUDENT', quantities[1]);
+        enqueueTickets('WHEELCHAIR', quantities[2]);
 
         while (!ticketQueue.isEmpty()) {
             const seatClass2 = ticketQueue.dequeue();
-            const ticketId = utils.generate_ticketID(opera);
+            const ticketId = utils.generate_ticketID();
 
             generatedTicketIDs.push({ ticketId, level, seatClass2 });
-            await pool.query(mainsql.pay_record_ticket, [ticketId, opreaId, newOrderId, level, seatClass2, generatedTicketIDs.length]);
+            await client.query(mainsql.pay_record_ticket, [ticketId, operaId, newOrderId, level, seatClass2, generatedTicketIDs.length]);
         }
-        await pool.query('commit');
+        await client.query('commit');
         return res.json({ msg: 'success', orderId: newOrderId, tickets: generatedTicketIDs });
     } catch (error) {
-        await pool.query('rollback');
+        if (client) { try { await client.query('rollback'); } catch (_) { } }
         console.error("tx error", error);
-        return res.json({ msg: 'error', detials: 'service in maintainance' })
+        return res.json({ msg: 'error', details: 'service in maintenance' });
+    } finally {
+        if (client) client.release();
     }
 });
-
 
 
 

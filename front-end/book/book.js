@@ -238,6 +238,7 @@ sub_form.addEventListener('submit', (e) => {
     const details = {
         user: username,
         opera: operaName,
+        priceId:selectedPriceId,
         showtime: selectedTime,
         level: ticket.level,
         adult: ticket.adult,

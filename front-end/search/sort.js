@@ -1,13 +1,13 @@
 //util file
 
 
-export function bubble_ascending_price(data = []) {
+export function bubble_descending_price(data = []) {
     for (let i = 0; i < data.length - 1; i++) {
         let swapped = false;
         for (let j = 0; j < data.length - i - 1; j++) {
             const leftPrice=Number(data[j].plans[0].budget);
             const rightPrice=Number(data[j+1].plans[0].budget);
-            if (leftPrice>rightPrice){
+            if (leftPrice<rightPrice){
                 [data[j], data[j + 1]] = [data[j + 1], data[j]];
                 swapped = true;
             }
@@ -16,11 +16,11 @@ export function bubble_ascending_price(data = []) {
     }
     return data;
 };
-export function bubble_descending_rate(data = []) {
+export function bubble_ascending_rate(data = []) {
     for (let i = 0; i < data.length - 1; i++) {
         let status = false;
         for (let j = 0; j < data.length - i - 1; j++) {
-            if (data[j].rate < data[j + 1].rate) {
+            if (data[j].rate > data[j + 1].rate) {
                 [data[j], data[j + 1]] = [data[j + 1], data[j]];
                 status = true;
             }
