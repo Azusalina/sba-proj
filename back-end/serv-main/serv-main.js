@@ -66,6 +66,7 @@ app.post('/refundOrder', async (req, res) => {
         const newBalance = parseFloat(walletRes.rows[0].balance);
         const txId = utils.generate_TransacID();
         await client.query(mainsql.refund_updateStatus, [order_id]);
+        await client.query(mainsql.refund_voidTickets,[order_id]);
         await client.query(mainsql.refund_RecordRefund, [txId, order.uid, order_id, refundAmount, newBalance, `Refund for order #${order_id}`]);
         const infoRes = await client.query(mainsql.refund_getEmailContent, [user, order_id]);
         await client.query(`commit`);
@@ -168,84 +169,100 @@ app.post('/operaName', async (req, res) => {
     }
 });
 app.post('/PaymentOrder', async (req, res) => {
-    const { user, opera, priceId, level, adult, student, wheelchair } = req.body;
+    const { user, opera, priceId, seats } = req.body;
 
-    const quantities = [adult, student, wheelchair].map(Number);
-    if (quantities.some(value => !Number.isInteger(value) || value < 0) || quantities.every(value => value === 0)) {
-        console.error("paymentOrder:invalid_quantity");
-        return res.status(400).json({ msg: 'invalid_quantity' });
-    }
-    if (!['premium', 'std_high', 'std_low', 'budget'].includes(level) || !Number.isInteger(Number(priceId))) {
-        console.error("paymentOrder:invalid_level_or_plan");
+    if (!user || !opera || !Number.isInteger(Number(priceId)) || !Array.isArray(seats) || seats.length < 1 || seats.length > MAX_SEATS) {
+        console.error('paymentOrder:invalid_request');
         return res.status(400).json({ msg: 'invalid_request' });
+    }
+    const ids = seats.map(seat => Number(seat.seat_id));
+    if (ids.some(id => !Number.isInteger(id)) || new Set(ids).size !== ids.length || seats.some(seat => !AUDIENCES.includes(seat.audience))) {
+        console.error('paymentOrder:invalid_seats');
+        return res.status(400).json({ msg: 'invalid_seats' });
     }
 
     let client;
     try {
         client = await pool.connect();
-
-        const { rows: pr } = await client.query(mainsql.Getprices, [opera, Number(priceId)]);
-        if (pr.length === 0) {
-            return res.status(400).json({ msg: 'price_not_found' });
-        }
-        const { rows: lvRows } = await client.query(mainsql.lv_multipliers);
-        const multiplier = {};
-        lvRows.forEach(row => { multiplier[row.name] = Number(row.multiplier); });
-        const base = Number(pr[0][level]);
-        const unit = {
-            ADULT: base * (multiplier.adult ?? 1),
-            STUDENT: base * (multiplier.student ?? 1),
-            WHEELCHAIR: base * (multiplier.wheelchair ?? 1)
-        };
-        const payAmount = Math.round((quantities[0] * unit.ADULT + quantities[1] * unit.STUDENT + quantities[2] * unit.WHEELCHAIR) * 100) / 100;
-        if (!Number.isFinite(payAmount) || payAmount <= 0) {
-            console.error("paymentOrder:invalid payment amount");
-            return res.status(400).json({ msg: 'invalid_amount' });
-        }
-
         await client.query('begin');
+
+        const showRes = await client.query(mainsql.seat_session, [opera, Number(priceId)]);
+        if (showRes.rows.length === 0) {
+            await client.query('rollback');
+            return res.status(400).json({ msg: 'show_not_found' });
+        }
+        const show = showRes.rows[0];
+
+        const locked = (await client.query(mainsql.seat_lock, [ids])).rows;
+        if (locked.length !== ids.length) {
+            await client.query('rollback');
+            return res.status(400).json({ msg: 'invalid_seats' });
+        }
+        const taken = (await client.query(mainsql.seat_checkTaken, [show.pid, ids])).rows;
+        if (taken.length > 0) {
+            await client.query('rollback');
+            console.error('paymentOrder:seat_taken');
+            return res.status(409).json({ msg: 'seat_taken', seats: taken.map(r => r.seat_id) });
+        }
+        const blocked = (await client.query(mainsql.seat_checkBlocked, [show.pid, ids])).rows;
+        if (blocked.length > 0) {
+            await client.query('rollback');
+            console.error('paymentOrder:seat_blocked');
+            return res.status(409).json({ msg: 'seat_blocked', seats: blocked.map(r => r.seat_id) });
+        }
+
+        const multiplier = {};
+        (await client.query(mainsql.lv_multipliers)).rows.forEach(row => { multiplier[row.name] = Number(row.multiplier); });
+        const seatById = new Map(locked.map(seat => [seat.seat_id, seat]));
+        const items = seats.map(choice => {
+            const seat = seatById.get(Number(choice.seat_id));
+            const base = Number(show[seat.zone]);
+            if (!Number.isFinite(base)) throw new Error('zone price missing');
+            return { seat, audience: choice.audience, unit: round2(base * (multiplier[choice.audience] ?? 1)) };
+        });
+        if (items.some(item => item.audience === 'wheelchair' && !item.seat.is_accessible)) {
+            await client.query('rollback');
+            return res.status(400).json({ msg: 'wheelchair_needs_accessible_seat' });
+        }
+        const payAmount = round2(items.reduce((sum, item) => sum + item.unit, 0));
+
         const userRes = await client.query(mainsql.pay_fetchUser, [user]);
         if (userRes.rows.length === 0) throw new Error('user or wallet not found');
-
         const { uid, balance } = userRes.rows[0];
         if (parseFloat(balance) < payAmount) {
             await client.query('rollback');
-            console.error("paymentOrder:insufficient wallet balance");
-            return res.json({ msg: 'insufficientBalance' });
+            console.error("paymentOrder:indufficient wallet balance");
+            return res.json({ msg: 'insufficient balance' });
         }
+
         const orderRes = await client.query(mainsql.pay_record_order, [uid, payAmount]);
         const newOrderId = orderRes.rows[0].order_id;
         const walletRes = await client.query(mainsql.pay_updateWallet, [payAmount, uid]);
         const newWalletBal = parseFloat(walletRes.rows[0].balance);
-
         const txId = utils.generate_TransacID();
-        await client.query(mainsql.pay_record_tx, [txId, uid, newOrderId, payAmount, newWalletBal, `Purchased ticket for ${opera}`]);
-        const operaRes = await client.query(mainsql.pay_fetchOpera, [opera]);
-        if (operaRes.rows.length === 0) throw new Error('opera not found');
-        const operaId = operaRes.rows[0].opera_id;
+        await client.query(mainsql.pay_record_tx, [txId, uid, newOrderId, payAmount, newWalletBal, `Purchased ${items.length} seat(s) for ${show.opera_name}`]);
 
-        const generatedTicketIDs = [];
+
         const ticketQueue = new Queue();
+        items.forEach(item => ticketQueue.enqueue(item));
 
-        const enqueueTickets = (seatClass2, quantity) => {
-            for (let i = 0; i < quantity; i++) {
-                ticketQueue.enqueue(seatClass2);
-            }
-        };
-
-        enqueueTickets('ADULT', quantities[0]);
-        enqueueTickets('STUDENT', quantities[1]);
-        enqueueTickets('WHEELCHAIR', quantities[2]);
-
+        const generatedTickets = [];
         while (!ticketQueue.isEmpty()) {
-            const seatClass2 = ticketQueue.dequeue();
+            const item = ticketQueue.dequeue();
             const ticketId = utils.generate_ticketID();
+            const seatClass2 = item.audience.toUpperCase();
+            await client.query(mainsql.pay_record_seatTicket, [ticketId, show.opera_id, newOrderId, show.pid, item.seat.seat_id, item.seat.zone, seatClass2, generatedTickets.length + 1, item.unit]);
 
-            generatedTicketIDs.push({ ticketId, level, seatClass2 });
-            await client.query(mainsql.pay_record_ticket, [ticketId, operaId, newOrderId, level, seatClass2, generatedTicketIDs.length]);
+            generatedTickets.push({
+                ticketId,
+                level: item.seat.zone,
+                seatClass2,
+                seat: `${item.seat.row_label}${item.seat.col_no}`,
+                unitPrice: item.unit
+            });
         }
         await client.query('commit');
-        return res.json({ msg: 'success', orderId: newOrderId, tickets: generatedTicketIDs });
+        return res.json({ msg: 'success', orderId: newOrderId, tickets: generatedTickets, total: payAmount });
     } catch (error) {
         if (client) { try { await client.query('rollback'); } catch (_) { } }
         console.error("tx error", error);
@@ -253,7 +270,31 @@ app.post('/PaymentOrder', async (req, res) => {
     } finally {
         if (client) client.release();
     }
-});
+
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 app.post('/SendConfirmationEmail', async (req, res) => {
     const { user, orderId, opera, showtime, level, sum_price, tickets } = req.body;
     try {

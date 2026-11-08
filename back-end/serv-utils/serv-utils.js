@@ -52,7 +52,13 @@ export async function send_ver_mail(target, token, url, userid) {
 }
 export async function send_confirmation_email(targetEmail, orderId, opera, showtime, level, sum_price, tickets) {
     const recipient = [new Recipient(targetEmail, "Opera Customer")];
-    const ticketRows = tickets.map(t => `<li><strong>${t.ticketId}</strong> — Level: <em>${t.level}</em>, Class: <em>${t.seatClass2}</em></li>`).join('');
+    const ticketRows = tickets.map(t =>
+        `<li>
+        <strong>${t.ticketId}</strong>
+        - Seat: <em>${t.seat}</em>,
+        - Level:<em>${t.level}</em>,
+        - Class:<em>${t.seatClass2}</em>    
+        </li>`).join('');
     const showtimeDisplay = showtime ? new Date(showtime).toLocaleString('en-US', {
         year: 'numeric',
         month: '2-digit',
