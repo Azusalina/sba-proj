@@ -6,7 +6,8 @@ import * as utils from '../serv-utils/serv-utils.js';
 import { Recipient } from "mailersend";
 
 import { Queue } from '../serv-utils/ticket-queue.mjs'
-import { mainsql } from '../queries.js'
+import { mainsql, adminsql } from '../queries.js'
+
 import { session } from 'electron';
 
 const MAX_SEATS = 8;
@@ -66,7 +67,7 @@ app.post('/refundOrder', async (req, res) => {
         const newBalance = parseFloat(walletRes.rows[0].balance);
         const txId = utils.generate_TransacID();
         await client.query(mainsql.refund_updateStatus, [order_id]);
-        await client.query(mainsql.refund_voidTickets,[order_id]);
+        await client.query(mainsql.refund_voidTickets, [order_id]);
         await client.query(mainsql.refund_RecordRefund, [txId, order.uid, order_id, refundAmount, newBalance, `Refund for order #${order_id}`]);
         const infoRes = await client.query(mainsql.refund_getEmailContent, [user, order_id]);
         await client.query(`commit`);
@@ -272,29 +273,6 @@ app.post('/PaymentOrder', async (req, res) => {
     }
 
 })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 app.post('/SendConfirmationEmail', async (req, res) => {
     const { user, orderId, opera, showtime, level, sum_price, tickets } = req.body;
     try {
@@ -363,7 +341,26 @@ app.post('/seatMap', async (req, res) => {
         return res.json({ status: false, msg: 'unknown fatal error' })
     }
 })
-
+app.post('/toolkit/sessions', async (req, res) => {
+    try {
+        const { rows } = await pool.query(adminsql.admin_sessions);
+        return res.json({
+            status: true,
+            sessions: rows.map(row => ({
+                pid: row.pid,
+                opera: row.opera_name,
+                planId: row.price_id,
+                time: row.time,
+                total: Number(row.total),
+                booked: Number(row.booked),
+                blocked: Number(row.blocked)
+            }))
+        })
+    } catch (error) {
+        console.error(error);
+        return res.json({ status: false, sessions: [] })
+    }
+})
 
 
 

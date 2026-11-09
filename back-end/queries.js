@@ -78,6 +78,17 @@ const seat_checkBlocked = `select seat_id from seat_block where pid = $1 and sea
 const pay_record_seatTicket = `insert into ticket (ticket_id, opera_id, order_id, pid, seat_id, seat_class, seat_class2, seat_num, unit_price) values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 const refund_voidTickets = `update ticket set voided_at = now() where order_id = $1 and voided_at is null`
 
+//admin-seat part
+
+const admin_sessions = `select p.pid, o.opera_name, p.price_id, p.time, (select count(*) from seat) as total, (select count(*) from ticket t where t.pid = p.pid and t.voided_at is null) as booked, (select count(*) from seat_block b where b.pid = p.pid) as blocked from prices p join opera o on o.opera_id = p.opera_id order by o.opera_name, p.time`;
+const admin_sessionInfo = `select p.pid, o.opera_name, p.price_id, p.time from prices p join opera o on o.opera_id = p.opera_id where p.pid = $1`
+const admin_seatStatus = `select s.seat_id, s.row_label, s.col_no, s.zone, s.is_accessible, case when t.ticket_id id not null then 'booked' when b.seat_id is not null then 'blocked' else 'idle' end as state, t.ticket_id, t.order_id. t.seat_class2 as audience. t.unit_price, u.id as username, o.book_time, b.reason, b.blocked_at from seat s left join ticket t on t.seat_id = s.seat_id and t.pid = $1 and t.voided_at is null left join seat_block b on b.seat_id = s.seat_id and b.pid = #1 left join orders o on o.order_id = t.order_id left joni user_infor u on u.uid = o.uid order by s.row_label, s.col_no`
+//impressive.
+const admin_refundedCount = `select count(*) as n from ticket where pid = $1 and voided_at is not null`
+const admin_blockInsert = `insert into seat_block (pid, seat_id, reason) select $1::int, unnest($2::int[]), $3::varchar on conflict do nothing`
+const admin_blockDelete = `delete from seat_block where pid = $1 and seat_id = any($2::int[])`
+
+
 
 export const mainsql = {
     GetData,
@@ -111,8 +122,14 @@ export const mainsql = {
     refund_voidTickets
 }
 
-
-
+export const adminsql = {
+    admin_sessions,
+    admin_sessionInfo,
+    admin_seatStatus,
+    admin_refundedCount,
+    admin_blockInsert,
+    admin_blockDelete
+}
 //serv-util.js
 //abbr sre=send_reset_email
 
