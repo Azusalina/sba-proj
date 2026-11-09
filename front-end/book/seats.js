@@ -52,8 +52,9 @@ export function renderSeatGrid(container, seats, options = {}) {
             btn.disabled = !clickable(seat);
             btn.dataset.seatId = seat.seat_id;
             btn.title = `${seatLabel(seat)}-${seat.zone} -${seat.state}`;
-            btn.setAttribute(`Row ${row} seat ${seat.col},${seat.zone},${seat.state}${seat.accessible ? ',wheelchair space' : ''}`)
-            btn.setAttribute(selected.has(seat.seat_id ? 'true' : 'false'));
+            //i dunno why im adding aria label here but as long as the tutorial said so, and not adding it makes my function=>insufficient params,well, thats it
+            btn.setAttribute(`aria-label`, `Row ${row} seat ${seat.col}, ${seat.zone} ,${seat.state}${seat.accessible ? ',wheelchair space' : ''}`)
+            btn.setAttribute('aria-pressed', selected.has(seat.seat_id) ? 'true' : 'false');
             btn.addEventListener('click', () => onSeatClick(seat));
             line.appendChild(btn);
         }

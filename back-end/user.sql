@@ -81,7 +81,7 @@ create table if not exists seat_block(
     reason varchar(100),
     blocked_at timestamp default now(),
     primary key (pid,seat_id)
-)
+);
 create table if not exists ticket(
     ticket_id VARCHAR(50) PRIMARY KEY,
     opera_id INT REFERENCES opera(opera_id),
@@ -92,7 +92,7 @@ create table if not exists ticket(
     pid int references prices(pid),
     seat_id int references seat(seat_id),
     unit_price numeric(10,2),
-    voided_at timestamp;
+    voided_at timestamp
 );
 create unique index if not exists ux_ticket_live_seat on ticket(pid,seat_id) where voided_at is null;
 CREATE TABLE IF NOT EXISTS wallet_transaction (
@@ -143,3 +143,4 @@ SELECT * from wallet_transaction order by uid;
 select * from orders order by order_id;
 select * from ticket order by ticket_id;
 -----
+update prices set budget = round(std_low * 0.6);

@@ -64,13 +64,7 @@
     color: #8a1f1f;
     cursor: not-allowed;
 }
-.seat.accessible::after {
-    content: 'w';
-    position: absolute;
-    top: -9px;
-    right: -4px;
-    font-size: 11px;
-}
+
 .seat.dim {
     opacity: 0.25;
 }
@@ -84,6 +78,11 @@
     flex-wrap: wrap;
     gap: 6px 14px;
     padding: 0 8px;
+}
+.seat-legend li{
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
 }
 .legend-chip {
     display: inline-block;
