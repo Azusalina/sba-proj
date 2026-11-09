@@ -7,6 +7,7 @@ import { Recipient } from "mailersend";
 
 import { Queue } from '../serv-utils/ticket-queue.mjs'
 import { mainsql, adminsql } from '../queries.js'
+import { SmsNumberModule } from 'mailersend/lib/modules/sms/Number.module.js';
 
 const MAX_SEATS = 8;
 const AUDIENCES = ['adult', 'student', 'wheelchair']
@@ -363,8 +364,92 @@ app.post('/toolkit/sessions', async (req, res) => {
         return res.json({ status: false, sessions: [] })
     }
 })
+app.post('./toolkit/seat_status', async (req, res) => {
+    const pid = Number(req.body.pid);
+    if (!Number.isInteger(pid)) {
+        return res.status(400).json({ status: false, msg: 'invalid_pid' });
+    }
+    try {
+        const info = (await pool.query(adminsql.admin_sessionInfo, [pid])).rows[0];
+        if (!info) {
+            return res.json({ status: false, msg: 'show not exist' });
+        }
+        const { rows } = await pool.query(adminsql.admin_seatStatus, [pid]);
+        const refunded = Number((await pool.query(adminsql.admin_refundedCount, [pid])).rows[0].n);
+
+        const summary = { total: rows.length, idle: 0, booked: 0, blocked: 0, revenue: 0, refunded, byZone: {} }
+        rows.forEach(row => {
+            summary[row.state] += 1;
+            if (row.state === 'booked') summary.revenue += Number(row.unit_price);
+            if (!summary.byZone[row.zone]) summary.byZone[row.zone] = { idle: 0, booked: 0, blocked: 0 };
+            summary.byZone[row.zone][row.state] += 1;
+            //where an implementation of2d array is performed
+        });
+        summary.revenue = round2(summary.revenue);
 
 
+        return res.json({
+            status: true,
+            session: { pid: info.pid, opera: info.opera_name, planId: info.price_id, time: info.time },
+            summary: summary,
+            seats: rows.map(row => ({
+                seat_id: row.seat_id,
+                row: row.row_label,
+                col: row.col_no,
+                zone: row.zone,
+                accessible: row.is_accessible,
+                state: row.state,
+                ticket_id: row.ticket_id,
+                order_id: row.order_id,
+                audience: row.audience,
+                unit_price: row.unit_price,
+                username: row.username,
+                book_time: row.book_time,
+                reason: row.reason,
+                blocked_at: row.blocked_at
+            }))
+        });
+    } catch (error) {
+        console.error(error);
+        return res.json({ status: false, msg: 'sth went wrong and we dunno.' });
+    }
+});
+app.post('./toolkit/seat_block', async (req, res) => {
+    const { pid, seat_ids, action, reason } = req.body;
+    const ids = Array.isArray(seat_ids) ? seat_ids.map(Number) : [];
+    if (!Number.isInteger(Number(pid)) || ids.length === 0 || ids.some(id => !Number.isInteger(id)) || !['block', 'unblock'].includes(action)) {
+        return res.status(400).json({ status: false, msg: 'invalid data input' });
+    }
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query('begin');
+        const info = (await client.query(adminsql.admin_sessionInfo, [Number(pid)])).rows[0];
+        const locked = (await client.query(adminsql.seat_lock, [ids])).rows;
+        if (!info || locked.length !== ids.length) {
+            await client.query('rollback');
+            return res.status(400).json({ msg: 'invalid-request' });
+        }
+        if (action === 'block') {
+            const taken = (await client.query(adminsql.seat_checkTaken, [Number(pid), ids])).rows;
+            if (taken.length > 0) {
+                await client.query('rollback');
+                return res.status(400).json({ msg: 'seat_booked', seats: taken.map(a => a.seat_id) });
+            }
+            await client.query(adminsql.admin_blockInsert, [Number(pid), ids, String(reason || '').slice(0, 100) || null]);
+        } else {
+            await client.query(adminsql.admin_blockDelete, [Number(pid), ids]);
+        }
+        await client.query('commit');
+        return res.json({ msg: 'success' })
+    } catch (error) {
+        if (client) { try { await client.query('rollback') } catch (_) { } }
+        console.error(error);
+        return res.json({ status: false, msg: 'sth bad happen and we dont know.' });
+    } finally {
+        if (client) client.release();
+    }
+})
 
 
 
