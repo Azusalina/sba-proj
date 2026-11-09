@@ -26,17 +26,22 @@ function formatShowtime(time) {
 const details = JSON.parse(detailsStr);
 const tickets = ticketsStr ? JSON.parse(ticketsStr) : [];
 
+const paid = Number(localStorage.getItem('orderTotal') ?? details.sum_price ?? 0);
+const levelText = [...new Set(tickets.map(t => t.level))].join(', ');
+details.sum_price = paid;
+details.level = levelText;
+const countOf = (type) => tickets.filter(t => t.seatClass2 === type).length;
+
 document.getElementById('display-order-id').innerText = `#${orderId}`;
 document.getElementById('display-user').innerText = details.user || 'N/A';
 document.getElementById('display-opera').innerText = details.opera || 'N/A';
 document.getElementById('display-showtime').innerText = formatShowtime(details.showtime || details.time);
-document.getElementById('display-level').innerText = (details.level || '').toUpperCase();
+document.getElementById('display-level').innerText = levelText.toUpperCase();
 
-document.getElementById('display-adult').innerText = `${details.adult || 0} x HK$${details.price_adult || 0}`;
-document.getElementById('display-student').innerText = `${details.student || 0} x HK$${details.price_student || 0}`;
-document.getElementById('display-wheelchair').innerText = `${details.wheelchair || 0} x HK$${details.price_wheelchair || 0}`;
-document.getElementById('display-total').innerText = `HK$${Number(details.sum_price || 0).toFixed(2)}`;
-
+document.getElementById('display-adult').innerText = `${countOf('ADULT')}`;
+document.getElementById('display-student').innerText = `${countOf('STUDENT')}`;
+document.getElementById('display-wheelchair').innerText = `${countOf('WHEELCHAIR')}`;
+document.getElementById('display-total').innerText = `${paid.toFixed(2)}`;
 const ticketListUl = document.getElementById('ticket-list');
 
 if (tickets.length === 0) {
@@ -55,7 +60,7 @@ if (tickets.length === 0) {
         const badgeColor = colorList[levelKey] || '#333333';
         li.innerHTML = `
             <span><strong>Ticket ID:</strong> ${t.ticketId}</span>
-            <span class="badge" style="background-color: ${badgeColor};">${t.level} - ${t.seatClass2}</span>
+            <span class="badge" style="background-color: ${badgeColor};">Seat ${t.seat}-${t.level}-${t.seatClass2}</span>
         `;
         ticketListUl.appendChild(li);
 
