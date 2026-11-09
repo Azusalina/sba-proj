@@ -83,7 +83,7 @@ app.post('/auth/signup', async (req, res) => {
         client.release();
     }
 });
-app.post('/auth/token', async (req, res) => {
+app.get('/auth/:token', async (req, res) => {
     const token = req.params.token;
     let client;
     try {
@@ -99,7 +99,7 @@ app.post('/auth/token', async (req, res) => {
         await client.query(authsql.token_update_ev, [token]);
         await client.query(authsql.signup_CreateNew_Wallet, [userid]);
         await client.query('commit');
-        return res.json(`${FRONTEND_URL}/auth/confirm.html`);
+        return res.redirect(`${FRONTEND_URL}/auth/confirm.html`);
     } catch (error) {
         if (client) { try { await client.query('rollback'); } catch (_) { } }
         console.error('verify error', error);

@@ -8,8 +8,6 @@ import { Recipient } from "mailersend";
 import { Queue } from '../serv-utils/ticket-queue.mjs'
 import { mainsql, adminsql } from '../queries.js'
 
-import { session } from 'electron';
-
 const MAX_SEATS = 8;
 const AUDIENCES = ['adult', 'student', 'wheelchair']
 const round2 = (n) => Math.round(n * 100) / 100;
@@ -60,7 +58,7 @@ app.post('/refundOrder', async (req, res) => {
         if (order.transac_status !== 'COMPLETED') {
             await client.query('rollback');
             console.error("refundOrder: not refundable");
-            return res.json({ msg: not_refundable });
+            return res.json({ msg: 'not_refundable' });
         }
         const refundAmount = parseFloat(order.sum_fee);
         const walletRes = await client.query(mainsql.refund_updateWallet, [refundAmount, order.uid]);
@@ -115,11 +113,11 @@ app.post('/redeem', async (req, res) => {
         const balance = walletResult.rows[0].balance;
         return res.json({ msg: 'redeemed', balance: balance });
     } catch (error) {
-        await client.query('ROLLBACK');
+        if (client) { try { await client.query('ROLLBACK'); } catch (_) { } }
         console.log(error);
         return res.json({ msg: 'unknown fatal error' });
     } finally {
-        client.release();
+        if (client) client.release();
     }
 });
 app.post('/updateOperaData', async (req, res) => {
@@ -175,6 +173,10 @@ app.post('/PaymentOrder', async (req, res) => {
     if (!user || !opera || !Number.isInteger(Number(priceId)) || !Array.isArray(seats) || seats.length < 1 || seats.length > MAX_SEATS) {
         console.error('paymentOrder:invalid_request');
         return res.status(400).json({ msg: 'invalid_request' });
+    }
+    if (seats.some(seat => !seat || typeof seat !== 'object')) {
+        console.error('paymentError:invalid_seats')
+        return res.status(400).json({ msg: 'invalid_seats' })
     }
     const ids = seats.map(seat => Number(seat.seat_id));
     if (ids.some(id => !Number.isInteger(id)) || new Set(ids).size !== ids.length || seats.some(seat => !AUDIENCES.includes(seat.audience))) {
@@ -232,8 +234,8 @@ app.post('/PaymentOrder', async (req, res) => {
         const { uid, balance } = userRes.rows[0];
         if (parseFloat(balance) < payAmount) {
             await client.query('rollback');
-            console.error("paymentOrder:indufficient wallet balance");
-            return res.json({ msg: 'insufficient balance' });
+            console.error("paymentOrder:insufficient wallet balance");
+            return res.json({ msg: 'insufficientBalance' });
         }
 
         const orderRes = await client.query(mainsql.pay_record_order, [uid, payAmount]);
@@ -332,8 +334,8 @@ app.post('/seatMap', async (req, res) => {
                 row: seat.row_label,
                 col: seat.col_no,
                 zone: seat.zone,
-                accessible: seat.accessible,
-                state: taken.has(seat_id) ? 'booked' : blocked.has(seat_id) ? 'blocked' : 'idle'
+                accessible: seat.is_accessible,
+                state: taken.has(seat.seat_id) ? 'booked' : blocked.has(seat.seat_id) ? 'blocked' : 'idle'
             }))
         });
     } catch (error) {

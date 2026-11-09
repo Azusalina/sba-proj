@@ -67,9 +67,9 @@ const admin_generateCode = `insert into gift_code(code,amount) values($1,$2)`
 
 
 //newly added seat part
-
+const lv_multipliers=`select name,multiplier from lv`
 const seat_session = `select p.pid, p.time, o.opera_id, o.opera_name, p.premium, p.std_high, p.std_low, p.budget from prices p join opera o on o.opera_id = p.opera_id where lower(replace(o.opera_name, ' ', '-')) = $1 and p.price_id = $2`
-const seat_all = `select seat_id, row_label, col_no, zone, is accessible from seat order by row_label, col_no`
+const seat_all = `select seat_id, row_label, col_no, zone, is_accessible from seat order by row_label, col_no`
 const seat_takenList = `select seat_id from ticket where pid = $1 and voided_at is null`
 const seat_blockedList = `select seat_id from seat_block where pid = $1`
 const seat_lock = `select seat_id, row_label, col_no, zone, is_accessible from seat where seat_id = any($1::int[]) order by seat_id for update`
@@ -111,6 +111,7 @@ export const mainsql = {
     pay_record_ticket,
     pay_fetchEmail,
     admin_generateCode,
+    lv_multipliers,
     seat_session,
     seat_all,
     seat_takenList,

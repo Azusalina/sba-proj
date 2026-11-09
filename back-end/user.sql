@@ -67,19 +67,6 @@ create table if not exists orders(
     sum_fee decimal(10,2),
     transac_status varchar(20)
 );
-create table if not exists ticket(
-    ticket_id VARCHAR(50) PRIMARY KEY,
-    opera_id INT REFERENCES opera(opera_id),
-    order_id INT REFERENCES orders(order_id) ON DELETE CASCADE,
-    seat_class VARCHAR(20),
-    seat_class2 VARCHAR(20),
-    seat_num INT,
-    pid int references prices(pid),
-    seat_id int references seat(seat_id),
-    unit_price numeric(10,2),
-    voided_at timestamp;
-);
-create unique index if not exists ux_ticket_live_seat on ticket(pid,seat_id) where voided_at is null;
 create table if not exists seat(
     seat_id serial primary key,
     row_label char(1) not null,
@@ -95,7 +82,19 @@ create table if not exists seat_block(
     blocked_at timestamp default now(),
     primary key (pid,seat_id)
 )
-
+create table if not exists ticket(
+    ticket_id VARCHAR(50) PRIMARY KEY,
+    opera_id INT REFERENCES opera(opera_id),
+    order_id INT REFERENCES orders(order_id) ON DELETE CASCADE,
+    seat_class VARCHAR(20),
+    seat_class2 VARCHAR(20),
+    seat_num INT,
+    pid int references prices(pid),
+    seat_id int references seat(seat_id),
+    unit_price numeric(10,2),
+    voided_at timestamp;
+);
+create unique index if not exists ux_ticket_live_seat on ticket(pid,seat_id) where voided_at is null;
 CREATE TABLE IF NOT EXISTS wallet_transaction (
     tx_id varchar(40) PRIMARY KEY,
     uid INT NOT NULL REFERENCES user_infor(uid) ON DELETE CASCADE,
