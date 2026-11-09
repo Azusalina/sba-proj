@@ -1,56 +1,37 @@
+import { renderSeatGrid, seatLabel, seatUnitPrice, ZONES } from './seats.js'
+
 const isLocal = window.location.hostname === '127.0.0.1'
 const API_BASE_URL = isLocal ? 'http://127.0.0.1:3000' : 'https://backend-sba.vercel.app';
 
-const operaTitle = document.getElementById('operaTitle')
+const MAX_SEATS = 8;
+const AUDIENCES = ['adult', 'student', 'wheelchair'];
+
+const operaTitle = document.getElementById('operaTitle');
 const showtimeTitle = document.getElementById('showtimeTitle');
-const selectedTime = localStorage.getItem('selected_time');
-const selectedPriceId= Number(localStorage.getItem('selected_price_id'));
+const priceStatus = document.getElementById('price-status');
+const seatMap = document.getElementById('seat-map');
+const zonePrices = document.getElementById('zone-prices');
+const selectedList = document.getElementById('selected-list');
+const sumPrice = document.getElementById('sum-price');
+const subForm = document.getElementById('sub-form');
+const refreshBtn = document.getElementById('refresh-seats')
+
 const operaName = localStorage.getItem('selected');
-const budget = document.getElementById("budget")
-const std_low = document.getElementById("std_low")
-const std_high = document.getElementById("std_high")
-const premium = document.getElementById("premium")
-
-const lv = [budget, std_low, std_high, premium];
-
-
-//abbr notes:a=adult,s=student,w=wheelchair
-//p=price
-
-const change = document.querySelectorAll('#a-minus, #a-plus, #s-minus, #s-plus, #w-minus, #w-plus');
-const pA = document.getElementById("pA")
-const pS = document.getElementById("pS")
-const pW = document.getElementById("pW")
-const sum_price = document.getElementById("sum-price")
-const sub_form = document.getElementById("sub-form")
-const a = document.getElementById("a-status")
-const s = document.getElementById("s-status")
-const w = document.getElementById("w-status")
-const ticket = {
-    level: "",
-    adult: 0,
-    student: 0,
-    wheelchair: 0,
-};
-let btn_current = null;
-const sub_btn = document.getElementById('sub-btn');
-//
+const selectedTime = localStorage.getItem('selected_time');
+const priceId = Number(localStorage.getItem('selected_price_id'));
 const username = localStorage.getItem('user');
 let authStatus = false;
-let authName = null;
-
 try {
-    authStatus = localStorage.getItem('isLoggedIn') === 'true';
-    authName = localStorage.getItem('user');
+    authStatus = localStorage.getItem('isLoggedIn') === 'true;'
 } catch (error) {
-    console.error("LocalStorage is disabled or inaccessible:", error);
-    authStatus = false;
-    authName = null;
+    console.error('localstorage 404', error)
 }
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+let hall = null;
+const chosen = new Map();
 
 
-//subfunctions
+//sub-funcs
 function formatShowtime(time) {
     if (!time) return 'N/A';
     return new Date(time).toLocaleString([], {
@@ -61,194 +42,152 @@ function formatShowtime(time) {
         minute: '2-digit'
     });
 }
-async function getPrices(name, priceId) {
-    const url = `${API_BASE_URL}/operaName`;
-    const data = {name,priceId };
+async function loadHall() {
     try {
-        const resp = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data)
+        const resp = await fetch(`${API_BASE_URL}/seatMap`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ name: operaName, priceId })
         });
-        if (!resp.ok) throw new Error(`HTTP error! status: ${resp.status}`);
-        return await resp.json();
+        if (!resp.ok) throw new Error(`http error ${resp.status}`);
+        const data = await resp.json();
+        if (!data.status) {
+            priceStatus.textContent = data.msg || `Seat map could not be loaded`;
+            return null;
+        }
+        priceStatus.textContent = '';
+        return data
     } catch (error) {
         console.log(error);
+        priceStatus.textContent = `Seat map could not be loaded`;
+        return null;
     }
 }
-
-function updateSumPrices() {
-    const getPriceNum = (element) => {
-        const match = element.innerText.match(/\d+(\.\d+)?/);
-        return match ? Number(match[0]) : 0;
-    };
-
-    const total =
-        ticket.adult * getPriceNum(pA) +
-        ticket.student * getPriceNum(pS) +
-        ticket.wheelchair * getPriceNum(pW);
-
-    sum_price.textContent = `Total Price: HK$${total.toFixed(2)}`;
+function seatById(id) {
+    return hall.seats.find(seat => seat.seat_id === id);
 }
-
-
-
-function StoreData() {
-    const opera = operaTitle.innerText.split(':')[1];
-    const level = btn_current.id;
-    //abbr: A=amount,a=adult,s=student,w=wheelchair
-    const adult = Number(a.innerText)
-    const student = Number(s.innerText)
-    const wheelchair = Number(w.innerText)
-    const details = {
-        opera: opera,
-        level: level,
-        user: username,
-        price_adult: Number(pA.innerText.match(/\d+/)),
-        adult: adult,
-        price_student: Number(pS.innerText.match(/\d+/)),
-        student: student,
-        price_wheelchair: Number(pW.innerText.match(/\d+/)),
-        wheelchair: wheelchair,
-        sum_price: Number(sum_price.innerText.match(/\d+/))
+function priceOf(seat, audience) {
+    return seatUnitPrice(hall.prices[seat.zone], hall.multipliers, audience);
+}
+function totalPrice() {
+    let sum = 0;
+    for (const [id, audience] of chosen) sum += priceOf(seatById(id), audience);
+    return Math.round(sum * 100) / 100;
+}
+function toggleSeat(seat) {
+    if (chosen.has(seat.seat_id)) {
+        chosen.delete(seat.seat_id);
+    } else if (chosen.size >= MAX_SEATS) {
+        alert(`you can choose at most ${MAX_SEATS} seats at once`);
+        return;
+    } else {
+        chosen.set(seat.seat_id, 'adult');
     }
-    localStorage.setItem('details', JSON.stringify(details))
+    render();
 }
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+function renderSelectedList() {
+    selectedList.innerHTML = '';
+    for (const [id, audience] of chosen) {
+        const seat = seatById(id);
+        const item = document.createElement('li');
+        const label = document.createElement('strong');
+        label.textContent = `${seatLabel(seat)}(${seat.zone})`;
 
-//initialize
-window.addEventListener('DOMContentLoaded', async () => {
-    if (operaName) operaTitle.innerText = `Opera selected: ${operaName}`;
-    if (showtimeTitle) showtimeTitle.innerText = `Showtime: ${formatShowtime(selectedTime)}`;
-});
-let data = await getPrices(operaName, selectedPriceId);
+        const select = document.createElement('select');
+        for (const type of AUDIENCES) {
+            const option = document.createElement('option');
+            option.value = type;
+            option.textContent = type;
+            option.disabled = (type === 'wheelchair' && seat.accessible);
+            select.appendChild(option);
+        }
+        select.value = audience;
+        select.addEventListener('change', () => {
+            chosen.set(id, select.value);
+            render();
+        });
 
-if(!data?.status || !data.prices || !Array.isArray(data.multipliers)){
-  document.getElementById('price-status').textContent=data?.msg || 'Price could not be loaded';
-  lv.forEach(btn=>btn.disabled=true);
+        const price = document.createElement('span');
+        price.textContent = `HK$${priceOf(seat, audience).toFixed(2)}`;
+
+        const rm = document.createElement('button');
+        rm.type = 'button';
+        rm.textContent = 'remove';
+        rm.addEventListener('click', () => {
+            chosen.delete(id);
+            render();
+        });
+        item.append(label, select, price, rm);
+        selectedList.appendChild(item);
+    }
 }
-
-
-if (operaName) {
-    operaTitle.innerText = `Opera selected:${operaName}`
-}
-//make lv btns mut.exlc
-lv.forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        ticket.adult = 0;
-        ticket.student = 0;
-        ticket.wheelchair = 0;
-        a.innerText = 0;
-        s.innerText = 0;
-        w.innerText = 0;
-
-        if (btn_current != null) {
-            btn_current.classList.remove('active');
-        }
-        btn.classList.add('active')
-        btn_current = btn;
-        btn.blur();
-        ticket.level = btn.id;
-        updateSumPrices();
-    })
-});
-//ticketamount+- initialize
-change.forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        const [a, b] = btn.id.split("-");
-        const statusElem = document.getElementById(`${a}-status`);
-        let currentVal = Number(statusElem.innerText);
-        if (b === "plus") {
-            currentVal++;
-        }
-        if (b === "minus" && currentVal > 0) {
-            currentVal--;
-        }
-        statusElem.innerText = currentVal;
-        if (a === "a") {
-            ticket.adult = currentVal;
-        } else if (a === "s") {
-            ticket.student = currentVal;
-        } else if (a === "w") {
-            ticket.wheelchair = currentVal;
-        }
-        btn.blur();
-        updateSumPrices();
+function render() {
+    renderSeatGrid(seatMap, hall.seats, {
+        selected: new Set(chosen.keys()),
+        onSeatClick: toggleSeat
     });
-});
-//redir
+    renderSelectedList();
+    sumPrice.textContent = `Total price: HK$${totalPrice().toFixed(2)}`;
+}
+async function reload() {
+    const data = await loadHall();
+    if (!data) return;
+    hall = data;
 
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-`       `
-//prices work zone
-lv.forEach(async (btn) => {
-    btn.addEventListener('click', async (event) => {
-        event.preventDefault();
-        const level = btn.id;
-        const std_price = data.prices[level];
-        //abbr:m=multiplier,A=adult,S=student,W=wheelchair
-        const AdultObj = data.multipliers.find(m => m.name === 'adult')
-        const mA = AdultObj ? AdultObj.multiplier : 1
-        const StudentObj = data.multipliers.find(m => m.name === 'student')
-        const mS = StudentObj ? StudentObj.multiplier : 1
-        const WheelObj = data.multipliers.find(m => m.name === 'wheelchair')
-        const mW = WheelObj ? WheelObj.multiplier : 1
-        //for debug only:
-        console.log(mA)
-        console.log(mS)
-        console.log(mW)
-        const Aprice = std_price * mA;
-        const Sprice = std_price * mS;
-        const Wprice = std_price * mW;
-        pA.innerText = `per ticket:${Aprice}`;
-        pS.innerText = `per ticket:${Sprice}`;
-        pW.innerText = `per ticket:${Wprice}`;
-        updateSumPrices();
-    })
-})
-
-sub_form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const quantity =
-    ticket.adult + ticket.student + ticket.wheelchair;
-
-    if (quantity === 0) {
-      alert('Please select at least one ticket.');
-      return;
+    for (const id of [...chosen.keys()]) {
+        const seat = seatById(id);
+        if (!seat || seat.state !== 'idle') chosen.delete(id);
     }
-    if (!ticket.level) {
-        alert("Please select a seat class.");
+    zonePrices.innerHTML = '';
+    for (const zone of ZONES) {
+        const item = document.createElement('li');
+        item.textContent = `${zone}:HK$${hall.prices[zone]}`;
+        zonePrices.appendChild(item);
+    }
+    render();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//init
+
+
+if (operaName) operaTitle.innerText = `Opera selected:${operaName}`;
+showtimeTitle.innerText = `Showtime:${formatShowtime(selectedTime)}`;
+await reload();
+
+refreshBtn.addEventListener('click', reload);
+
+subForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!hall || chosen.size === 0) {
+        alert('maybe you should select at least one seat.');
         return;
     }
     if (!authStatus) {
-        alert('You haven\'t signed in yet, redirecting to auth page...');
+        alert('you haven\'t signed in yet, redirecting to the auth page...');
         window.location.href = '../auth/auth.html';
         return;
     }
-    const totalMatch = sum_price.innerText.match(/\d+(\.\d+)?/);
-    const total = totalMatch ? Number(totalMatch[0]) : 0;
 
-    const getMultiplier = (type) => {
-        const obj = data.multipliers.find(m => m.name === type);
-        return obj ? obj.multiplier : 1;
-    };
+    const seats = [...chosen].map((id, audience) => {
+        const seat = seatById(id);
+        return {
+            seat_id: id,
+            label: seatLabel(seat),
+            zone: seat.zone,
+            audience: audience,
+            price: priceOf(seat, audience)
+        };
+    });
     const details = {
         user: username,
         opera: operaName,
-        priceId:selectedPriceId,
+        priceId: priceId,
         showtime: selectedTime,
-        level: ticket.level,
-        adult: ticket.adult,
-        student: ticket.student,
-        wheelchair: ticket.wheelchair,
-        price_adult: data.prices[ticket.level] * getMultiplier('adult'),
-        price_student: data.prices[ticket.level] * getMultiplier('student'),
-        price_wheelchair: data.prices[ticket.level] * getMultiplier('wheelchair'),
-        sum_price: total
+        seats: seats,
+        sum_price: totalPrice()
     };
     localStorage.setItem('details', JSON.stringify(details));
-    window.location.href = '../pay/pay.html';
-});
+    window.location.href = '../pay/pay.html'
+})
