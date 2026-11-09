@@ -1,12 +1,6 @@
 const opera = document.getElementById('opera')
 const showtime = document.getElementById('showtime');
-const seatClass = document.getElementById('class')
-const Pa = document.getElementById('Pa')
-const Ps = document.getElementById('Ps')
-const Pw = document.getElementById('Pw')
-const Aa = document.getElementById('Aa')
-const As = document.getElementById('As')
-const Aw = document.getElementById('Aw')
+const seatList = document.getElementById('seat-list')
 const pSum = document.getElementById('pSum')
 
 
@@ -33,16 +27,22 @@ function formatShowtime(time) {
 
 const BookData = JSON.parse(localStorage.getItem('details'))
 window.addEventListener('DOMContentLoaded', () => {
-    console.log(BookData)
+    if (!BookData || !Array.isArray(BookData.seats)) {
+        window.location.href = '../book/book.html'
+        return;
+    }
     opera.innerText = BookData.opera;
-    showtime.innerText = formatShowtime(BookData.showtime || BookData.time) 
-    seatClass.innerText = BookData.level;
-    Pa.innerText = `Adult($${BookData.price_adult}/per):`
-    Aa.innerText = BookData.adult;
-    Ps.innerText = `Student($${BookData.price_student}/per):`
-    As.innerText = BookData.student;
-    Pw.innerText = `Wheelchair($${BookData.price_wheelchair}/per):`
-    Aw.innerText = BookData.wheelchair;
+
+    showtime.innerText = formatShowtime(BookData.showtime);
+    BookData.seats.forEach(seat => {
+        const item = document.createElement('li');
+        //how many times ive written this sentence today-09.11.2026
+        item.textContent = `${seat.label}-${seat.zone}-${seat - audience}-HK$${Number(seat.price).toFixed(2)}`
+        seatList.appendChild(item)
+    });
+    pSum.innerText = `HK$${Number(BookData.sum_price).toFixed(2)}`;
+
+
     pSum.innerText = BookData.sum_price;
 
 })

@@ -1,0 +1,93 @@
+.seat-map {
+    overflow-x: auto;
+    padding: 8px;
+}
+.stage {
+    text-align: center;
+    background-color: #222;
+    color: #fff;
+    padding: 6px;
+    margin: 8px 10%;
+    border-radius: 0 0 40px 40px;
+    letter-spacing: 6px;
+}
+.seat-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 4px;
+}
+.seat-row-name {
+    width: 20px;
+    font-weight: bold;
+    text-align: center;
+}
+.seat {
+    position: relative;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid #666;
+    border-bottom-width: 5px;
+    border-radius: 6px 6px 3px 3px;
+    background-color: #fff;
+    color: #111;
+    font-size: 12px;
+    cursor: pointer;
+}
+.zone-premium {
+    border-bottom-color: #c59b27;
+}
+.zone-std_high {
+    border-bottom-color: #581825;
+}
+.zone-std_low {
+    border-bottom-color: #1a2b4c;
+}
+.zone-budget {
+    border-bottom-color: #b2ac88;
+}
+.seat.selected {
+    background-color: #0a7a3b;
+    border-color: #0a7a3b;
+    color: #fff;
+}
+.seat.state-booked {
+    background: #d0d0d0;
+    color: #777;
+    text-decoration: line-through;
+    cursor: not-allowed;
+}
+.seat.state-blcked {
+    background: repeating-linear-gradient(45deg, #f2c1c1, #f2c1c1 4px, #fff 4px, #fff 8px);
+    color: #8a1f1f;
+    cursor: not-allowed;
+}
+.seat.accessible::after {
+    content: 'w';
+    position: absolute;
+    top: -9px;
+    right: -4px;
+    font-size: 11px;
+}
+.seat.dim {
+    opacity: 0.25;
+}
+seat:focus-visible {
+    outline: 3px solid #0057d9;
+    outline-offset: 2px;
+}
+.seat-legend {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    padding: 0 8px;
+}
+.legend-chip {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 4px;
+    cursor: default;
+}
