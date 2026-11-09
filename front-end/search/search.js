@@ -131,12 +131,12 @@ function createOperaArticle(opera) {
     const currentPlan = { ...plans[0] };
     const caseLabels = ['I', 'II', 'III', 'IV', 'V', 'VI'];
     const planItems = plans.map((plan, index) => `
-        <li data-priceid="${plan.price_id}" data-time="${plan.time}" data-budget=${plan.budget}">
+        <li data-priceid="${plan.price_id}" data-time="${plan.time}" data-budget="${plan.budget}">
         Case ${caseLabels[index] || index + 1}:${formatShowtime(plan.time)} (Plan ${plan.price_id})
         </li>`).join('');
 
     article.innerHTML = `
-        < img src = "placeholder.png" >
+        <img src="placeholder.png" >
             <div class="info_container">
                 <h1 data-id="${opera.id}">${opera.name}</h1>
                 <label class="price">Budget Price: $${currentPlan.budget}</label>

@@ -57,7 +57,7 @@ async function handlingOrder() {
             await sleep(2000);
             window.location.href = '../../index.html'
         } else {
-            note.innerText("sth is wrong but we dunno.")
+            note.innerText='sth is wrong but we dunno.'
             await sleep(2000);
             window.location.href = '../../index.html'
 

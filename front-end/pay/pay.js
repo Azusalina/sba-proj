@@ -37,13 +37,11 @@ window.addEventListener('DOMContentLoaded', () => {
     BookData.seats.forEach(seat => {
         const item = document.createElement('li');
         //how many times ive written this sentence today-09.11.2026
-        item.textContent = `${seat.label}-${seat.zone}-${seat - audience}-HK$${Number(seat.price).toFixed(2)}`
+        item.textContent = `${seat.label}-${seat.zone}-${seat.audience}-HK$${Number(seat.price).toFixed(2)}`
         seatList.appendChild(item)
     });
     pSum.innerText = `HK$${Number(BookData.sum_price).toFixed(2)}`;
 
-
-    pSum.innerText = BookData.sum_price;
 
 })
 

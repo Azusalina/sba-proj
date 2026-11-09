@@ -1,5 +1,5 @@
 //this serves as a util file actually
-export const ZONES = ['premium', 'std_high', 'std-low', 'budget'];
+export const ZONES = ['premium', 'std_high', 'std_low', 'budget'];
 
 export function seatLabel(seat) {
     return `${seat.row}${seat.col}`;
@@ -53,7 +53,8 @@ export function renderSeatGrid(container, seats, options = {}) {
             btn.dataset.seatId = seat.seat_id;
             btn.title = `${seatLabel(seat)}-${seat.zone} -${seat.state}`;
             btn.setAttribute(`Row ${row} seat ${seat.col},${seat.zone},${seat.state}${seat.accessible ? ',wheelchair space' : ''}`)
-            btn.setAttribute(selected.has(seat.seat_id ? 'true' : 'false'))
+            btn.setAttribute(selected.has(seat.seat_id ? 'true' : 'false'));
+            btn.addEventListener('click', () => onSeatClick(seat));
             line.appendChild(btn);
         }
         container.appendChild(line);

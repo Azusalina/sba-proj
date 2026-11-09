@@ -22,7 +22,7 @@ const priceId = Number(localStorage.getItem('selected_price_id'));
 const username = localStorage.getItem('user');
 let authStatus = false;
 try {
-    authStatus = localStorage.getItem('isLoggedIn') === 'true;'
+    authStatus = localStorage.getItem('isLoggedIn') === 'true';
 } catch (error) {
     console.error('localstorage 404', error)
 }
@@ -98,7 +98,7 @@ function renderSelectedList() {
             const option = document.createElement('option');
             option.value = type;
             option.textContent = type;
-            option.disabled = (type === 'wheelchair' && seat.accessible);
+            option.disabled = (type === 'wheelchair' && !seat.accessible);
             select.appendChild(option);
         }
         select.value = audience;
@@ -170,7 +170,7 @@ subForm.addEventListener('submit', (e) => {
         return;
     }
 
-    const seats = [...chosen].map((id, audience) => {
+    const seats = [...chosen].map(([id, audience]) => {
         const seat = seatById(id);
         return {
             seat_id: id,
