@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+
+<head>
+    <title>admin-toolkit-seat</title>
+    <link rel="stylesheet" href="../book/book.css">
+    <link rel="stylesheet" href="seats-admin.css">
+    <script type="module" src="seats-admin.js" defer></script>
+</head>
+
+
+<body>
+    <h2>seat monitor</h2>
+    <p><a href="toolkit.html">back</a></p>
+
+    <div class="bar">
+        <label>Show:
+            <select id="session-select"></select>
+        </label>
+        <label>Highlight:
+            <select id="state-filter">
+                <option value="all">All</option>
+                <option value="idle">idle</option>
+                <option value="booked">booked</option>
+                <option value="blocked">blocked</option>
+            </select>
+        </label>
+        <label><input type="checkbox" id="auto-refresh" checked>refresh-auto</label>
+        <button type="button" id="refresh-now">Refresh</button>
+        <span id="updated-at"></span>
+    </div>
+    <p id="status-line" role="status"></p>
+
+    <div class="cards" id="summary"></div>
+
+    <div class="layout">
+        <p class="stage">stage:</p>
+        <div id="seat-map" class="seat-map"></div>
+        <ul class="seat-legend">
+            <li><span class="seat zone-std_low legend-chip"></span>idle</li>
+            <li><span class="seat selected legend-chip"></span>picked</li>
+            <li><span class="seat state-booked legend-chip"></span>booked</li>
+            <li><span class="seat state-blocked legend-chip"></span>unavailable</li>
+            <li><span class="seat accessible legend-chip"></span>wheelchair space</li>
+        </ul>
+    </div>
+    <aside>
+        <h3>picked seats:<span id="picked-count">0</span></h3>
+        <input id="block-reason" placeholder="reason(optional)" maxlength="100">
+        <button type="button" id="block-btn">unavail.</button>
+        <button type="button" id="unblock-btn">avail.</button>
+        <p id="action-line" role="status"></p>
+
+        <h3>Last clicked seat</h3>
+        <dl id="detail"></dl>
+
+        <h3>by zone</h3>
+        <table id="zone-table">
+            <thead>
+                <tr>
+                    <th>zone</th>
+                    <th>idle</th>
+                    <th>booked</th>
+                    <th>unavail.</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </aside>
+</body>
