@@ -45,7 +45,7 @@ async function post(path, body) {
     })
     return { status: resp.status, data: await resp.json() }
 }
-async function localSessions() {
+async function loadSessions() {
     const keep = sessionSelect.value;
     const { data } = await post('toolkit/sessions', {})
     if (!data.status) {
@@ -135,3 +135,76 @@ function renderDetail() {
         detail.append(dt, dd)
     }
 }
+function renderGrid() {
+    const filter = stateFilter.value;
+    renderSeatGrid(seatMap, current.seats, {
+        selected: picked,
+        clickable: () => true,
+        dim: (seat) => filter !== 'all' && seat.state !== filter,
+        onSeatClick: (seat) => {
+            lastClicked = seat.seat_id;
+            if (seat.state !== 'booked') {
+                if (picked.has(seat.seat_id)) picked.delete(seat.seat_id);
+                else picked.add(seat.seat_id)
+            }
+            renderGrid();
+            renderDetail();
+        }
+    })
+    pickedCount.textContent = picked.size;
+}
+
+function renderAll() {
+    renderSummary();
+    renderGrid();
+    renderDetail();
+}
+
+function setTimer() {
+    clearInterval(timer);
+    timer = autoBox.checked ? setInterval(loadStatus, 5000) : null;
+}
+
+async function changeBlock(action) {
+    if (picked.size === 0) {
+        actionLine.textContent = 'pick >=1 seat first.'
+        return;
+    }
+    const { status, data } = await post('/toolkit/seat_block', {
+        pid: Number(sessionSelect.value),
+        seat_ids: [...picked],
+        action: action,
+        reason: reasonInput.value
+    })
+    if (data.msg === 'success') {
+        actionLine.textContent = action === 'block' ? 'unavail.' : 'avail again.';
+        picked.clear();
+        reasonInput.value = ''
+    } else if (status === 409) {
+        actionLine.textContent = 'some are alr booked.'
+    } else {
+        actionLine.textContent = 'failed.'
+    }
+    await loadStatus();
+    await loadSessions();
+}
+
+///////////////
+
+//main
+
+
+sessionSelect.addEventListener('change', () => {
+    picked.clear();
+    lastClicked = null;
+    loadStatus();
+})
+stateFilter.addEventListener('change', () => { if (current) renderGrid() });
+autoBox.addEventListener('change', setTimer);
+refreshNow.addEventListener('click', async () => { await loadSessions(); await loadStatus(); })
+blockBtn.addEventListener('click', () => changeBlock('block'));
+unblockBtn.addEventListener('click', () => changeBlock('unblock'));
+
+await loadSessions();
+await loadStatus();
+setTimer();
