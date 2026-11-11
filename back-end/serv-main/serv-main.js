@@ -434,7 +434,7 @@ app.post('/toolkit/seat_block', async (req, res) => {
             const taken = (await client.query(mainsql.seat_checkTaken, [Number(pid), ids])).rows;
             if (taken.length > 0) {
                 await client.query('rollback');
-                return res.status(400).json({ msg: 'seat_booked', seats: taken.map(a => a.seat_id) });
+                return res.status(409).json({ msg: 'seat_booked', seats: taken.map(a => a.seat_id) });
             }
             await client.query(adminsql.admin_blockInsert, [Number(pid), ids, String(reason || '').slice(0, 100) || null]);
         } else {
