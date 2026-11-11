@@ -364,7 +364,7 @@ app.post('/toolkit/sessions', async (req, res) => {
         return res.json({ status: false, sessions: [] })
     }
 })
-app.post('./toolkit/seat_status', async (req, res) => {
+app.post('/toolkit/seat_status', async (req, res) => {
     const pid = Number(req.body.pid);
     if (!Number.isInteger(pid)) {
         return res.status(400).json({ status: false, msg: 'invalid_pid' });
@@ -414,7 +414,7 @@ app.post('./toolkit/seat_status', async (req, res) => {
         return res.json({ status: false, msg: 'sth went wrong and we dunno.' });
     }
 });
-app.post('./toolkit/seat_block', async (req, res) => {
+app.post('/toolkit/seat_block', async (req, res) => {
     const { pid, seat_ids, action, reason } = req.body;
     const ids = Array.isArray(seat_ids) ? seat_ids.map(Number) : [];
     if (!Number.isInteger(Number(pid)) || ids.length === 0 || ids.some(id => !Number.isInteger(id)) || !['block', 'unblock'].includes(action)) {
@@ -425,13 +425,13 @@ app.post('./toolkit/seat_block', async (req, res) => {
         client = await pool.connect();
         await client.query('begin');
         const info = (await client.query(adminsql.admin_sessionInfo, [Number(pid)])).rows[0];
-        const locked = (await client.query(adminsql.seat_lock, [ids])).rows;
+        const locked = (await client.query(mainsql.seat_lock, [ids])).rows;
         if (!info || locked.length !== ids.length) {
             await client.query('rollback');
             return res.status(400).json({ msg: 'invalid-request' });
         }
         if (action === 'block') {
-            const taken = (await client.query(adminsql.seat_checkTaken, [Number(pid), ids])).rows;
+            const taken = (await client.query(mainsql.seat_checkTaken, [Number(pid), ids])).rows;
             if (taken.length > 0) {
                 await client.query('rollback');
                 return res.status(400).json({ msg: 'seat_booked', seats: taken.map(a => a.seat_id) });

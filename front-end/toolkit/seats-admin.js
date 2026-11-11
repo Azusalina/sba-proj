@@ -1,6 +1,6 @@
 import { renderSeatGrid, seatLabel, ZONES } from '../book/seats.js'
 
-const isLocal = window.location.href === '127.0.0.1'
+const isLocal = window.location.hostname === '127.0.0.1'
 const API_BASE_URL = isLocal ? 'http://127.0.0.1:3000' : 'https://backend-sba.vercel.app'
 
 const sessionSelect = document.getElementById('session-select');
@@ -47,9 +47,9 @@ async function post(path, body) {
 }
 async function loadSessions() {
     const keep = sessionSelect.value;
-    const { data } = await post('toolkit/sessions', {})
+    const { data } = await post('/toolkit/sessions', {})
     if (!data.status) {
-        statusLine.textContent = 'could not load'.
+        statusLine.textContent = 'could not load.'
             return;
     }
     sessionSelect.innerHTML = '';
@@ -59,13 +59,13 @@ async function loadSessions() {
         op.textContent = `${s.opera} - plan ${s.planId} - ${formatTime(s.time)} (${s.booked}/${s.total} booked, ${s.blocked} unavailable)`
         sessionSelect.appendChild(op);
     }
-    if (keep) sessionSelect.value = 'keep'
+    if (keep) sessionSelect.value = keep
 }
 async function loadStatus() {
     if (loading || !sessionSelect.value) return;
     loading = true;
     try {
-        const { data } = await post('toolkit/seat_status', { pid: Number(sessionSelect.value) });
+        const { data } = await post('/toolkit/seat_status', { pid: Number(sessionSelect.value) });
         if (!data.status) {
             statusLine.textContent = data.msg || 'could not load'
             return;
@@ -86,7 +86,9 @@ function card(t, val) {
     box.className = 'card';
     const num = document.createElement('strong');
     num.textContent = val;
-    box.appendChild(num, t);
+    const label = document.createElement('span');
+    label.textContent = t;
+    box.append(num, label);
     return box;
 }
 function renderSummary() {
@@ -99,14 +101,14 @@ function renderSummary() {
         card('idle', s.idle),
         card('booked', s.booked),
         card('unavailable', s.blocked),
-        card('occupancy', `${occupancy}%`),
+        card('occupancy', `${occ}%`),
         card('income (HK$)', s.revenue.toFixed(2)),
         card('refunded tickets', s.refunded)
     );
     zoneBody.innerHTML = '';
     for (const zone of ZONES) {
         const z = s.byZone[zone] || { idle: 0, booked: 0, blocked: 0 };
-        const row = document.createElement('td');
+        const row = document.createElement('tr');
         for (const text of [zone, z.idle, z.booked, z.blocked]) {
             const cell = document.createElement('td');
             cell.textContent = text;
@@ -122,7 +124,7 @@ function renderDetail() {
     if (!seat) return;
     const rows = [['seat', `${seatLabel(seat)} (${seat.zone}${seat.accessible ? ', wheelchair space' : ''})`], ['status', seat.state]];
     if (seat.state === 'booked') {
-        rows.push(['booked by', seat.username], ['order', `#${seat.order_id}`], ['ticket', seat.ticket_id], ['ticket type', seat.audience], ['price paid', `HK$${seat.unit_price.toFixed(2)}`], ['booked at', formatTime(seat.book_time)]);
+        rows.push(['booked by', seat.username], ['order', `#${seat.order_id}`], ['ticket', seat.ticket_id], ['ticket type', seat.audience], ['price paid', `HK$${Number(seat.unit_price).toFixed(2)}`], ['booked at', formatTime(seat.book_time)]);
     }
     if (seat.state === 'blocked') {
         rows.push(['reason', seat.reason || '-'], ['since', formatTime(seat.blocked_at)]);
