@@ -89,8 +89,6 @@ function card(t, val) {
     box.appendChild(num, t);
     return box;
 }
-
-
 function renderSummary() {
     const s = current.summary;
     const sellable = s.total - s.blocked;
@@ -117,7 +115,6 @@ function renderSummary() {
         zoneBody.appendChild(row);
     }
 }
-
 function renderDetail() {
     detail.innerHTML = '';
     if (!lastClicked) return;
