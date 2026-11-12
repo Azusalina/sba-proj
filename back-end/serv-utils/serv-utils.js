@@ -137,21 +137,6 @@ export async function send_reset_email(targetEmail) {
 }
 ///////////////////////////////////////////////////////////////
 
-export function TimeToSeconds(timestr) {
-    const [hr, min, sec] = timestr.split(':').map(Number);
-    return hr * 3600 + min * 60 + sec;
-}
-export function getPricePlan(time) {
-    const mid = '12:00:00';
-    const targetDate = time ? new Date(time) : new Date();
-    const midSec = TimeToSeconds(mid);
-    const currentSec = targetDate.getHours() * 3600 + targetDate.getMinutes() * 60 + targetDate.getSeconds();
-    if (currentSec <= 43200) {
-        return 1;
-    } else {
-        return 2;
-    }
-}
 //
 export function sub_ID_time() {
     const now = new Date();

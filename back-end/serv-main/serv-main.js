@@ -3,11 +3,9 @@ import cors from 'cors';
 
 import pool from '../serv-config/serv-config.js';
 import * as utils from '../serv-utils/serv-utils.js';
-import { Recipient } from "mailersend";
 
 import { Queue } from '../serv-utils/ticket-queue.mjs'
 import { mainsql, adminsql } from '../queries.js'
-import { SmsNumberModule } from 'mailersend/lib/modules/sms/Number.module.js';
 
 const MAX_SEATS = 8;
 const AUDIENCES = ['adult', 'student', 'wheelchair']
