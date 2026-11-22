@@ -154,6 +154,19 @@ async function reload() {
 
 if (operaName) operaTitle.innerText = `Opera selected:${operaName}`;
 showtimeTitle.innerText = `Showtime:${formatShowtime(selectedTime)}`;
+const pending = localStorage.getItem('pendingSeats');
+if (pending) {
+    localStorage.getItem('pendingSeats');
+    try {
+        for (const [id, audience] of JSON.parse(pending)) {
+            if (chosen.size < MAX_SEATS && Number.isInteger(id) && AUDIENCES.includes(audience)) {
+                chosen.set(id, audience)
+            }
+        }
+    } catch (error) {
+        console.error(error)
+    }
+}
 await reload();
 
 refreshBtn.addEventListener('click', reload);
@@ -166,6 +179,8 @@ subForm.addEventListener('submit', (e) => {
     }
     if (!authStatus) {
         alert('you haven\'t signed in yet, redirecting to the auth page...');
+        localStorage.setItem('returnTo', '../book/book.html')
+        localStorage.setItem('pendingSeats', JSON.stringify([...chosen]));
         window.location.href = '../auth/auth.html';
         return;
     }

@@ -12,7 +12,7 @@ to_signin_switch.onclick = function () { stage.classList.remove('swipe'); }
 ///////
 const signin_name = document.getElementById("signin_name");
 const signin_pwd = document.getElementById("signin_pwd");
-const signinForm=document.getElementById("signin-form");
+const signinForm = document.getElementById("signin-form");
 const signin_status = document.getElementById("signin_status");
 
 let username = "";
@@ -49,7 +49,9 @@ async function signin(username, pwd) {
             signin_status.innerText = result.msg;
             localStorage.setItem('isLoggedIn', 'true');
             localStorage.setItem('user', username);
-            window.location.href = '../index.html';
+            const back = localStorage.getItem('returnTo');
+            localStorage.removeItem('returnTo')
+            window.location.href = back === '../book/book.html' ? back : '../index.html';
         } else {
             signin_status.innerText = 'pwd incorrect';
         }
@@ -76,8 +78,8 @@ async function signup(username, email, pwd) {
 
 function valid_check(pwd) {
     if (!pwd) return {
-        isValid:false,
-        errors:['pwd must not by empty']
+        isValid: false,
+        errors: ['pwd must not by empty']
     }
     const cases = [
         { case: /[A-Z]/.test(pwd), msg: "At least one uppercase character is required", },
