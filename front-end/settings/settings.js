@@ -31,7 +31,6 @@ function formatShowtime(time) {
     const pad = (n) => String(n).padStart(2, '0');
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
-
 async function GetData(user) {
     const url = `${API_BASE_URL}/settingGetData`;
     const data = { username: user };
@@ -111,7 +110,7 @@ function createOrderRow(order) {
 
     container.appendChild(refundBtn);
     return container;
-}  
+}
 //
 let isRefunding = false;
 async function handleRefund(orderId, container, btn) {
@@ -154,7 +153,6 @@ async function handleRefund(orderId, container, btn) {
     }
 }
 
-
 let isRedeeming = false;
 async function redeem(user, code) {
     if (isRedeeming) return;
@@ -190,6 +188,41 @@ async function redeem(user, code) {
 
 }
 
+function setupEdit(btn, path, key, target) {
+    const row = btn.closest('.row')
+    const area = row.querySelector('.edit-area');
+    const input = row.querySelector('.input-val');
+    const confirmBtn = row.querySelector('.confirm-btn')
+
+    btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        area.classList.toggle('hidden')
+        input.focus();
+    })
+    confirmBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        try {
+            const resp = await fetch(`${API_BASE_URL}${path}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: user, [key]: input.value })
+            })
+            const res = await resp.json();
+            if (res.msg === 'success') {
+                target.innerText = result[key];
+                input.value = ''
+                area.classList.add('hidden')
+            } else if (resp.status === 400) {
+                alert('please enter a valid value.')
+            } else {
+                alert('could not update, try again later.')
+            }
+        } catch (err) {
+            console.log(err);
+            alert('server not reachable')
+        }
+    })
+}
 
 
 
@@ -211,4 +244,7 @@ updatePwd_btn.addEventListener('click', (event) => {
     event.preventDefault();
     window.location.href = '../reset/reset.html'
 })
+
+setupEdit(updateEmail_btn, '/updateEmail', 'email', email)
+setupEdit(updateBirth_btn, '/updateBirth', 'birth', birth)
 //main
