@@ -15,6 +15,45 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+
+
+app.post('/updateEmail', async (req, res) => {
+    const { username, email } = req.body;
+    const clean = String(email || '').trim();
+    if (!username || clean.length > 50 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) {
+        //regex=>email format check
+        return res.status(400).json({ msg: 'invalid email' });
+    }
+    try {
+        const { rows } = await pool.query(mainsql.update_email, [clean, username]);
+        if (rows.length === 0) {
+            return res.json({ msg: 'account not found' });
+        }
+        return res.json({ msg: 'success', email: rows[0].email })
+    } catch (error) {
+        console.error(error);
+        return res.json({ msg: 'error' })
+    }
+})
+app.post('/updateBirth', async (req, res) => {
+    const { username, birth } = req.body;
+    const value = String(birth || '')
+    const day = new Date(value);
+    if (!username || !/^\d{4}-\d{2}-\d{2}$/.test(value) || Number.isNaN(day.getTime()) || day.toISOString().slice(0, 10) !== value || day > new Date()) {
+        // regex birth format yyyy-mm-dd check
+        return res.status(400).json({ msg: 'invalid_birth' });
+    }
+    try {
+        const { rows } = await pool.query(mainsql.update_birth, [value, username]);
+        if (rows.length === 0) {
+            return res.json({ msg: 'account not found' })
+        }
+        return res.json({ msg: 'success', birth: rows[0].birth })
+    } catch (error) {
+        console.error(error)
+        return res.json({ msg: 'error' })
+    }
+})
 app.post('/settingGetData', async (req, res) => {
     const username = req.body.username;
     try {
@@ -29,9 +68,6 @@ app.post('/settingGetData', async (req, res) => {
         res.json({ msg: 'unknown or fatal error' });
     }
 });
-
-
-//auth-main collaborated port added 08.08.2026,refund
 app.post('/settingsGetOrders', async (req, res) => {
     const username = req.body.username;
     try {

@@ -14,7 +14,8 @@ app.use(cors());
 app.use(express.json());
 
 const isLocal = !process.env.VERCEL;
-const FRONTEND_URL = isLocal ? 'http://127.0.0.1:5500/front-end' : process.env.FRONTEND_URL;
+const FRONTEND_URL=isLocal?`http://127.0.0.1:${process.env.PORT||3000}`:process.env.FRONTEND_URL
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 app.post('/auth/signup', async (req, res) => {

@@ -129,6 +129,7 @@ SELECT * from wallet_transaction order by uid;
 select * from orders order by order_id;
 select * from ticket order by ticket_id;
 
+delete from email_verification where userid='a' ;delete from user_infor where id='a';
 ------
 select * from user_infor order by uid;  
 select * from email_verification;

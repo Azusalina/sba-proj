@@ -40,6 +40,8 @@ export const authsql = {
 //serv-main.js
 
 const GetData = `select u.uid,u.id,u.create_at,u.email,u.birth,w.balance from user_infor u left join wallet w on u.uid=w.uid where u.id=$1`
+const update_email=`update user_infor set email=$1 where id=$2 returning email`
+const update_birth=`update user_infor set birth=$1 where id=$2 returning to_char(birth,'YYYY-MM-DD') as birth`
 const GetUserOrder = `SELECT o.order_id, o.book_time, o.transac_time, o.transac_method, o.sum_fee, o.transac_status, (SELECT op.opera_name FROM ticket t JOIN opera op ON op.opera_id = t.opera_id WHERE t.order_id = o.order_id LIMIT 1) AS opera_name, (SELECT json_agg(json_build_object('seat_class', grp.seat_class, 'seat_class2', grp.seat_class2, 'count', grp.cnt)) FROM (SELECT seat_class, seat_class2, COUNT(*) AS cnt FROM ticket WHERE order_id = o.order_id GROUP BY seat_class, seat_class2) grp) AS ticket_breakdown FROM orders o JOIN user_infor u ON o.uid = u.uid WHERE u.id = $1 ORDER BY o.book_time DESC`;
 
 const refund_selectOrder = `SELECT o.order_id, o.uid, o.sum_fee, o.transac_status FROM orders o JOIN user_infor u ON o.uid = u.uid WHERE o.order_id = $1 AND u.id = $2 FOR UPDATE`;
@@ -92,6 +94,8 @@ const admin_blockDelete = `delete from seat_block where pid = $1 and seat_id = a
 
 export const mainsql = {
     GetData,
+    update_email,
+    update_birth,
     GetUserOrder,
     refund_selectOrder,
     refund_updateWallet,
