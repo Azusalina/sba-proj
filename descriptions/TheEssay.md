@@ -35,7 +35,7 @@ the database:(see `/back-end/user.sql`)
 
 ## 2 database design
 
-By using PostgreSQL,every requests goes through an *Express* server, which keeps all sql in one file (see backend/queries.js)
+Powered by PostgreSQL,every requests goes through an *Express* server, which keeps all sql in one file (see backend/queries.js)
 
 ### 2.1 database ERD graph
 ![](./Graph_Assets/ERD_Finalized_Version.jpg)
@@ -248,7 +248,7 @@ flowchart LR
     H-->A
     A-.dev link.->I[3.8 admin toolkit]
 ```
-*Figure 2*, user's journey. The arrow from 3.4 to 3.3 shows that after signing in , the user returns to the seat page with the chosen seats restored.
+*Fig 2*, user's journey. The arrow from 3.4 to 3.3 shows that after signing in , the user returns to the seat page with the chosen seats restored.
 ### 3.1 Home
 Give every visitor,regardless the signin status, one place from which all other features are reachable.
 
@@ -286,6 +286,9 @@ Help a user find an opera quickly.
 |page|route|table|
 |:--:|:--:|:--:|
 |`search.html`,`search.js`,`sort.js`,`search-index.js`|`post /updateOperaData`|`opera`,`prices`|
+
+![](./demo/assets/search-main.png)
+
 ### 3.3choose seats
 book/seat,post seatmap
 The seat map has 140 seats in ten rows (A–J). A seat can be idle, selected, booked or unavailable; booked and unavailable seats cannot be clicked.
@@ -325,6 +328,8 @@ flowchart LR
 |page||route|table|
 |:--:|:--:|:--:|
 |`book.html`,`book.js`,`seats.js`|`POST /seatMap`|`seat`,`ticket`,`seat_block`,`prices`,`lv`|
+
+![](./demo/assets/book-seat-selection.png)
 ### 3.4 authentication
 
 Only verifies users may spend money and passwords must never be stored in plain text.
@@ -362,10 +367,14 @@ Every broken rule is reported.
 The user name must not exist yet.
 The server creates a random salt,hashes the password with the salt by using `scrypt` and saves the account as not verified.
 
+![auth-signup](./demo/assets/auth-signup-main.png)
+
 2. **Verify** A verification email contains a link with a random token valid for one day and usable once. opening the link marks the account verified,marks the token used and creates the user's wallet with initial balance $0.00.
 ![verification email](./demo/assets/signup-verification.png)
 
 3. **Sign in** The server compares the hash of the typed password with the stored hash.An account that is not verified is refused.On success the browser stores `isLoggedIn` and `user` in `localStorage` and returns to the home page.
+
+![auth-signin](./demo/assets/auth-signin-main.png)
 
 4. **Forgotten password** The user enters the email address; a reset link with a token valid for 15 minutes is emailed.The new password is checked against the same rules, saved with a new salt, and the token is marked used. A signed-in user reaches the same page from the account page(settings,3.7)
 ![reset pwd email](./demo/assets/reset-pwd.png)
@@ -500,6 +509,9 @@ a valid value is saved and shown at once(`POST /updateEmail`).  the email addres
 | Page | Route | Table |
 | :--: | :--: | :--: |
 | `settings.html,.js` | `POST /settingGetData`, `/settingsGetOrders`, `/refundOrder`, `/redeem`, `/updateEmail`, `/updateBirth` | `user_infor`, `wallet`, `orders`, `ticket`, `wallet_transaction`, `gift_code` |
+
+![](./demo/assets/settings.png)
+
 ### 3.8 admin tools
 
 Let the administrator create gift codes ,manage and control seats. these tools are beside the normal user's journey, reached from the dev link on the home page, 
@@ -527,6 +539,9 @@ the admin selects several seats, optionally enters a reason, and press the butto
 | --- | --- | --- |
 | `toolkit.html`, `toolkit.js`, `seats-admin.html`, `seats-admin.js` | `POST /toolkit/gen_redeem_code`, `/toolkit/sessions`, `/toolkit/seat_status`, `/toolkit/seat_block` | `gift_code`, `prices`, `seat`, `ticket`, `seat_block`, `orders`, `user_infor` |
 
+
+![generate gift code](./demo/assets/admin-gen-gift-code-eg.png)
+![seat monitor](./demo/assets/admin-monitor.png)
 
 ---
 
@@ -758,7 +773,7 @@ this part includes short extracts from the source files.Each section implements 
 
 this part groups seats by row,
 with reference to `front-end/book/seats.js`
-featuring [](#33choose-seats)
+featuring [#3.3 choose seats](#33choose-seats)
 
 ```js
 export function groupByRow(seats) {
@@ -777,11 +792,10 @@ A `Map` collects the seats of each row letter, and each row is sorted by seat nu
 
 
 
-
 ### 5.2 Seat price
 
 with reference to `front-end/book/seats.js`
-featuring [](#33choose-seats) and price step of *Fig.5*
+featuring [#3.3 choose seats](#33choose-seats) and price step of *Fig.5*
 ```js
 export function seatUnitPrice(zonePrice, multipliers, audience) {
     const found = multipliers.find(m => m.name === audience);
@@ -793,28 +807,180 @@ note that the multiplier comes from table `lv`,an unknown type falls back to `1`
 multiplying by 100 before `Math.round()` and dividing afterwards rounds to nearest cents,
 as a result, the browser and the server will show the same total amount of price 
 
+![](./demo/assets/book-price-calculate.png)
 
 
 ### 5.3 levenshtein distance
 
+features [# 4.2.1 fuzzy-search, levenshtein-distance](#421-fuzzy-search-levenshtein-distance),note that `arr` is the table of the trace in this section.
+with reference to `front-end/search/search.js`.
+```js
+function levenshtein(searchInput, data) {
+    const a = searchInput.length;
+    const b = data.length;
+    const arr = [];
+    for (let i = 0; i <= a; i++) {
+        arr[i] = [];
+    }
+    for (let i = 0; i <= a; i++) {
+        arr[i][0] = i;
+    }
+    for (let j = 0; j <= b; j++) {
+        arr[0][j] = j;
+    }
+    for (let i = 1; i <= a; i++) {
+        for (let j = 1; j <= b; j++) {
+            if (searchInput[i - 1] === data[j - 1]) {
+                arr[i][j] = arr[i - 1][j - 1];//inherite last result in previous diagonal block if no change
+            } else {
+                arr[i][j] = Math.min(
+                    arr[i - 1][j] + 1,    // Del
+                    arr[i][j - 1] + 1,    // Insert
+                    arr[i - 1][j - 1] + 1 // Sub
+                );
+            }
+        }
+    }
+    const result = arr[a][b];
+    return result;
+}
+```
+
+Equal letters copy the diagonal value, otherwise the smallest of (`deletion`/`insertion`/`substitution`) +1 is taken.
+
+![](./demo/assets/levenshtein.png)
 
 ### 5.4 merge sort
 
 
+features [# 4.1.3, merge-sort](#413-merge-sort)
+with reference to `front-end/search/sort.js`
+
+```js
+export function merge_name(data = []) {
+    if (data.length <= 1) {
+        return data;
+    }
+
+    const middle = Math.floor(data.length / 2);
+    const left = merge_name(data.slice(0, middle));
+    const right = merge_name(data.slice(middle));
+    const merged = mergeHalves(
+        left,
+        right,
+        (a, b) =>
+            String(a.name ?? a.id).localeCompare(
+                String(b.name ?? b.id),
+                undefined,
+                { sensitivity: 'base' }
+            )
+    );
+
+    for (let i = 0; i < merged.length; i++) {
+        data[i] = merged[i];
+    }
+
+    return data;
+}
+```
+
+It is worth noting that this function(`merge_name()`) calls it self on both halves, which uses **recursion**,
+and `localCompare` with `sensiticity:'base'` ignores upper and lower case.
+
+
 ### 5.5 payment transaction
+
+features *Fig.5*
+with reference to `back-end/serv-main/serv-main.js`, extracted from route `/PaymentOrder`.  
+
+```js
+client=await pool.connect();//initialize a client for database connection
+
+await client.query('begin')//symbolize the begin of record of a transaction
+//lock seats, check seat status, calculate total price, check remaining wallet balance..
+const orderRes = await client.query(mainsql.refund_selectOrder, [order_id, user]);
+const walletRes = await client.query(mainsql.refund_updateWallet, [refundAmount, order.uid]);
+//save the wallet record, then generate and distribute one ticket per seat
+await client.query('commit')//confirm and record the transaction
+//since the code above is nested inside a try in order to prevent unexpected error ruin the whole process,
+//in catch, await client.query('rollback'),
+//in finally, client.release(), which returns the client back to the pool for future borrowing
+```
+
+it is worth noting that all transaction-related statements use the same database conection `client`, with is essential here,because a transaction only works if `begin`, and changes and `commit` or `rollback` go through one connection.
+Any step fails would lead to a `rollback` action which undoes eveything.
+
 
 ### 5.6 locking seats 
 
+features *Fig.5*
+with reference to `back-end/queries.js` and `back-end/user.sql`
+
+```js
+const seat_lock = `select seat_id, row_label, col_no, zone, is_accessible from seat where seat_id = any($1::int[]) order by seat_id for update`
+```
+
+`for update` append at the last of the query sentence makes a second payment wait until the first one finishes
+
+```sql
+create unique index if not exists ux_ticket_live_seat on ticket(pid,seat_id) where voided_at is null;
+```
+
+and the unique index refuses a second valid ticket even if something slips through.
+
+![](./demo/assets/admin-ref-lock-seat.png)
+![](./demo/assets/user-proof-block-seat.png)
+
+
 ### 5.7 seat monitor counting
+
+features [3.8 admin tools](#38-admin-tools)
+with reference to `back-end/serv-main/serv-main.js`, route `/toolkit/seat_status`
+
+```js
+rows.forEach(row => {
+            summary[row.state] += 1;
+            if (row.state === 'booked') summary.revenue += Number(row.unit_price);
+            if (!summary.byZone[row.zone]) summary.byZone[row.zone] = { idle: 0, booked: 0, blocked: 0 };
+            summary.byZone[row.zone][row.state] += 1;
+        });
+
+```
+
+One pass over the 140 rows fills the totals and the table by zone.  
+`unit_price` is converted by `Number()` because PostgreSQL returns a `numeric` value as text.
 
 
 ### 5.8 password hashing
 
+features [#3.4, authentication](#34-authentication)
+with reference to `back-end/serv-utils/serv-utils.js`
+```js
+export function hash(pwd, salt) {
+    return new Promise((resolve, reject) => {
+        if (typeof pwd !== 'string' || typeof salt !== 'string') {
+            reject(new TypeError('Password and salt must be strings.'));
+            return;
+        }
 
+        crypto.scrypt(pwd, salt, 64, (error, derivedKey) => {
+            if (error) {
+                reject(error);
+                return;
+            }
 
+            resolve(derivedKey.toString('hex'));
+        });
+    });
+}
+```
+Note that only salt and this hash are stored in the database, so a stolen database does not contain any passwords.
 
+![](./demo/assets/db-example-user-hash.png)
 
 ---
+
+
 ## 6 boundary case,test,error track
 
 ### 6.1 Boundary and error cases
