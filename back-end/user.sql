@@ -148,3 +148,7 @@ update prices set budget = round(std_low * 0.6);
 
 
 select * from user_infor where id='a'
+
+
+
+update wallet set balance=300 where uid=7;

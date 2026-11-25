@@ -44,7 +44,7 @@ body {
 .title {
     color: var(--gold);
     font-style: oblique;
-    font-size:50px;
+    font-size: 50px;
     white-space: nowrap;
 }
 
@@ -103,7 +103,7 @@ body {
 
 .auth,
 .logoutBtn {
-    margin-left:2vw;
+    margin-left: 2vw;
     color: var(--gold2);
     text-decoration: none;
     font-family: "Grenze Gotisch", serif;
@@ -138,6 +138,7 @@ body {
     height: auto;
     object-fit: contain;
     filter: invert(100%);
+    mix-blend-mode: screen;
 }
 
 .container_delta {
