@@ -19,7 +19,7 @@ An administrator can:
 
 Note that the payments are simulated, no real payment provider is provided, 
 
-Thus every payment is conducted by the user's wallet created automatically when they sign up a personal account.
+Thus every payment is conducted by the user's wallet created automatically when they verify their account when sign up.
 
 
 The database:(with reference to `/back-end/user.sql`)
@@ -50,15 +50,15 @@ Powered by PostgreSQL,every requests goes through an *Express* server, which kee
 |:--:                           |:--:          |:--:                 |:--:|:--:|
 | user_infor *(u)*              |u.uid         |-|-| user data|
 |  wallet *(w)*                 |w.uid         | w.uid *ref* u.uid |balance>=0 |  user balance|
-|gift_code *(gc)*               |gc.code       | gc.claim_by *ref* u.uid |- |gift code|
-|email_verification *(ev)*      |ev.token      | ev.userid *ref* u.uid |- |signup token|
+|gift_code *(gc)*               |gc.code       | gc.claim_by *ref* u.id |- |gift code|
+|email_verification *(ev)*      |ev.token      | ev.userid *ref* u.id |- |signup token|
 |pwd_reset *(pr)*               |pr.token      |  -  |- |reset token|
 |opera *(op)*                   |op.opera_id   |  - |op.rate<=10.0 |opera data|
 |prices *(p)*                   |p.pid         | p.opera_id *ref* op.opera_id| -|store prices|
 |lv                             |lv.id         |  - |- |multipliers|
 |orders *(or)*                  |or.order_id   | or.uid *ref* u.uid | -|store order details|
 |seat *(s)*                     |s.seat_id     |  - | s.zone in designated value|seat data|
-|seat_block *(sb)*              |sb.pid        | sb.pid *ref* p.pid<br>sb.seat_id *ref* s.seat_id|-|blocked seat&reason|
+|seat_block *(sb)*              |sb.pid,sb.seat_id        | sb.pid *ref* p.pid<br>sb.seat_id *ref* s.seat_id|-|blocked seat&reason|
 |ticket *(t)*                   |t.ticket_id   | t.opera_id *ref* u.uid<br>t.order_id *ref* or.order_id<br>t.pid *ref* p.pid<br>t.seat_id *ref* s.seat_id;  |- |ticket data|
 |wallet_transaction *(wt)*      |wt.tx_id      | wt.uid *ref* u.uid<br>wt.order_id *ref* or.order_id |wt.amount>0<br>wt.tx_type in designated value | transac history|
 
@@ -69,7 +69,8 @@ Powered by PostgreSQL,every requests goes through an *Express* server, which kee
 - a seat's row,col,num,zone are stored once in `seat`,the ticket only keeps the keys.
 - `ticket.unit_price` is stored on purpose. It records what the user actually paid, thus a later change to `prices` cannot change old orders.All tickets should be recorded at their selling price as this is the exact amount the playform earned from the user at the moment of purchasing.
 - a successful refund delete nothing. it sets `ticket.voided_at`. The payment history stays in the database,and the seat counts as free again.
-
+- `ticket.unit_price` and `orders.sum_fee` stores the price paid at the moment of processing payment.
+    - although they voilates 3nf, but storing such data significantly increases query executing speed.
 ### 2.1.2 Quick look up index
 
 - the database itself refuses double booking. A unique index `ux_ticket_live_seat` means that two valid tickets for the same seat of the same performance cannot coexist,even if two requests were received at the same moment.
@@ -150,7 +151,7 @@ an array `nodes`;
 a `head` (index of the first node);  
 a `tail` (index of the last node);  
 a `length`;  
-and a `next` index.  
+
 To append, the list takes a free slot or the next new position, writes the node,links the old tail to it and moves `tail`.  
 To remove the first item it reads the node at `head`, moves `head` to that node's `next`, and puts the slot in `freeSlots`.
 ##### 2.2.3.3 a3-linked list
