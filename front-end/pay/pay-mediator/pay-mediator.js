@@ -20,6 +20,10 @@ const noteInterval = setInterval(updateNote, 500);
 async function handlingOrder() {
     const url = `${API_BASE_URL}/PaymentOrder`
     const details = JSON.parse(localStorage.getItem('details'))
+    if (details.submitted) {
+        window.location.replace('../OrderConfirm/OrderConfirm.html');
+        return;
+    }
     const data = {
         user: details.user,
         opera: details.opera,
@@ -47,7 +51,9 @@ async function handlingOrder() {
             window.location.href = '../../index.html'
         } else if (result.msg === 'success') {
             note.innerText = 'everything are prepared, redirecting...'
-            localStorage.setItem('orderId', result.orderId);
+            details.submitted = true;
+            localStorage.setItem('details', JSON.stringify(details));
+            localStorage.setItem('orderId', result.orderId)
             localStorage.setItem('orderTotal', result.total);
             localStorage.setItem('tickets', JSON.stringify(result.tickets));
             await sleep(2000);
@@ -57,7 +63,7 @@ async function handlingOrder() {
             await sleep(2000);
             window.location.href = '../../index.html'
         } else {
-            note.innerText='sth is wrong but we dunno.'
+            note.innerText = 'sth is wrong but we dunno.'
             await sleep(2000);
             window.location.href = '../../index.html'
 

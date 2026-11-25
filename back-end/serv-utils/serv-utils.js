@@ -146,14 +146,13 @@ export function sub_ID_time() {
     const hr = String(now.getHours()).padStart(2, '0');
     const min = String(now.getMinutes()).padStart(2, '0');
     const sec = String(now.getSeconds()).padStart(2, '0');
-    const result = `${yyyy}${mm}${dd} -${hr}${min}${sec} `;
+    const result = `${yyyy}${mm}${dd}-${hr}${min}${sec}`;
     return result;
 }
 export function generate_TransacID() {
     const prefix = 'tx-';
-    const time = `${sub_ID_time()} -`;
-    const ID = Math.random().toString(36).substring(2, 8).toUpperCase();
-    return `${prefix}${time}${ID} `
+    const ID = crypto.randomBytes(3).toString('hex').toUpperCase();
+    return `${prefix}${sub_ID_time()}-${ID}`
 }
 export function generate_ticketID() {
     const time = Date.now().toString(36).toUpperCase();

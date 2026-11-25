@@ -156,7 +156,7 @@ if (operaName) operaTitle.innerText = `Opera selected:${operaName}`;
 showtimeTitle.innerText = `Showtime:${formatShowtime(selectedTime)}`;
 const pending = localStorage.getItem('pendingSeats');
 if (pending) {
-    localStorage.getItem('pendingSeats');
+    localStorage.removeItem('pendingSeats');
     try {
         for (const [id, audience] of JSON.parse(pending)) {
             if (chosen.size < MAX_SEATS && Number.isInteger(id) && AUDIENCES.includes(audience)) {

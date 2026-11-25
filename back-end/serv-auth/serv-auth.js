@@ -14,7 +14,7 @@ app.use(cors());
 app.use(express.json());
 
 const isLocal = !process.env.VERCEL;
-const FRONTEND_URL=isLocal?`http://127.0.0.1:${process.env.PORT||3000}`:process.env.FRONTEND_URL
+const FRONTEND_URL = isLocal ? `http://127.0.0.1:${process.env.PORT || 3000}` : process.env.FRONTEND_URL
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -29,6 +29,10 @@ app.post('/auth/signup', async (req, res) => {
             success: false,
             msg: pwdErrors.length > 0 ? pwdErrors.join(' ') : 'username and email are required'
         });
+    }
+    if (typeof userid !== 'string' || typeof email !== 'string' || userid.length > 20 || email.length > 50
+        || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return res.status(400).json({ success: false, msg: 'username (max 20 char) and a valid email (max 50 char) are required' });
     }
     //repetitive check
     try {
@@ -78,7 +82,10 @@ app.post('/auth/signup', async (req, res) => {
         } catch (error) {
             console.error('signup error', error);
             try { await client.query('rollback'); } catch (_) { }
-            res.status(500).json({ success: false, msg: "sth error?" })
+            if (error.code === '23505') {
+                return res.status(409).json({ success: false, msg: 'username or email already used' });
+            }
+            res.status(500).json({ success: false, msg: "sth error." })
         }
     } finally {
         client.release();
@@ -115,7 +122,7 @@ app.post('/auth/login', async (req, res) => {
     try {
         const salt_result = await pool.query(authsql.signin_fetchpwd, [userid]);
         if (salt_result.rows.length === 0) {
-            return res.json({ success: false, msg: "account not found" });
+            return res.json({ success: false, msg: "error" });
         }
         if (!salt_result.rows[0].verified) {
             return res.json({ success: false, msg: 'please verify your email first' })

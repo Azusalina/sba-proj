@@ -209,7 +209,7 @@ function setupEdit(btn, path, key, target) {
             })
             const res = await resp.json();
             if (res.msg === 'success') {
-                target.innerText = result[key];
+                target.innerText = res[key];
                 input.value = ''
                 area.classList.add('hidden')
             } else if (resp.status === 400) {

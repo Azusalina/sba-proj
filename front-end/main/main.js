@@ -12,8 +12,19 @@ const logoutBtn = document.getElementById('logoutBtn')
 const dev = document.getElementById('dev')
 //sub-func
 function logout() {
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('user');
+    ['isLoggedIn',
+        'user',
+        'details',
+        'tickets',
+        'orderId',
+        'orderTotal',
+        'pendingSeats',
+        'returnTo',
+        'selected',
+        'selected_price_id',
+        'selected_time',
+        'search_content'
+    ].forEach(key => localStorage.removeItem(key));
     window.location.href = 'index.html';
 }
 
@@ -35,7 +46,7 @@ function dev_pwd(event) {
 document.addEventListener('DOMContentLoaded', () => {
     const authBtn = document.getElementById('authBtn');
     const isLoggedIn = localStorage.getItem('isLoggedIn');
-    const user=localStorage.getItem('user')
+    const user = localStorage.getItem('user')
     if (isLoggedIn === null) {
         localStorage.setItem('isLoggedIn', 'false');
     }
@@ -45,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
         logoutBtn.style.opacity = 1;
         logoutBtn.style.removeProperty('pointer-events');
 
-    } else if (isLoggedIn==='false' ||user===null){
+    } else if (isLoggedIn === 'false' || user === null) {
         authBtn.innerText = 'Sign in/up';
         authBtn.href = './auth/auth.html'
         logoutBtn.style.opacity = 0;

@@ -32,6 +32,9 @@ app.post('/updateEmail', async (req, res) => {
         return res.json({ msg: 'success', email: rows[0].email })
     } catch (error) {
         console.error(error);
+        if (error.code === '23505') {
+            return res.status(409).json({ msg: 'email already used' });
+        }
         return res.json({ msg: 'error' })
     }
 })

@@ -25,7 +25,7 @@ Thus every payment is conducted by the user's wallet created automatically when 
 The database:(with reference to `/back-end/user.sql`)
 - holds 15 operas with two performances each (30 performances in total)
 - one seat map of 140 seats(**row** *a*-*j*, **col** *1*-*14*) shared by every performances.
-![project structure](./Graph_Assets/sba-struct.png)  
+![project structure](./demo/assets/proj-struct.png)  
 
 ### 1.2 Main features overview
 - sign up/sign in/reset password

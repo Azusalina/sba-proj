@@ -53,7 +53,7 @@ async function signin(username, pwd) {
             localStorage.removeItem('returnTo')
             window.location.href = back === '../book/book.html' ? back : '../index.html';
         } else {
-            signin_status.innerText = 'pwd incorrect';
+            signin_status.innerText = result.msg === 'please verify your email first' ? result.msg : 'username or pwd incorrect';
         }
     } catch (error) {
         signin_status.innerText = "Service in Maintenance,try again later";

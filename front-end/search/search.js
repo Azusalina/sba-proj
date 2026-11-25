@@ -199,6 +199,7 @@ function renderPage(dataList) {
     // Toggle button state
     btnPrev.disabled = currentPage === 1;
     btnNext.disabled = currentPage >= totalPages;
+    page_num.innerText = `Current Page:${currentPage}`;
 }
 function AccordingToSearchBar() {
     const content = bar.value.trim().toLowerCase();
@@ -263,6 +264,7 @@ filterlist.forEach((status) => {
 
 const redir_link = `${FRONTEND_URL} /front-end/book / book.html`
 window.addEventListener('keydown', (event) => {
+    if (event.target.tagName === 'INPUT') return;
     if (event.key === 'ArrowLeft') {
         event.preventDefault();
         btnPrev.click();
