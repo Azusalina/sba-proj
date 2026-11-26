@@ -1,3 +1,38 @@
+# 1.1
+
+```mermaid
+flowchart LR
+    subgraph BR["Browser(front-end)"]
+        direction TB
+        P1[Visitor pages:<br/>home, search, book, pay,<br/>order confirmation, settings]
+        P2[Sign-in pages:<br/>auth, reset]
+        P3[Admin pages:<br/>toolkit, seats-admin]
+        LS[(localStorage:<br/>user name, chosen seats,<br/>order being shown)]
+    end
+    subgraph SV["Server (Node.js and Express)"]
+        direction TB
+        R1[serv-auth:<br/>sign up, verify, sign in, reset]
+        R2[serv-main:<br/>operas, seat map, payment,<br/>refund, wallet, admin]
+        R3[serv-utils:<br/>password hash, ids,<br/>ticket queue, emails]
+        Q[queries.js:<br/>SQL statements]
+    end
+    DB[(PostgreSQL database)]
+    MS[MailerSend<br/>email service]
+    BR -- "fetch, JSON" --> SV
+    R1 --> Q
+    R2 --> Q
+    Q --> DB
+    R1 --> R3
+    R2 --> R3
+    R3 -- "verification, reset,<br/>order emails" --> MS
+```
+
+*Fig.1* system Architecture
+Data stored in the database are fetched by back-end *Express* server but not directly by the front-end client-side browser.
+- All queries were stored in `queries.js`;
+- All emails were send by calling *Mailersend* api;
+Note that an `exec` function in `child_process` is used in `serv.js` so when the server starts, the front-end page will show up in the user's default browser
+
 
 ### 3.0
 
@@ -6,7 +41,7 @@ flowchart LR
     A([3.1 Enter<br/>home page])-->B[3.2 Search<br/>and Browse]
     B-->C[3.3 choose <br/>a performance and seats]
     C-->D{signed in?}
-    D-->NoE[3.4 signup,<br/>verify,signin]
+    D-->No-->E[3.4 signup,<br/>verify,signin]
     E--back to the seats-->C
     D--Yes-->F[3.5 Review and pay]
     F-->G([3.6 Order<br/>confirmation])
@@ -24,7 +59,7 @@ user's journey. The arrow from 3.4 to 3.3 shows that after signing in , the user
 flowchart LR
  I([Idle])--'user clicks'-->S[Selected]
  S--'user clicks again'-->I
- I--"payment succeeds"-->B[Booked]
+ S--"payment succeeds"-->B[Booked]
  B-- 'order refunded'--> I
  I--"admin blocks"-->U[unavailable]
  U--'admin unblocks'-->I
@@ -78,3 +113,30 @@ graph LR
     E --> E1[back to home page]
 ```
 *Fig.6* response to the processing page
+
+
+
+### 3.7
+
+```mermaid
+flowchart LR
+    A([Refund pressed]) --> B[Begin<br/>transaction]
+    B --> C[Find the user's order<br/>and lock it]
+    C --> D{Order found?}
+    D -- No --> X1[/Roll back,<br/>not_found/]
+    D -- Yes --> E{Status is<br/>COMPLETED?}
+    E -- No --> X2[/Roll back,<br/>not_refundable/]
+    E -- Yes --> F[Add the amount<br/>back to the wallet]
+    F --> G[Mark order REFUNDED,<br/>set voided_at on tickets]
+    G --> H[Save the<br/>refund record]
+    H --> I[Commit]
+    I --> J[Send refund email;<br/>failure does not undo the refund]
+    J --> K([Show new balance])
+```
+
+*Fig 7*. Refund flowchart. After the refund the seats are idle again (Fig.3).
+
+
+
+
+---

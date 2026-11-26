@@ -3,7 +3,7 @@ create table if not EXISTS user_infor (
     id varchar(20) unique,
     pwd varchar(255),
     create_at timestamp default now(),
-    email varchar(50),
+    email varchar(50) unique,
     birth date, 
     verified BOOLEAN default FALSE,
     salt varchar(64)
@@ -152,3 +152,6 @@ select * from user_infor where id='a'
 
 
 update wallet set balance=300 where uid=7;
+
+
+

@@ -74,7 +74,7 @@ function levenshtein(searchInput, data) {
     for (let i = 1; i <= a; i++) {
         for (let j = 1; j <= b; j++) {
             if (searchInput[i - 1] === data[j - 1]) {
-                arr[i][j] = arr[i - 1][j - 1];//inherite last result in previous diagonal block if no change
+                arr[i][j] = arr[i - 1][j - 1];//inherit last result in previous diagonal block if no change
             } else {
                 arr[i][j] = Math.min(
                     arr[i - 1][j] + 1,    // Del

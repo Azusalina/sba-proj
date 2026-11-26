@@ -1,12 +1,12 @@
 # ICT SBA Project, 2027 DSE,
 ## Clifford Wu Jia An, St Paul's College
 
-
 ## 1 Intro.
+
 
 ### 1.1 Overview
 This project is an opera ticket booking system for the *option C booking-system* task following the sba guidelines.  
-
+for all the figures used in this essay, an explicit list of figures is prepared in `
 A user can:
 - search for an opera;
 - choose his/her seats on a grid seat map;
@@ -26,6 +26,39 @@ The database:(with reference to `/back-end/user.sql`)
 - holds 15 operas with two performances each (30 performances in total)
 - one seat map of 140 seats(**row** *a*-*j*, **col** *1*-*14*) shared by every performances.
 ![project structure](./demo/assets/proj-struct.png)  
+
+```mermaid
+flowchart LR
+    subgraph BR["Browser(front-end)"]
+        direction TB
+        P1[Visitor pages:<br/>home, search, book, pay,<br/>order confirmation, settings]
+        P2[Sign-in pages:<br/>auth, reset]
+        P3[Admin pages:<br/>toolkit, seats-admin]
+        LS[(localStorage:<br/>user name, chosen seats,<br/>order being shown)]
+    end
+    subgraph SV["Server (Node.js and Express)"]
+        direction TB
+        R1[serv-auth:<br/>sign up, verify, sign in, reset]
+        R2[serv-main:<br/>operas, seat map, payment,<br/>refund, wallet, admin]
+        R3[serv-utils:<br/>password hash, ids,<br/>ticket queue, emails]
+        Q[queries.js:<br/>SQL statements]
+    end
+    DB[(PostgreSQL database)]
+    MS[MailerSend<br/>email service]
+    BR -- "fetch, JSON" --> SV
+    R1 --> Q
+    R2 --> Q
+    Q --> DB
+    R1 --> R3
+    R2 --> R3
+    R3 -- "verification, reset,<br/>order emails" --> MS
+```
+
+*Fig.1* system Architecture
+Data stored in the database are fetched by back-end *Express* server but not directly by the front-end client-side browser.
+- All queries were stored in `queries.js`;
+- All emails were send by calling *Mailersend* api;
+Note that an `exec` function in `child_process` is used in `serv.js` so when the server starts, the front-end page will show up in the user's default browser
 
 ### 1.2 Main features overview
 - sign up/sign in/reset password
@@ -65,13 +98,13 @@ Powered by PostgreSQL,every requests goes through an *Express* server, which kee
 
 #### 2.1.1 3nf design declaration
 
-- a price is stored once per performances in `prices` instead of repeatingly being stored in every ticket.
+- a price is stored once per performances in `prices` instead of repeatedly being stored in every ticket.
 - a seat's row,col,num,zone are stored once in `seat`,the ticket only keeps the keys.
-- `ticket.unit_price` is stored on purpose. It records what the user actually paid, thus a later change to `prices` cannot change old orders.All tickets should be recorded at their selling price as this is the exact amount the playform earned from the user at the moment of purchasing.
+- `ticket.unit_price` is stored on purpose. It records what the user actually paid, thus a later change to `prices` cannot change old orders.All tickets should be recorded at their selling price as this is the exact amount the platform earned from the user at the moment of purchasing.
 - a successful refund delete nothing. it sets `ticket.voided_at`. The payment history stays in the database,and the seat counts as free again.
 - `ticket.unit_price` and `orders.sum_fee` stores the price paid at the moment of processing payment.
     - although they voilates 3nf, but storing such data significantly increases query executing speed.
-### 2.1.2 Quick look up index
+#### 2.1.2 Quick look up index
 
 - the database itself refuses double booking. A unique index `ux_ticket_live_seat` means that two valid tickets for the same seat of the same performance cannot coexist,even if two requests were received at the same moment.
 
@@ -92,13 +125,13 @@ Each structure below is used somewhere in the project and is described in the sa
 A **stack** is a lifo list (*last-in,first-out*): the item pushed last is popped first.
 
 ##### 2.2.1.2 a2-stack
-As there does not exist a build-in `stack` data structure in *JavaScript*, I wrote my own `Stack` class in `sort.js`. It keeps its items in an array.
+As there does not exist a built-in `stack` data structure in *JavaScript*, I wrote my own `Stack` class in `sort.js`. It keeps its items in an array.
 - a counter `top` that always points to the last item(-1 when the stack is empty).
 - `push` increases `top` and stores the value,
-- `pop` returns the item at `top` and decrease it
+- `pop` returns the item at `top` and decreases it
 - `peek` reads it without removing it,
 - `isEmpty` tests whether `top` is below zero($i.e. -1$).
-All four operations take a fix number of steps $O(1)$, because they only touch the end of the list.
+All four operations take a fixed number of steps $O(1)$, because they only touch the end of the list.
 
 
 ##### 2.2.1.3 a3-stack
@@ -106,7 +139,7 @@ The stack is used by `quickSortInPlace`, Quick sort splits a list into smaller r
 
 ##### 2.2.1.4 a4-stack
 A common way to do this is recursion, but then the browser keeps a hidden call stack that is uncontrollable.  
-As a alternative solution, I choose to:
+As an alternative solution, I choose to:
 - **push the range** [start,end] on my own stack
 - **pop a range**
 - **split it**
@@ -179,10 +212,10 @@ A set makes duplicates impossible by design, and it also matches the rule on the
 
 
 #### 2.2.5 map(hashmap)
-##### 2.5.5.1 a1-map
+##### 2.2.5.1 a1-map
 A **hash table** stores items under a key and finds an item by its key in a fixed number of steps on average.
 In *JavaScript* a plain object (or a `Map`) is a hash table.
-##### 2.5.5.2 a2-map
+##### 2.2.5.2 a2-map
 The database returns one row for every performance, so an opera with two performances appears twice.  
 The route creates an empty object `operaMap` and goes through the rows once.  
 For each row it checks whether `operaMap[opera_id]` exists;  
@@ -195,12 +228,12 @@ If not, it creates the entry with following data:
 
 It pushes the performance into that entry's `plans`.  
 At the end, `Object.values` turns the *table* into a *list* with one entry per opera.
-##### 2.5.5.3 a3-map
+##### 2.2.5.3 a3-map
 It is used in the route `/updateOperaData`, which feeds the search page.  
-##### 2.5.5.4 a4-map
+##### 2.2.5.4 a4-map
 Because each lookup takes one step, the whole job needs one pass over the rows, $O(n)$.  
 Without the table the code would have to search the finished list for the opera for every row, which is $O(n^{2})$ in total.
-The same idea is used on a smaller scale in `hall.prices[seat.zone]` on the server, which finds a ticket-type multiplier from its name.
+The same idea is used on a smaller scale in `hall.prices[seat.zone]` in the front-end `book.js`, which finds a ticket-type multiplier from its name.
 
 #### 2.2.6 Two-dimensional grid
 ##### 2.2.6.1 a1-two-dimensional grid
@@ -208,7 +241,7 @@ Basically 2d array.
 ##### 2.2.6.2 a2-two-dimensional grid
 The database stores the seats as a flat list (`seat` table: **row number**, **seat number**,**zone**,**wheelchair flag**)
 
-The browser turns that flat list into a grid by `groupByRow` (`seat.js`):  
+The browser turns that flat list into a grid by `groupByRow` (`seats.js`):  
 a `Map` whose key is the row letter(`A`to `J`) and whose value is an array of the seats of that row, sorted by seat number.
 The result is a grid of 10 rows by 14 seats each. `renderSeatGrid` then walks through the grid row by row; for every row it creates a line, writes the row letter and adds one button per seat.
 ##### 2.2.6.3 a3-two-dimensional grid
@@ -274,7 +307,7 @@ flowchart LR
     A([3.1 Enter<br/>home page])-->B[3.2 Search<br/>and Browse]
     B-->C[3.3 choose <br/>a performance and seats]
     C-->D{signed in?}
-    D-->NoE[3.4 signup,<br/>verify,signin]
+    D-->No-->E[3.4 signup,<br/>verify,signin]
     E--back to the seats-->C
     D--Yes-->F[3.5 Review and pay]
     F-->G([3.6 Order<br/>confirmation])
@@ -282,7 +315,7 @@ flowchart LR
     H-->A
     A-.dev link.->I[3.8 admin toolkit]
 ```
-*Fig 2*, user's journey.  
+*Fig.2*, user's journey.  
 The arrow from 3.4 to 3.3 shows that after signing in , the user returns to the seat page with the chosen seats restored.
 
 ### 3.1 Home
@@ -292,23 +325,23 @@ Give every visitor,regardless the signin status, one place from which all other 
 - the search box
 - a *Sign in/up* link 
 - a link to dev page
-2. On load, the page reads `isLoggedIn` and `user` from ***Localstorage***.  
-If user is already signed in, the authentication link changes to the user's account setting spage ([section 3.7](#37-settings)) and a *log out* link appears; otherwise it points to the sign-in page ([section 3.4](#34-authentication))
-3. Typing a word in the search box and pressing the btn stores the word in ***localstorage*** (`search_content`) and opens the search page ([section 3.2](#32-searchbrowse)), which it reads it and run the search at once.
-4. *Log out* removes `isLoggedIn` and `user` from ***localstorage*** and reloads the home page.
+2. On load, the page reads `isLoggedIn` and `user` from ***localStorage***.  
+If user is already signed in, the authentication link changes to the user's account setting space ([section 3.7](#37-settings)) and a *log out* link appears; otherwise it points to the sign-in page ([section 3.4](#34-authentication))
+3. Typing a word in the search box and pressing the btn stores the word in ***localStorage*** (`search_content`) and opens the search page ([section 3.2](#32-searchbrowse)), which it reads it and run the search at once.
+4. *Log out* removes `isLoggedIn` and `user` from ***localStorage*** and reloads the home page.
 5. The dev link asks for a password in a browser prompt (pwd:aaaa) before it opens the admin tool ([section 3.8](#38-admin-tools))
 
 
 |page|data used|
 |:--:|:--:|
-|`index.html`,`main/main.js`|**localstorage**:`isLoggedIn`,`user`,`search_content`|
+|`index.html`,`main/main.js`|**localStorage**:`isLoggedIn`,`user`,`search_content`|
 
 ![home](./demo/assets/home.png)
 
 ### 3.2 Search/Browse
 Help a user find an opera quickly.
 
-1. The search page asks the server for all operas and their performances (`post /updateOperaData`,hash table([section 2.2.4](#224-set)))
+1. The search page asks the server for all operas and their performances (`post /updateOperaData`,hash table([section 2.2.5](#225-maphashmap)))
 2. If the search box is empty, every opera is shown. otherwise each opera gets a score:  
 - $-2$ if the name matches exactly as the text,  
 - $-1$ if the name contains the text,  
@@ -323,7 +356,7 @@ Help a user find an opera quickly.
 - show time  
 The show time is a **drop-down list** of the performances,  
 Choosing another performance changes the shown time and price.
-6. Clicking the opera name stores the chosen opera performance and time in `localstorage` and opens the booking page.
+6. Clicking the opera name stores the chosen opera performance and time in `localStorage` and opens the booking page.
 
 |Sort option|Algorithm|
 |:--:|:--:|
@@ -359,14 +392,14 @@ The user can pick real seats instead of quantities.
 
 6. When the user presses Confirm, the page checks that at least one seat is chosen, then checks whether the user is signed.
 
-If not, the page saves the chosen seats and the address of the seat page in `localstorage` and opens the sign-in page; after signing in the user comes back and the seats are restored.  
-If the user is signed in, the chosen seats, the prices and the total are saved in `localstorage`(`details`) and the review page opens
+If not, the page saves the chosen seats and the address of the seat page in `localStorage` and opens the sign-in page; after signing in the user comes back and the seats are restored.  
+If the user is signed in, the chosen seats, the prices and the total are saved in `localStorage`(`details`) and the review page opens
 
 ```mermaid
 flowchart LR
  I([Idle])--'user clicks'-->S[Selected]
  S--'user clicks again'-->I
- I--"payment succeeds"-->B[Booked]
+ S--"payment succeeds"-->B[Booked]
  B-- 'order refunded'--> I
  I--"admin blocks"-->U[unavailable]
  U--'admin unblocks'-->I
@@ -426,7 +459,7 @@ A verification email contains a link with a random token valid for one day and u
 ![verification email](./demo/assets/signup-verification.png)
 
 3. **Sign in**  
-The server compares the hash of the typed password with the stored hash.An account that is not verified is refused. On success the browser stores `isLoggedIn` and `user` in `localStorage` and returns to the home page.
+The server compares the hash of the typed password with the stored hash.An account that is not verified is refused. On success the browser stores `isLoggedIn` and `user` in `localStorage` and returns to the seat page
 
 ![auth-signin](./demo/assets/auth-signin-main.png)
 
@@ -452,7 +485,7 @@ Show the user exactly what will be bought, then turn the selected seats into tic
 It lists the opera,the show time, every seat with its zone, ticket type and price, and the total price.
 *Return* goes back to the booking page;
 *Continue* opens the processing page.
-If the booking details arer missing,the user is sent back to the booking page.
+If the booking details are missing,the user is sent back to the booking page.
 
 2. **Processing page** (`pay-mediator`)
 It shows a rotating "please wait" message and sends the order to the server (`POST /PaymentOrder`):`username`, `opera` ,`performance` and the chosen `seats` with their `ticket types`.
@@ -533,7 +566,7 @@ and one line per ticket:
 - **zone**
 - **ticket type**
 
-2. The user can press *send me a copy* to receive the confirmation email (`POST /sendConfirmationEmail`).
+2. The user can press *send me a copy* to receive the confirmation email (`POST /SendConfirmationEmail`).
 The page reports success or failure of the sending: a failure does not affect the order.
 
 3. *Return to home* goes back to the home page, from which the account page is reached.
@@ -552,7 +585,7 @@ It shows:
 - user's `username`,`email`.`birth`,`signup date` and `wallet balance` (`POST /settingGetData`)   
 - A list of all orders with `date`,`opera`,`ticket breakdown`, `amount` and `status` (`POST /settingsGetOrders`)
 
-2. **Refund** each completed order has a *Refund* button: a refunded order shows its status and the button is disabled. The server refunds the **WHOLE ORDER** (ref. to Fig.6)
+2. **Refund** each completed order has a *Refund* button: a refunded order dissapears in the order list. The server refunds the **WHOLE ORDER** (ref. to *Fig.6*)
 ```mermaid
 flowchart LR
     A([Refund pressed]) --> B[Begin<br/>transaction]
@@ -569,14 +602,14 @@ flowchart LR
     J --> K([Show new balance])
 ```
 
-*Fig 6*. Refund flowchart. After the refund the seats are idle again (Fig.3).
+*Fig 7*. Refund flowchart. After the refund the seats are idle again (Fig.3).
 
 3. **Gift code**  
-The user types a code a presses *Redeem* (`POST /redeem`).  
+The user types a code a press *Redeem* (`POST /redeem`).  
 The code row is locked, the two members cannot redeem the same code at once, an unknown code gives *invalid*,a used code gives *already redeemed*;otherwise the amount is added to the wallet and the code is marked as used with the user and the time.
 
 4. **Change password**  
-The *reset* button nex the the password opens the password reset page(3.4)
+The *reset* button next the the password opens the password reset page(3.4)
 
 5. **Change email and birth date**  
 The **update** button next to each opens an input box. the server checks the new value before saving it. 
@@ -606,7 +639,7 @@ The pages creates a random code in the form of `XXXX-XXXX-XXXX`(digits and capit
 the code is shown so that it can be copied and given to a user.
 
 3. **Seat monitor**
-The admin chooses a performance (`POST /toolkit/sessions`) and sees the seat map with the state of every seat, summary cards(seats,idle,booked,unavailable,status,income,refunded tickets) and a table by zone (`POST /toolkit/seat_status`)
+The admin chooses a performance (`POST /toolkit/sessions`) and sees the seat map with the state of every seat, summary cards(seats, idle, booked, unavailable, status, income, refunded tickets) and a table by zone (`POST /toolkit/seat_status`)
 a filter dims the seats that are not in ticket type, the price paid and the time. 
 the page automatically refreshes itself every 5 seconds.
 
@@ -641,12 +674,12 @@ reference data from the database:
 
 ### 4.1 sort
 
-|search|best case|worst case|average|stability|extra space|
+|sortting algorithm|best case|worst case|average|stability|extra space|
 |:--:|:--:|:--:|:--:|:--:|:--:|
 |selection| $O(n^{2})$ | $O(n^{2})$|$O(n^{2})$|no|$O(1)$|
 |insertion| $O(n)$       |$O(n^2)$|$O(n^2)$|yes|$O(1)$|
 |merge|     $O(n \log{n})$|$O(n\log{n})$|$O(n\log{n})$|yes|$O(n)$|
-|quick|     $O(n \log{n})$   |$O(n^{2})$(rare)|$O(n\log{n})$|no|$O(\log{n})-O(n)$ (stack)|
+|quick|     $O(n \log{n})$   |$O(n^{2})$(rare)|$O(n\log{n})$|no|$O(\log{n})$ (stack)|
 |bubble|    $O(n)$       |$O(n^2)$|$O(n^2)$|yes|$O(1)$
 
 #### 4.1.1 selection sort
@@ -685,7 +718,7 @@ flowchart LR
 | 3 | 3 (165) | no swap |
 
 #### 4.1.2 Insertion sort
-It is used for sort by show time, earlist first.
+It is used for sort by show time, earliest first.
 
 Each new item is inserted into the already sorted part on its left, so it's highly effective when the list is nearly sorted,while being stable.
 
@@ -714,7 +747,7 @@ flowchart LR
 
 This is used for sort by name, alphabetically from ***a*** to ***z***, ignoring upper or lower case.
 
-The list is cut in half, each half is sorted by recursion, and the two sorteed halves are merged back. it always take $O(n\log{(n)})$ time but needs $O(n)$ extra space.
+The list is cut in half, each half is sorted by recursion, and the two sorted halves are merged back. it always take $O(n\log{(n)})$ time but needs $O(n)$ extra space.
 
 ```mermaid
 flowchart LR
@@ -728,7 +761,7 @@ flowchart LR
 ```
 
 *Trace (five names):* 
-- **split** into { Marriage of Figaro, Don Giovanni } and { La Boheme, Tosca, Barber of Seville };  
+- **split** into { Marriage of Figaro, Don Giovanni } and { Barber of Seville, La Boheme, Tosca };  
 - **split again** until each part has one name;  
 - **merge back**: **D**on Giovanni, **L**a Boheme, **T**he Barber of Seville, **T**he Marriage of Figaro, **T**osca. 
 
@@ -814,7 +847,7 @@ flowchart LR
 (Note that this part is not required and included in the syllabus, but this significantly enhances ui/ux)
 
 The levenshtein distance is the smallest number of insertions/deletions/substitutions that turns one string into another.
-A member who types `ada` still finds `aida`, becaude the distance between the two words is $1$:
+A user who types `ada` still finds `aida`, because the distance between the two words is $1$:
 
 the result is $1$: one inserted `i`. the time and space needed for this algorithm are $O(m*n)$ for string of length $m$ and $n$, which is small for opera names.
 
@@ -851,7 +884,7 @@ flowchart LR
 #### 4.2.2 Linear search& Binary search
 
 `OperaSearchIndex` keeps a copy of the operas sorted by name (using [quick sort](#414-quick-sort)).  
-An exact name is found by binary serch: start by looking at the middle item, then continue in the hald where the name can be, so each step removes half of the items. 
+An exact name is found by binary search: start by looking at the middle item, then continue in the half where the name can be, so each step removes half of the items. 
 It need $O(\log{(n)})$ steps.
 while the linear search used for **part of a name** needs $O(n)$ steps.
 
@@ -926,7 +959,7 @@ function levenshtein(searchInput, data) {
     for (let i = 1; i <= a; i++) {
         for (let j = 1; j <= b; j++) {
             if (searchInput[i - 1] === data[j - 1]) {
-                arr[i][j] = arr[i - 1][j - 1];//inherite last result in previous diagonal block if no change is made
+                arr[i][j] = arr[i - 1][j - 1];//inherit last result in previous diagonal block if no change is made
             } else {
                 arr[i][j] = Math.min(
                     arr[i - 1][j] + 1,    // Del
@@ -980,7 +1013,7 @@ export function merge_name(data = []) {
 ```
 
 It is worth noting that this function(`merge_name()`) calls it self on both halves, which uses **recursion**,  
-and `localCompare` with `sensiticity:'base'` ignores upper and lower case.
+and `localeCompare` with `sensitivity:'base'` ignores upper and lower case.
 
 
 ### 5.5 Payment transaction
@@ -1002,8 +1035,8 @@ await client.query('commit')//confirm and record the transaction
 //in finally, client.release(), which returns the client back to the pool for future borrowing
 ```
 
-It is worth noting that all transaction-related statements use the same database conection `client`, with is essential here, because a transaction only works if `begin`, and changes and `commit` or `rollback` go through one connection.
-Any step fails would lead to a `rollback` action which undoes eveything.
+It is worth noting that all transaction-related statements use the same database connection `client`, which isessential here, because a transaction only works if `begin`, and changes and `commit` or `rollback` go through one connection.
+Any step fails would lead to a `rollback` action which undoes everything.
 
 
 
@@ -1123,9 +1156,10 @@ It is accepted because a hold would need timers and release rules which is not a
 6. The seats are remembered across the sign-in only in the same browser, and only for one return to the seat page ([section3.4](#34-authentication)).
 7. Payment is simulated with a wallet.
 8. Performance dates in the sample data are in 2009;  this only affects what is displayed.
+9. If the verification email cannot be sent, and the account has already been created, the user cannot sign up again with the same time, and there is no *resend* button.
 
 
-### 6.3 error track
+### 6.3 Error track
 
 All errors are tracked and logged with `console.log` or `console.error` in the server terminal.  
 Failed database steps are rolled back and answered with an HTTP status:
@@ -1134,33 +1168,142 @@ Failed database steps are rolled back and answered with an HTTP status:
 and a brief message.
 
 
+Errors recorded below are found and fixed during testing.
 
+| ID | What the user saw | Cause (file) | Fix | Result of the re-test |
+| --- | --- | --- | --- | --- |
+| 1 | Changing the e-mail or the birth date showed "server not reachable", although the database had changed | `settings.js` read the variable `result`, which does not exist (the response was named `res`) | `res[key]` | The new value is shown at once, with no warning |
+| 2 | A seat chosen on one opera appeared again on a different opera | `book.js` read `pendingSeats` with `getItem` but never removed it | `removeItem` | The saved seats come back once; a second visit starts with an empty selection |
+| 3 | After a successful payment, the Back button showed "a seat was just taken, you were not charged" although the money had been taken | `pay-mediator.js` sent the order again each time the page loaded, and the server answered 409 because the seats were now the user's own | After a success the order is marked `submitted`; the page then goes straight to the confirmation | Back shows the confirmation again; the database holds one order and one ticket per seat |
+| 4 | Two payments from one wallet at the same moment: the second one showed a generic error | `pay_fetchUser` read the balance without locking the wallet row, so both saw enough money and the database check (`balance >= 0`) stopped the second one | `for update of w` | Wallet 700, two payments of 670: one `success`, one `insufficientBalance`, balance 30.00 |
+| 5 | The confirmation page stayed on "Loading..." when no order was stored | `OrderConfirm.js` read the stored order without checking that it existed | Go back to the home page when it is missing | Opening the page with an empty `localStorage` goes to the home page |
+| 6 | After signing out, the previous order and tickets were still stored in the browser | The sign-out removed only two stored items | One list of every stored item is cleared | After sign-out `localStorage` holds no user data |
+| 7 | Signing up with a 21-character name or a 60-character e-mail gave "sth error?" (HTTP 500) | The database refused the long value and the route did not check first | Check type, length and format before the database is used; answer 400 | Each case now gives 400 with a clear message |
+| 8 | A transaction id contained spaces, such as `tx-20261125 -185924  -0HRGZA ` | The id was built from template pieces that included spaces | One template without spaces and a random part from `crypto.randomBytes` | `tx-20261125-190430-4171D6` (25 characters) |
+| 9 | A user who had not verified the e-mail saw "pwd incorrect" | The login page replaced every failure with the same text | Show "please verify your email first" when that is the reason; otherwise the neutral text | Each case shows the right message |
+| 10 | Pressing the arrow keys inside the search box turned the page; after a new search the page number was out of date | The key handler ignored where the key was pressed; the page label was not updated by `renderPage` | Ignore the keys when an input has the focus; update the label in `renderPage` | Typing works; the label shows page 1 after a new search |
 
 ---
 ## 7 .tests
+
+| ID | Area | Type | Input | Expected | Actual | Pass |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | Payment | Normal | 4 different seats, enough balance | 200 `success`, 4 tickets, wallet reduced by the total | As expected | Yes |
+| 2 | Payment | Boundary | Wallet equal to the total | Accepted, balance 0.00 | Balance 0.00 | Yes |   
+| 3 | Payment | Boundary | 9 seats in one order | 400 `invalid_request` | 400 `invalid_request` | Yes |
+| 4 | Payment | Invalid | The same seat twice | 400 `invalid_seats` | 400 `invalid_seats` | Yes |
+| 5 | Payment | Invalid | Ticket type that does not exist | 400 `invalid_seats` | 400 `invalid_seats` | Yes |
+| 6 | Payment | Invalid | Seat number `1.5` and `9999` | 400 `invalid_seats` | 400 `invalid_seats` | Yes |
+| 7 | Payment | Invalid | Wheelchair ticket on an ordinary seat | 400 | 400 | Yes |
+| 8 | Payment | Invalid | Total changed in the browser | The server price is used | Server price used | Yes |
+| 9 | Seats | Boundary | Two users pay for the same seat at the same moment | One 200, one 409 `seat_taken`, one charge | One 200, one 409 | Yes |
+| 10 | Seats | Invalid | Admim blocks a booked seat | 409 `seat_booked` | 409 `seat_booked` | Yes |
+| 11 | Seats | Invalid | Pay for a seat the administrator has blocked | 409 `seat_blocked` | 409 `seat_blocked` | Yes |
+| 12 | Seats | Normal | Open the seat map of each of the 15 operas | Seat map with 140 seats each | All 15 returned a seat map | Yes |
+| 13 | Wallet | Boundary | Wallet 700, two payments of 670 at the same moment | One `success`, one `insufficientBalance` | `insufficientBalance` and `success`, balance 30.00 | Yes |
+| 14 | Payment | Normal | Press Back on the confirmation page after paying | Confirmation page; no second order | Confirmation page; one order | Yes |
+| 15 | Refund | Normal | Refund a completed order | Wallet increased, tickets voided, seats idle | As expected | Yes |
+| 16 | Refund | Boundary | Refund the same order twice at the same moment | One `success`, one `not_refundable` | `success` and `not_refundable` | Yes |
+| 17 | Gift code | Invalid | Redeem the same code twice | `already redeemed` | `already redeemed` | Yes |
+| 18 | Sign-up | Invalid | User name with 21 characters | 400 with a message | 400 | Yes |
+| 19 | Sign-up | Invalid | E-mail with 60 characters | 400 with a message | 400 | Yes |
+| 20 | Sign-up | Invalid | E-mail `abc` | 400 with a message | 400 | Yes |
+| 21 | Sign-in | Invalid | Correct password, e-mail not verified | "please verify your email first" | The same text | Yes |
+| 22 | Sign-in | Invalid | Unknown user name | "username or pwd incorrect" | The same text | Yes |
+| 23 | Sign-up | Invalid | Use a verification link twice | The second time `?status=invalid` | `?status=invalid` | Yes |
+| 24 | Settings | Normal | Change the e-mail and the birth date | The new values are shown at once | Shown at once, no warning | Yes |
+| 25 | Settings | Invalid | Birth date `2009-02-30` | "please enter a valid value." | The same text | Yes |
+| 26 | Sign-out | Normal | Sign out, then open the confirmation page | `localStorage` empty; page goes to home | As expected | Yes |
+| 27 | Search | Normal | Press left arrow inside the search box | The cursor moves; the page does not turn | The page did not turn | Yes |
+| 28 | Payment | Normal | Check a transaction id after a payment | 25 characters, no spaces | `tx-20261125-190430-4171D6` | Yes |
+
 
 ---
 
 ## 8 improvement and eval
 
 
+## 8.1 improvement
+**Problem.** Two tests failed on the first version of the payment.
+
+- **Test T13 (two payments from one wallet).** `pay_fetchUser` read the wallet balance without a lock. With a balance of 700 and two payments of 670 at the same moment, both read 700. The database rule `balance >= 0` stopped the second payment, so no money was lost, but the user saw a generic error instead of *insufficient balance*.
+- **Test T14 (Back button).** After a successful payment the browser stored the order in `localStorage`. The processing page (`pay-mediator.js`) sent the order to `/PaymentOrder` every time it was loaded, so pressing *Back* from the confirmation page sent the same order again. The seats were already the user's own, so the server answered 409 and the screen said that a seat was just taken and that the user was not charged, although the money had already been taken.
+
+**Change.**
+
+```js
+// pay-mediator.js: before sending
+if (details.submitted) {
+    window.location.replace('../../OrderConfirm/OrderConfirm.html');
+    return;
+}
+// after a successful answer
+details.submitted = true;
+localStorage.setItem('details', JSON.stringify(details));
+```
+
+```sql
+-- queries.js: pay_fetchUser now locks the wallet row until the transaction ends
+SELECT u.uid, w.balance FROM user_infor u JOIN wallet w ON u.uid = w.uid
+WHERE u.id = $1 FOR UPDATE OF w
+```
+
+
+**Result**:The two tests were run again successfully.
+
+
+| Test | Before | After |
+| --- | --- | --- |
+| T14 Back after paying | "seat was just taken, you were not charged", while the money had been taken | The confirmation page is shown, and the database holds one order and one ticket per seat |
+| T13 Two payments of 670 from a wallet of 700 | `success` and a generic `error` | `insufficientBalance` and `success`; the balance is 30.00 |
+
+Note that the second change works because the seat rows are already locked with `FOR UPDATE` ([section 5.6](#56-locking-seats)),  
+the wallet row now gets the same treatment, so the order of locking is the same in every payment and two payments cannot wait for each other.
+
+
+
+## 8.2 Evaluation regarding the targets
+
+Recall the targets mentioned in [section 1.1, Overview](#11-overview):
+
+
+```markdown
+A user can:
+- search for an opera;
+- choose his/her seats on a grid seat map;
+- pay with a virtual wallet;
+- refund the whole order on request  
+
+An administrator can:  
+- create gift codes;  
+- monitoring and manage seat status;  
+```
+
+
+| Target | Evidence | Result |
+| :---: | :---: | :---: |
+| Search for an opera, with sorting and fuzzy matching | section[4.1](#41-sort), [4.2](#42-others); tests 27 and the search screenshots | Met |
+| Choose seats on a grid map | section[3.3](#33-choose-seats), [5.1](#51-seat-grid); tests 1, 3-7, 9, 12 | Met |
+| Pay with a virtual wallet | section[3.5](#35-payment-and-transaction), [5.5](#55-payment-transaction); tests 1, 2, 13, 14, 28 | Met |
+| Refund a whole order | section[3.7](#37-settings); tests 15, 16 | Met (a part of an order cannot be refunded) |
+| Sign up, verify, sign in, reset the password | section [3.4](#34-authentication); tests 18-23 | Partly met: the passwords are salted and hashed, but the server does not issue a login credential (section [6.2](#62-constraints-and-limitations), point 3) |
+| Administrator tools: gift codes, seat monitor and blocking | Section [3.8](#38-admin-tools); tests 10, 11 | Partly met: the routes have no server-side check (section [6.2](#62-constraints-and-limitations), point 4) |
 
 ---
 
+## 8.3 About reusability and portability
+- Most of the functions are called for multiple times in the program, which features their high reusability.
+- Since this is a web project, it can run on any operating system with a browser. the `exec` function called in `back-end/serv.js` dapted for different environments including linux, macos, and windows.
 
-with reference to:
 
-inspiration and ui/ux design:  
-https://urbtix.hk
+Reference:
 
-font used:  
-https://fonts.google.com/
+Google. (n.d.). Google Fonts. https://fonts.google.com/
 
-mailersend api  
-https://www.mailersend.com
+MailerSend. (n.d.). MailerSend: Transactional email API. https://www.mailersend.com
 
-introduction to the opera ***Carmen*** in the home page:  
-https://en.wikipedia.org/wiki/Carmen
+Pinterest. (n.d.). Lyrics of "*L'amour est un oiseau rebelle*" [Pin]. https://www.pinterest.com/pin/199988039694668685/
 
-lyrics of the aria "l'amour est un oiseau rebelle" in the home page used for decoration purposes:  
-https://www.pinterest.com/pin/199988039694668685/
+URBTIX. (n.d.). URBTIX: Hong Kong ticketing. https://urbtix.hk
+
+Wikipedia. (n.d.). Carmen. https://en.wikipedia.org/wiki/Carmen
