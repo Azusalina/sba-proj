@@ -6,7 +6,7 @@
 
 ### 1.1 Overview
 This project is an opera ticket booking system for the *option C booking-system* task following the sba guidelines.  
-for all the figures used in this essay, an explicit list of figures is prepared in `
+for all the figures used in this essay, an explicit list of figures is prepared in `figs.md`
 A user can:
 - search for an opera;
 - choose his/her seats on a grid seat map;
@@ -81,7 +81,7 @@ Powered by PostgreSQL,every requests goes through an *Express* server, which kee
 
 | Table(abbr)                   |Primary key   |Foreign key| Constraints|Use 
 |:--:                           |:--:          |:--:                 |:--:|:--:|
-| user_infor *(u)*              |u.uid         |-|-| user data|
+| user_infor *(u)*              |u.uid         |-| u.id unique, u.email unique| user data|
 |  wallet *(w)*                 |w.uid         | w.uid *ref* u.uid |balance>=0 |  user balance|
 |gift_code *(gc)*               |gc.code       | gc.claim_by *ref* u.id |- |gift code|
 |email_verification *(ev)*      |ev.token      | ev.userid *ref* u.id |- |signup token|
@@ -92,7 +92,7 @@ Powered by PostgreSQL,every requests goes through an *Express* server, which kee
 |orders *(or)*                  |or.order_id   | or.uid *ref* u.uid | -|store order details|
 |seat *(s)*                     |s.seat_id     |  - | s.zone in designated value|seat data|
 |seat_block *(sb)*              |sb.pid,sb.seat_id        | sb.pid *ref* p.pid<br>sb.seat_id *ref* s.seat_id|-|blocked seat&reason|
-|ticket *(t)*                   |t.ticket_id   | t.opera_id *ref* u.uid<br>t.order_id *ref* or.order_id<br>t.pid *ref* p.pid<br>t.seat_id *ref* s.seat_id;  |- |ticket data|
+|ticket *(t)*                   |t.ticket_id   | t.opera_id *ref* op.opera_id<br>t.order_id *ref* or.order_id<br>t.pid *ref* p.pid<br>t.seat_id *ref* s.seat_id;  |- |ticket data|
 |wallet_transaction *(wt)*      |wt.tx_id      | wt.uid *ref* u.uid<br>wt.order_id *ref* or.order_id |wt.amount>0<br>wt.tx_type in designated value | transac history|
 
 
@@ -103,7 +103,7 @@ Powered by PostgreSQL,every requests goes through an *Express* server, which kee
 - `ticket.unit_price` is stored on purpose. It records what the user actually paid, thus a later change to `prices` cannot change old orders.All tickets should be recorded at their selling price as this is the exact amount the platform earned from the user at the moment of purchasing.
 - a successful refund delete nothing. it sets `ticket.voided_at`. The payment history stays in the database,and the seat counts as free again.
 - `ticket.unit_price` and `orders.sum_fee` stores the price paid at the moment of processing payment.
-    - although they voilates 3nf, but storing such data significantly increases query executing speed.
+    - although they violate 3nf, storing such data significantly increases query executing speed.
 #### 2.1.2 Quick look up index
 
 - the database itself refuses double booking. A unique index `ux_ticket_live_seat` means that two valid tickets for the same seat of the same performance cannot coexist,even if two requests were received at the same moment.
@@ -178,7 +178,7 @@ A plain array would also work, but the queue states the rule ***First chosen,Fir
 ##### 2.2.3.1 a1-linked list
 A linked list stores each item in a node that also points to the next node, so items do not have to sit next to each other in memory.
 ##### 2.2.3.2 a2-linked list
-In **JavaScript** i imitate pointers with array indices.  
+In **JavaScript** I imitate pointers with array indices.  
 `LinkedList` class in `ticket-queue.mjs` keeps:  
 an array `nodes`;  
 a `head` (index of the first node);  
@@ -285,7 +285,7 @@ They are compared only after standardized processing (`trim()` and `toLowerCase(
 Thus `aida`, `Aida` and `AIDA` are the same opera.  
 
 Plain one-dimensional arrays hold lists of fixed kind:
-- 5 zone names (`ZONES`);
+- 4 zone names (`ZONES`);
 - 3 ticket types (`AUDIENCES`);
 - 30 performances of an opera list.
 
@@ -302,12 +302,82 @@ A visit starts on the home page, goes through search,choosing seats,signing in (
 The admin tools sit beside this path.  
 The home page `index.html` is the main menu, every feature starts from it and returns to it, so each visit to the home page is the start of the 'menu loop'
 
+
+
+#### 3.0.0 Stepwise refinement
+
+
+```mermaid
+graph TD
+    L0["Level 0, Opera Ticket Booking System"]
+
+    L0 --> L1["Level 1: Main Menu Loop (Home Page)"]
+    L1 --> L1_1["1. Show the home page (main menu)"]
+    L1 --> L1_2["2. Repeat until user leaves"]
+    L1_2 --> L1_2a["Read user's choice:<br/>search<br/>sign in/up<br/>account<br/>log out<br/>or dev page"]
+    L1_2a --> L1_2b["Open page of that choice<br/>(3.2 Search/Browse ~ 3.8 Admin Tools)"]
+    L1_2b --> L1_2c["When page ends,<br/>return to home page"]
+    L1_2c --> L1_2
+
+    L1 --> L2["Level 2, Key Features"]
+
+    L2 --> L2_S["Search"]
+    L2_S --> S1["Load operas"]
+    S1 --> S2{"Search box empty?"}
+    S2 -->|Yes| S3["Show all operas"]
+    S2 -->|No| S4["Score every opera"]
+    S4 --> S5["Sort scores"]
+    S3 --> S6["Show 3 per page"]
+    S5 --> S6
+
+    L2 --> L2_C["Choose Seats"]
+    L2_C --> C1["Load seat map"]
+    C1 --> C2["Repeat: click a seat"]
+    C2 --> C3["Add or remove seat<br/>(at most 8)"]
+    C3 --> C4["Choose ticket type"]
+    C4 --> C5["Update total"]
+    C5 --> C6{"Confirm clicked?"}
+    C6 -->|No| C2
+    C6 -->|Yes| C7{"Signed in?"}
+    C7 -->|No| C8["Prompt sign in"]
+    C7 -->|Yes| C9["Save details"]
+    C9 --> C10["Open review page"]
+
+    L2 --> L2_P["Pay"]
+    L2_P --> P1["Check input"]
+    P1 --> P2["Lock seats"]
+    P2 --> P3["Check taken and blocked"]
+    P3 --> P4["Calculate price"]
+    P4 --> P5["Check balance"]
+    P5 --> P6["Save order, wallet record, tickets"]
+    P6 --> P7["Commit"]
+
+    L2 --> L2_R["Refund"]
+    L2_R --> R1["Lock order"]
+    R1 --> R2{"Order completed?"}
+    R2 -->|No| R_END["Abort refund"]
+    R2 -->|Yes| R3["Return money"]
+    R3 --> R4["Void tickets"]
+    R4 --> R5["Commit"]
+    R5 --> R6["Send e-mail"]
+
+    P4 --> L3["Level 3: Calculate Price (step of Pay)"]
+    L3 --> L3_1["For every chosen seat:<br/>read zone price of performance"]
+    L3_1 --> L3_2["Read multiplier of ticket type"]
+    L3_2 --> L3_3["Unit price = zone price × multiplier<br/>(rounded to cents)"]
+    L3_3 --> L3_4["Total = sum of unit prices"]
+```
+
+*Fig.2* draws level 1;  
+*Fig.5* draws the **Pay** step in level 2.
+
+
 ```mermaid
 flowchart LR
     A([3.1 Enter<br/>home page])-->B[3.2 Search<br/>and Browse]
     B-->C[3.3 choose <br/>a performance and seats]
     C-->D{signed in?}
-    D-->No-->E[3.4 signup,<br/>verify,signin]
+    D-->|No|E[3.4 signup,<br/>verify,signin]
     E--back to the seats-->C
     D--Yes-->F[3.5 Review and pay]
     F-->G([3.6 Order<br/>confirmation])
@@ -330,7 +400,15 @@ If user is already signed in, the authentication link changes to the user's acco
 3. Typing a word in the search box and pressing the btn stores the word in ***localStorage*** (`search_content`) and opens the search page ([section 3.2](#32-searchbrowse)), which it reads it and run the search at once.
 4. *Log out* removes `isLoggedIn` and `user` from ***localStorage*** and reloads the home page.
 5. The dev link asks for a password in a browser prompt (pwd:aaaa) before it opens the admin tool ([section 3.8](#38-admin-tools))
-
+6. The pages that have no way back to the main menu:
+- search
+- booking
+- auth
+- settings
+- reset password
+- admin toolkit  
+shows a **Home** link in the top-left corner.  
+One shared script (`common/home-link.js`) adds it, thus the link looks the same on every page and can be modified in one place.
 
 |page|data used|
 |:--:|:--:|
@@ -414,7 +492,7 @@ flowchart LR
 ![book-seat-selection](./demo/assets/book-seat-selection.png)
 ### 3.4 Authentication
 
-Only verifies users may spend money and passwords must never be stored in plain text.
+Only verified users may spend money and passwords must never be stored in plain text.
 
 A visitor may search and choose seats freely and is only sent to the sign-in page when pressing *Confirm* without being signed in.
 
@@ -459,7 +537,7 @@ A verification email contains a link with a random token valid for one day and u
 ![verification email](./demo/assets/signup-verification.png)
 
 3. **Sign in**  
-The server compares the hash of the typed password with the stored hash.An account that is not verified is refused. On success the browser stores `isLoggedIn` and `user` in `localStorage` and returns to the seat page
+The server compares the hash of the typed password with the stored hash. An account that is not verified is refused. On success the browser stores `isLoggedIn` and `user` in `localStorage` and returns to the seat page
 
 ![auth-signin](./demo/assets/auth-signin-main.png)
 
@@ -491,7 +569,7 @@ If the booking details are missing,the user is sent back to the booking page.
 It shows a rotating "please wait" message and sends the order to the server (`POST /PaymentOrder`):`username`, `opera` ,`performance` and the chosen `seats` with their `ticket types`.
 **The total from the browser is not sent as a price to trust.**
 
-3. **The server side** runs the steps of *fig.5* in one database transaction.
+3. **The server side** runs the steps of *Fig.5* in one database transaction.
 ```mermaid
 flowchart LR
     A([Continue pressed]) --> B{Input valid?<br/>1-8 different seats,<br/>known ticket types}
@@ -545,6 +623,7 @@ graph LR
 ### 3.6 Order confirmation
 
 ![OrderConfirm page](./demo/assets/OrderConfirm.png)
+![OrderConfirm email](./demo/assets/order-confirm.png)
 
 Give the user proof of the purchase.
 
@@ -578,6 +657,7 @@ The page reports success or failure of the sending: a failure does not affect th
 
 ### 3.7 Settings
 
+
 Allow a user to see the balance and orders, refund an order and add balance by using a gift code.
 
 1. **Account page** (`settings.html`)  
@@ -585,7 +665,7 @@ It shows:
 - user's `username`,`email`.`birth`,`signup date` and `wallet balance` (`POST /settingGetData`)   
 - A list of all orders with `date`,`opera`,`ticket breakdown`, `amount` and `status` (`POST /settingsGetOrders`)
 
-2. **Refund** each completed order has a *Refund* button: a refunded order dissapears in the order list. The server refunds the **WHOLE ORDER** (ref. to *Fig.6*)
+2. **Refund** each completed order has a *Refund* button: a refunded order disappears in the order list. The server refunds the **WHOLE ORDER** (ref. to *Fig.7*)
 ```mermaid
 flowchart LR
     A([Refund pressed]) --> B[Begin<br/>transaction]
@@ -602,14 +682,15 @@ flowchart LR
     J --> K([Show new balance])
 ```
 
-*Fig 7*. Refund flowchart. After the refund the seats are idle again (Fig.3).
+*Fig.7*. Refund flowchart. After the refund the seats are idle again (Fig.3).
 
+![refund email](./demo/assets/refund-email.png)
 3. **Gift code**  
-The user types a code a press *Redeem* (`POST /redeem`).  
-The code row is locked, the two members cannot redeem the same code at once, an unknown code gives *invalid*,a used code gives *already redeemed*;otherwise the amount is added to the wallet and the code is marked as used with the user and the time.
+The user types a code and press *Redeem* (`POST /redeem`).  
+The code row is locked, the two users cannot redeem the same code at once, an unknown code gives *invalid*,a used code gives *already redeemed*;otherwise the amount is added to the wallet and the code is marked as used with the user and the time.
 
 4. **Change password**  
-The *reset* button next the the password opens the password reset page(3.4)
+The *reset* button next to the password opens the password reset page(3.4)
 
 5. **Change email and birth date**  
 The **update** button next to each opens an input box. the server checks the new value before saving it. 
@@ -639,8 +720,8 @@ The pages creates a random code in the form of `XXXX-XXXX-XXXX`(digits and capit
 the code is shown so that it can be copied and given to a user.
 
 3. **Seat monitor**
-The admin chooses a performance (`POST /toolkit/sessions`) and sees the seat map with the state of every seat, summary cards(seats, idle, booked, unavailable, status, income, refunded tickets) and a table by zone (`POST /toolkit/seat_status`)
-a filter dims the seats that are not in ticket type, the price paid and the time. 
+The admin chooses a performance (`POST /toolkit/sessions`) and sees the seat map with the state of every seat, summary cards(seats, idle, booked, unavailable, occupancy, income, refunded tickets) and a table by zone (`POST /toolkit/seat_status`)
+A *highlight* filter dims every seat that is not in the chosen state (all/idle/booked/blocked)
 the page automatically refreshes itself every 5 seconds.
 
 4.  **Status of the seat**
@@ -674,7 +755,7 @@ reference data from the database:
 
 ### 4.1 sort
 
-|sortting algorithm|best case|worst case|average|stability|extra space|
+|sorting algorithm|best case|worst case|average|stability|extra space|
 |:--:|:--:|:--:|:--:|:--:|:--:|
 |selection| $O(n^{2})$ | $O(n^{2})$|$O(n^{2})$|no|$O(1)$|
 |insertion| $O(n)$       |$O(n^2)$|$O(n^2)$|yes|$O(1)$|
@@ -685,7 +766,7 @@ reference data from the database:
 #### 4.1.1 selection sort
 
 It is used for duration, shortest first. it repeatedly find the smallest item in the unsorted part and swaps it to the front.  
-One of its advantages is that it makes at at most $(n-1)$ swaps, which is considered efficient,  
+One of its advantages is that it makes at most $(n-1)$ swaps, which is considered efficient,  
 while one of its disadvantages is that it is not stable.  
 Several operas in my data share the same duration (150 minutes),so their order after sorting may differ from the original order.  
 
@@ -932,7 +1013,7 @@ export function seatUnitPrice(zonePrice, multipliers, audience) {
 ```
 note that the multiplier comes from table `lv`,an unknown type falls back to `1`.
 multiplying by 100 before `Math.round()` and dividing afterwards rounds to nearest cents,
-as a result, the browser and the server will show the same total amount of price 
+as a result, the server adopts the same rounding rule.
 
 ![book-price-calculate](./demo/assets/book-price-calculate.png)
 
@@ -1021,21 +1102,37 @@ and `localeCompare` with `sensitivity:'base'` ignores upper and lower case.
 Features *Fig.5*  
 With reference to `back-end/serv-main/serv-main.js`, extracted from route `/PaymentOrder`.  
 
-```js
-client=await pool.connect();//initialize a client for database connection
 
-await client.query('begin')//symbolize the begin of record of a transaction
-//lock seats, check seat status, calculate total price, check remaining wallet balance..
-const orderRes = await client.query(mainsql.refund_selectOrder, [order_id, user]);
-const walletRes = await client.query(mainsql.refund_updateWallet, [refundAmount, order.uid]);
-//save the wallet record, then generate and distribute one ticket per seat
-await client.query('commit')//confirm and record the transaction
-//since the code above is nested inside a try in order to prevent unexpected error ruin the whole process,
-//in catch, await client.query('rollback'),
-//in finally, client.release(), which returns the client back to the pool for future borrowing
+```js
+client = await pool.connect();
+await client.query('begin');
+// lock the chosen seats, then check taken / blocked (5.6)
+const locked = (await client.query(mainsql.seat_lock, [ids])).rows;
+// ... price of every seat: zone price x multiplier, rounded with round2
+const payAmount = round2(items.reduce((sum, item) => sum + item.unit, 0));
+
+const userRes = await client.query(mainsql.pay_fetchUser, [user]); // locks the wallet row
+const { uid, balance } = userRes.rows[0];
+if (parseFloat(balance) < payAmount) {
+    await client.query('rollback');
+    return res.json({ msg: 'insufficientBalance' });
+}
+const orderRes = await client.query(mainsql.pay_record_order, [uid, payAmount]);
+const walletRes = await client.query(mainsql.pay_updateWallet, [payAmount, uid]);
+await client.query(mainsql.pay_record_tx, [txId, uid, newOrderId, payAmount, newWalletBal, description]);
+
+const ticketQueue = new Queue();                       // 2.2.2
+items.forEach(item => ticketQueue.enqueue(item));
+while (!ticketQueue.isEmpty()) {
+    const item = ticketQueue.dequeue();
+    await client.query(mainsql.pay_record_seatTicket, [/* one ticket per seat */]);
+}
+await client.query('commit');
+// catch: rollback; finally: client.release(), which returns the client back to the pool for future borrowing
 ```
 
-It is worth noting that all transaction-related statements use the same database connection `client`, which isessential here, because a transaction only works if `begin`, and changes and `commit` or `rollback` go through one connection.
+It is worth noting that all transaction-related statements use the same database connection `client`, which is essential here, because a transaction only works if `begin`, and changes and `commit` or `rollback` go through one connection.
+The wallet row is locked by pay_fetchUser (FOR UPDATE OF w), so two payments from one wallet cannot both pass the balance check (section [8.1](#81-improvement))
 Any step fails would lead to a `rollback` action which undoes everything.
 
 
@@ -1128,7 +1225,7 @@ Note that only salt and this hash are stored in the database, so a stolen databa
 | Case | Expected behaviour | Handled in |
 | --- | --- | --- |
 | 8 seats / 9 seats in one order | 8 accepted, 9 rejected | Browser and `/PaymentOrder` (`MAX_SEATS = 8`) |
-| Two members pay for the same seat | The later one gets 409 `seat_taken` and is not charged | `seat_lock` (`FOR UPDATE`), unique index |
+| Two users pay for the same seat | The later one gets 409 `seat_taken` and is not charged | `seat_lock` (`FOR UPDATE`), unique index |
 | A seat the administrator made unavailable | 409 `seat_blocked` | `/PaymentOrder` |
 | Wheelchair ticket for an ordinary seat | 400 `wheelchair_needs_accessible_seat` | `/PaymentOrder`, browser option disabled |
 | The total is edited in the browser | Ignored; the server calculates the price | `/PaymentOrder` |
@@ -1147,16 +1244,26 @@ Note that only salt and this hash are stored in the database, so a stolen databa
 
 
 ### 6.2 constraints and limitations
-1. Seats are not held: if two members pay at the same moment, the slower one is told after pressing *Confirm* that the seat he/she chosed was taken.  
+1. Seats are not held: if two users pay at the same moment, the slower one is told after pressing *Confirm* that the seat he/she chose was taken.  
 It is accepted because a hold would need timers and release rules which is not a mandatory feature need to be added.
 2. A refund covers a whole order, not one ticket.
-3. The server does not issue a login credential. A request to `/PaymentOrder` or `/refundOrder` only contains a user name, so the system is only suitable for a coursework demonstration for now.
-4. The administrator tools are protected only by a password prompt in the browser; the `/toolkit/...` routes have no server-side check ([section3.8](#38-admin-tools)).
-5. A new email address is saved without a new verification email, and the update routes (like the payment and refund routes) only receive a user name, so they are only suitable for a demonstration ([section3.7](#37-settings)).
+3. The server does not issue a login token/credential.
+    - Every route received only the username for identification purposes, thus anyone who knows a user name can call these payment-related routes for that user.
+    - such a person could read the user's email, birth date and wallet balance, or change the e-mail address and then reset the pwd to take over the account
+    - therefore the system only meet the demonstration requirements, which is sufficient enough here.
+    - it was discovered late in developing progress ,adding it will result in heavy workload as it needs to change every route thus it is not implemented.
+4. The admin tools are implemented at the late-stage of the developing cycle and used as a tool for debug and demonstration, thus it is only protected by a password prompt in the browser, while the `/toolkit/..` routes didn't implement a server-side check.
+As a consequence, anyone who can reach the server can create a redeem code and redeem it. ([section 3.8, administrator tools](#38-admin-tools))
+
+5. A new email address is saved without a new verification email ([section 3.7, settings](#37-settings))
+
 6. The seats are remembered across the sign-in only in the same browser, and only for one return to the seat page ([section3.4](#34-authentication)).
 7. Payment is simulated with a wallet.
-8. Performance dates in the sample data are in 2009;  this only affects what is displayed.
-9. If the verification email cannot be sent, and the account has already been created, the user cannot sign up again with the same time, and there is no *resend* button.
+8. note that all 30 performances in the sample data are in 2009 which are fabricated.
+- The server does not strictly compare the performance time with the system time(current time),
+- Thus a performance that has already finished can still be booked/refunded
+- note that a real system would reject such requests(book/refund an already-finished performance)
+9. If the verification email cannot be sent, and the account has already been created, the user cannot sign up again with the same name, and there is no *resend* button.
 
 
 ### 6.3 Error track
@@ -1179,12 +1286,23 @@ Errors recorded below are found and fixed during testing.
 | 5 | The confirmation page stayed on "Loading..." when no order was stored | `OrderConfirm.js` read the stored order without checking that it existed | Go back to the home page when it is missing | Opening the page with an empty `localStorage` goes to the home page |
 | 6 | After signing out, the previous order and tickets were still stored in the browser | The sign-out removed only two stored items | One list of every stored item is cleared | After sign-out `localStorage` holds no user data |
 | 7 | Signing up with a 21-character name or a 60-character e-mail gave "sth error?" (HTTP 500) | The database refused the long value and the route did not check first | Check type, length and format before the database is used; answer 400 | Each case now gives 400 with a clear message |
-| 8 | A transaction id contained spaces, such as `tx-20261125 -185924  -0HRGZA ` | The id was built from template pieces that included spaces | One template without spaces and a random part from `crypto.randomBytes` | `tx-20261125-190430-4171D6` (25 characters) |
+| 8 | A transaction id contained spaces, such as `tx-20261125 -185924  -0HRGZA ` | The id was built from template pieces that included spaces | One template without spaces and a random part from `crypto.randomBytes` | `tx-20261126-180000-E983EA` (25 characters) |
 | 9 | A user who had not verified the e-mail saw "pwd incorrect" | The login page replaced every failure with the same text | Show "please verify your email first" when that is the reason; otherwise the neutral text | Each case shows the right message |
 | 10 | Pressing the arrow keys inside the search box turned the page; after a new search the page number was out of date | The key handler ignored where the key was pressed; the page label was not updated by `renderPage` | Ignore the keys when an input has the focus; update the label in `renderPage` | Typing works; the label shows page 1 after a new search |
 
 ---
-## 7 .tests
+## 7 Tests
+
+### 7.0 test plans
+
+following tests are adopted:
+- ***unit test***: check one function with fixed data
+- ***system test***: check a route from the browser or with a request:
+    - a normal request;
+    - a boundary request;
+    - an invalid input
+
+
 
 | ID | Area | Type | Input | Expected | Actual | Pass |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -1197,7 +1315,7 @@ Errors recorded below are found and fixed during testing.
 | 7 | Payment | Invalid | Wheelchair ticket on an ordinary seat | 400 | 400 | Yes |
 | 8 | Payment | Invalid | Total changed in the browser | The server price is used | Server price used | Yes |
 | 9 | Seats | Boundary | Two users pay for the same seat at the same moment | One 200, one 409 `seat_taken`, one charge | One 200, one 409 | Yes |
-| 10 | Seats | Invalid | Admim blocks a booked seat | 409 `seat_booked` | 409 `seat_booked` | Yes |
+| 10 | Seats | Invalid | Admin blocks a booked seat | 409 `seat_booked` | 409 `seat_booked` | Yes |
 | 11 | Seats | Invalid | Pay for a seat the administrator has blocked | 409 `seat_blocked` | 409 `seat_blocked` | Yes |
 | 12 | Seats | Normal | Open the seat map of each of the 15 operas | Seat map with 140 seats each | All 15 returned a seat map | Yes |
 | 13 | Wallet | Boundary | Wallet 700, two payments of 670 at the same moment | One `success`, one `insufficientBalance` | `insufficientBalance` and `success`, balance 30.00 | Yes |
@@ -1215,7 +1333,7 @@ Errors recorded below are found and fixed during testing.
 | 25 | Settings | Invalid | Birth date `2009-02-30` | "please enter a valid value." | The same text | Yes |
 | 26 | Sign-out | Normal | Sign out, then open the confirmation page | `localStorage` empty; page goes to home | As expected | Yes |
 | 27 | Search | Normal | Press left arrow inside the search box | The cursor moves; the page does not turn | The page did not turn | Yes |
-| 28 | Payment | Normal | Check a transaction id after a payment | 25 characters, no spaces | `tx-20261125-190430-4171D6` | Yes |
+| 28 | Payment | Normal | Check a transaction id after a payment | 25 characters, no spaces | `tx-20261126-180000-E983EA` | Yes |
 
 
 ---
@@ -1223,7 +1341,7 @@ Errors recorded below are found and fixed during testing.
 ## 8 improvement and eval
 
 
-## 8.1 improvement
+### 8.1 improvement
 **Problem.** Two tests failed on the first version of the payment.
 
 - **Test T13 (two payments from one wallet).** `pay_fetchUser` read the wallet balance without a lock. With a balance of 700 and two payments of 670 at the same moment, both read 700. The database rule `balance >= 0` stopped the second payment, so no money was lost, but the user saw a generic error instead of *insufficient balance*.
@@ -1262,7 +1380,7 @@ the wallet row now gets the same treatment, so the order of locking is the same 
 
 
 
-## 8.2 Evaluation regarding the targets
+### 8.2 Evaluation regarding the targets
 
 Recall the targets mentioned in [section 1.1, Overview](#11-overview):
 
@@ -1291,9 +1409,9 @@ An administrator can:
 
 ---
 
-## 8.3 About reusability and portability
+### 8.3 About reusability and portability
 - Most of the functions are called for multiple times in the program, which features their high reusability.
-- Since this is a web project, it can run on any operating system with a browser. the `exec` function called in `back-end/serv.js` dapted for different environments including linux, macos, and windows.
+- Since this is a web project, it can run on any operating system with a browser. the `exec` function called in `back-end/serv.js` adapted for different environments including linux, macos, and windows.
 
 
 Reference:

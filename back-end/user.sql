@@ -21,6 +21,7 @@ CREATE table if not exists gift_code(
     claim_by varchar(30) references user_infor(id),
     claim_time timestamp,
     amount decimal(10,2)
+    check ( amount > 0 )
 );
 CREATE TABLE if not exists email_verification (
     token TEXT PRIMARY KEY,
@@ -129,8 +130,7 @@ SELECT * from wallet_transaction order by uid;
 select * from orders order by order_id;
 select * from ticket order by ticket_id;
 
-delete from email_verification where userid='a' ;delete from user_infor where id='a';
-------
+-----
 select * from user_infor order by uid;  
 select * from email_verification;
 select * from wallet;
@@ -144,14 +144,7 @@ SELECT * from wallet_transaction order by uid;
 select * from orders order by order_id;
 select * from ticket order by ticket_id;
 -----
-update prices set budget = round(std_low * 0.6);
 
-
-select * from user_infor where id='a'
-
-
-
-update wallet set balance=300 where uid=7;
 
 
 

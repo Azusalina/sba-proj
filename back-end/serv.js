@@ -48,7 +48,7 @@ if (!process.env.VERCEL) {
         if (process.platform === 'win32') {
             cmd = `start "" "${url}"`;
         } else if (process.platform === 'darwin') {
-            cmd = `open "${url}`;
+            cmd = `open "${url}"`;
         } else {
             cmd = `xdg-open "${url}"`;
         }

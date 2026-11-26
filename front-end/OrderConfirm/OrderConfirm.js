@@ -1,6 +1,3 @@
-import { json } from "body-parser";
-import { error } from "node:console";
-
 const isLocal = window.location.hostname === '127.0.0.1'
 const API_BASE_URL = isLocal ? 'http://127.0.0.1:3000' : 'https://backend-sba.vercel.app';
 
@@ -26,11 +23,12 @@ function formatShowtime(time) {
     });
 }
 ///
-if (!detailsStr || orderId) {
+if (!detailsStr || !orderId) {
     window.location.replace('../index.html');
     throw new Error('no order to show');
 }
 const details = JSON.parse(detailsStr)
+const tickets = ticketsStr ? JSON.parse(ticketsStr) : [];
 const paid = Number(localStorage.getItem('orderTotal') ?? details.sum_price ?? 0);
 const levelText = [...new Set(tickets.map(t => t.level))].join(', ');
 details.sum_price = paid;

@@ -43,6 +43,8 @@ gen_gift_card.addEventListener('click', async (event) => {
             } else {
                 alert('unknown error')
             }
+        } else {
+            alert('Amount must be between 0 and 10000')
         }
     } catch (error) {
         alert(error)

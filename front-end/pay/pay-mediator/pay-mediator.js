@@ -21,7 +21,7 @@ async function handlingOrder() {
     const url = `${API_BASE_URL}/PaymentOrder`
     const details = JSON.parse(localStorage.getItem('details'))
     if (details.submitted) {
-        window.location.replace('../OrderConfirm/OrderConfirm.html');
+        window.location.replace('../../OrderConfirm/OrderConfirm.html');
         return;
     }
     const data = {

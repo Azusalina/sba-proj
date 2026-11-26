@@ -332,6 +332,9 @@ app.post('/SendConfirmationEmail', async (req, res) => {
 app.post('/toolkit/gen_redeem_code', async (req, res) => {
     const code = req.body.code;
     const value = req.body.value;
+    if (!/^[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}$/.test(String(code)) || typeof value !== 'number' || !(value > 0) || value > 10000) {
+        return res.status(400).json({ msg: 'invalid_code_or_value' });
+    }
     try {
         await pool.query(mainsql.admin_generateCode, [code, value]);
         return res.json({ msg: 'success' });

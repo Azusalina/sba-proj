@@ -1,4 +1,11 @@
-# 1.1
+
+
+
+
+### **This is an explicit list for all the figures used in the essay of ict sba project, 2027 DSE**
+#### Author: Clifford, Wu Jia An
+
+##### 1.1
 
 ```mermaid
 flowchart LR
@@ -34,14 +41,14 @@ Data stored in the database are fetched by back-end *Express* server but not dir
 Note that an `exec` function in `child_process` is used in `serv.js` so when the server starts, the front-end page will show up in the user's default browser
 
 
-### 3.0
+##### 3.0
 
 ```mermaid
 flowchart LR
     A([3.1 Enter<br/>home page])-->B[3.2 Search<br/>and Browse]
     B-->C[3.3 choose <br/>a performance and seats]
     C-->D{signed in?}
-    D-->No-->E[3.4 signup,<br/>verify,signin]
+    D-->|No|E[3.4 signup,<br/>verify,signin]
     E--back to the seats-->C
     D--Yes-->F[3.5 Review and pay]
     F-->G([3.6 Order<br/>confirmation])
@@ -53,7 +60,7 @@ flowchart LR
 user's journey. The arrow from 3.4 to 3.3 shows that after signing in , the user returns to the seat page with the chosen seats restored.
 
 
-### 3.3
+##### 3.3
 
 ```mermaid
 flowchart LR
@@ -69,7 +76,32 @@ flowchart LR
 note that the admin cannot block a booked seat
 
 
-### 3.5
+##### 3.4
+
+```mermaid
+flowchart LR
+    A([Press Confirm]) --> B{Signed in?}
+    B -- Yes --> Z([Review and pay])
+    B -- No --> C[Message, then<br/>sign-in page]
+    C --> D{Has an account?}
+    D -- No --> E[Sign up:<br/>check password rules]
+    E --> F[Save account with<br/>salted hash, send email]
+    F --> G[user opens the<br/>link in the email]
+    G --> H[Account verified,<br/>wallet created]
+    H --> I
+    D -- Yes --> I[Sign in]
+    I --> J{Verified and<br/>password correct?}
+    J -- No --> K[/Show message/] --> I
+    J -- Yes --> L[Remember user<br/>in localStorage]
+    L --> M([Back to the seat page,<br/>seats restored])
+```
+
+*Fig 4. Authentication path.*
+
+
+
+
+##### 3.5
 
 ```mermaid
 flowchart LR
@@ -116,7 +148,7 @@ graph LR
 
 
 
-### 3.7
+##### 3.7
 
 ```mermaid
 flowchart LR
